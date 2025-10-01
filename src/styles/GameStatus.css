@@ -1,0 +1,37 @@
+.game-status {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 20px;
+  min-height: 25px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.game-status.game-over {
+  color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 2px solid #e74c3c;
+  animation: gameOverPulse 1s ease-in-out;
+}
+
+@keyframes gameOverPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@media (max-width: 768px) {
+  .game-status {
+    font-size: 16px;
+    padding: 8px 16px;
+  }
+}

@@ -1,0 +1,76 @@
+.vial-game {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #f0f8ff;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.vial-game h1 {
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+}
+
+.game-container {
+  display: flex;
+  gap: 100px;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+.vial-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.vial-and-bucket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.bucket-label {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: bold;
+  text-align: center;
+}
+
+.liquid-level {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: bold;
+  text-align: center;
+}
+
+.instructions {
+  max-width: 600px;
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 20px;
+}
+
+.instructions strong {
+  color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    gap: 50px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .vial-game h1 {
+    font-size: 2rem;
+  }
+}
