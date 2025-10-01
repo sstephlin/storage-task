@@ -51,6 +51,17 @@ button {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.toggle-version {
+  background-color: #3498db;
+  color: white;
+}
+
+.toggle-version:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;

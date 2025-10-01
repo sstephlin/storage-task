@@ -6,6 +6,7 @@ const GameControls = ({
   onAddVial2,
   onEmptyBucket,
   onRestart,
+  onToggleVersion,
   gameRunning,
   bucketLevel,
   hasBucket,
@@ -40,6 +41,10 @@ const GameControls = ({
 
       <button className="restart" onClick={onRestart}>
         Restart Game
+      </button>
+
+      <button className="toggle-version" onClick={onToggleVersion}>
+        {hasBucket ? "Play Without Bucket" : "Play With Bucket"}
       </button>
     </div>
   );

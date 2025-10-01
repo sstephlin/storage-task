@@ -5,8 +5,8 @@ import GameStatus from "./components/GameStatus";
 import "./styles/VialGame.css";
 
 const VialGame = () => {
-  // Randomly determine game version at start (50% chance for each)
-  const [hasBucket] = useState(() => Math.random() < 0.5);
+  // Randomly determine initial game version (50% chance for each)
+  const [hasBucket, setHasBucket] = useState(() => Math.random() < 0.5);
 
   const [vial1Level, setVial1Level] = useState(100);
   const [vial2Level, setVial2Level] = useState(100);
@@ -22,7 +22,7 @@ const VialGame = () => {
   // Game constants
   const DRAIN_RATE = 0.5; // Percentage points per 100ms
   const ADD_AMOUNT = 15; // Amount added per click
-  const MAX_LEVEL = 100;
+  const MAX_LEVEL = 70;
   const GAME_SPEED = 100; // milliseconds
 
   // Start game loop
@@ -95,6 +95,17 @@ const VialGame = () => {
     // Note: hasBucket remains the same, determined at component mount
   };
 
+  const toggleGameVersion = () => {
+    setHasBucket((prev) => !prev);
+    // Reset game state when switching versions
+    setVial1Level(100);
+    setVial2Level(100);
+    setBucket2Level(0);
+    setGameRunning(true);
+    setGameMessage("Keep both vials from emptying!");
+    setShowOverflow(false);
+  };
+
   return (
     <div className="vial-game">
       <h1>Two Vials Game</h1>
@@ -116,11 +127,6 @@ const VialGame = () => {
               showOverflow={showOverflow}
               bucketLevel={bucket2Level}
             />
-            {hasBucket && (
-              <div className="bucket-label">
-                Bucket: {Math.round(bucket2Level)}%
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -130,6 +136,7 @@ const VialGame = () => {
         onAddVial2={() => addLiquid(2)}
         onEmptyBucket={emptyBucket}
         onRestart={restartGame}
+        onToggleVersion={toggleGameVersion}
         gameRunning={gameRunning}
         bucketLevel={bucket2Level}
         hasBucket={hasBucket}
@@ -150,7 +157,7 @@ const VialGame = () => {
             <>
               {" "}
               Add liquid to keep both vials from emptying completely. Vial
-              levels are capped at 100%.{" "}
+              levels are capped at 70%.{" "}
             </>
           )}
           The game ends when either vial reaches 0%!
