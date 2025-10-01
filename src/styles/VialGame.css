@@ -11,8 +11,45 @@
 
 .vial-game h1 {
   color: #2c3e50;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   font-size: 2.5rem;
+}
+
+.game-info {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.score-display,
+.round-display,
+.timer-display {
+  background-color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  min-width: 120px;
+  text-align: center;
+}
+
+.score-display {
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  color: black;
+}
+
+.round-display {
+  /* background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); */
+  color: black;
+}
+
+.timer-display {
+  /* background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); */
+  color: black;
 }
 
 .game-container {

@@ -46,6 +46,30 @@ export const logButtonPress = async (buttonType, gameState) => {
     console.error("Error logging event to Firebase:", error);
   }
 };
+export const logVialLevels = async (gameState) => {
+  try {
+    const eventData = {
+      eventType: "vial_levels",
+      timestamp: serverTimestamp(),
+      gameState: {
+        vial1Level: gameState.vial1Level,
+        vial2Level: gameState.vial2Level,
+        hasBucket: gameState.hasBucket,
+        ...(gameState.hasBucket && { bucket2Level: gameState.bucket2Level }),
+        gameRunning: gameState.gameRunning,
+        currentRound: gameState.currentRound,
+        score: gameState.score,
+        roundTimeRemaining: gameState.roundTimeRemaining,
+      },
+    };
+
+    await addDoc(collection(db, "game_events"), eventData);
+    // Reduced logging to avoid console spam
+    console.log("Vial levels logged");
+  } catch (error) {
+    console.error("Error logging vial levels to Firebase:", error);
+  }
+};
 
 /**
  * Reset the button press timer (useful when starting a new game session)
