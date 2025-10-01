@@ -2,37 +2,35 @@ import React, { useState, useEffect, useRef } from "react";
 import Vial from "./components/Vial";
 import GameControls from "./components/GameControls";
 import GameStatus from "./components/GameStatus";
+import { GAME_PARAMS, GAME_MESSAGES, INSTRUCTIONS } from "./params";
+import { logButtonPress } from "./logging";
 import "./styles/VialGame.css";
 
 const VialGame = () => {
-  // Randomly determine initial game version (50% chance for each)
-  const [hasBucket, setHasBucket] = useState(() => Math.random() < 0.5);
-
-  const [vial1Level, setVial1Level] = useState(100);
-  const [vial2Level, setVial2Level] = useState(100);
-  const [bucket2Level, setBucket2Level] = useState(0);
-  const [gameRunning, setGameRunning] = useState(true);
-  const [gameMessage, setGameMessage] = useState(
-    "Keep both vials from emptying!"
+  // Randomly determine initial game version
+  const [hasBucket, setHasBucket] = useState(
+    () => Math.random() < GAME_PARAMS.RANDOM_VERSION_PROBABILITY
   );
+
+  const [vial1Level, setVial1Level] = useState(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+  const [vial2Level, setVial2Level] = useState(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+  const [bucket2Level, setBucket2Level] = useState(
+    GAME_PARAMS.INITIAL_BUCKET_LEVEL
+  );
+  const [gameRunning, setGameRunning] = useState(true);
+  const [gameMessage, setGameMessage] = useState(GAME_MESSAGES.PLAYING);
   const [showOverflow, setShowOverflow] = useState(false);
 
   const gameLoopRef = useRef(null);
-
-  // Game constants
-  const DRAIN_RATE = 0.5; // Percentage points per 100ms
-  const ADD_AMOUNT = 15; // Amount added per click
-  const MAX_LEVEL = 70;
-  const GAME_SPEED = 100; // milliseconds
 
   // Start game loop
   useEffect(() => {
     if (gameRunning) {
       gameLoopRef.current = setInterval(() => {
         // Drain both vials
-        setVial1Level((prev) => Math.max(0, prev - DRAIN_RATE));
-        setVial2Level((prev) => Math.max(0, prev - DRAIN_RATE));
-      }, GAME_SPEED);
+        setVial1Level((prev) => Math.max(0, prev - GAME_PARAMS.DRAIN_RATE));
+        setVial2Level((prev) => Math.max(0, prev - GAME_PARAMS.DRAIN_RATE));
+      }, GAME_PARAMS.GAME_SPEED);
     } else {
       clearInterval(gameLoopRef.current);
     }
@@ -42,14 +40,14 @@ const VialGame = () => {
 
   // Handle vial 2 overflow (only if bucket exists)
   useEffect(() => {
-    if (hasBucket && vial2Level > MAX_LEVEL) {
-      const overflow = vial2Level - MAX_LEVEL;
+    if (hasBucket && vial2Level > GAME_PARAMS.MAX_LEVEL) {
+      const overflow = vial2Level - GAME_PARAMS.MAX_LEVEL;
       setBucket2Level((prev) => Math.min(100, prev + overflow));
-      setVial2Level(MAX_LEVEL);
+      setVial2Level(GAME_PARAMS.MAX_LEVEL);
       setShowOverflow(true);
-    } else if (!hasBucket && vial2Level > MAX_LEVEL) {
+    } else if (!hasBucket && vial2Level > GAME_PARAMS.MAX_LEVEL) {
       // Without bucket, cap at MAX_LEVEL without overflow
-      setVial2Level(MAX_LEVEL);
+      setVial2Level(GAME_PARAMS.MAX_LEVEL);
       setShowOverflow(false);
     } else {
       setShowOverflow(false);
@@ -60,20 +58,34 @@ const VialGame = () => {
   useEffect(() => {
     if (vial1Level <= 0 || vial2Level <= 0) {
       setGameRunning(false);
-      setGameMessage("Game Over! A vial emptied!");
+      setGameMessage(GAME_MESSAGES.GAME_OVER);
     }
   }, [vial1Level, vial2Level]);
 
   const addLiquid = (vialNumber) => {
     if (!gameRunning) return;
 
+    // Log button press before state update
+    const currentState = {
+      vial1Level,
+      vial2Level,
+      bucket2Level,
+      hasBucket,
+      gameRunning,
+    };
+    logButtonPress(`add_vial_${vialNumber}`, currentState);
+
     if (vialNumber === 1) {
-      setVial1Level((prev) => Math.min(MAX_LEVEL, prev + ADD_AMOUNT));
+      setVial1Level((prev) =>
+        Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+      );
     } else if (vialNumber === 2) {
       if (hasBucket) {
-        setVial2Level((prev) => prev + ADD_AMOUNT); // Allow overflow with bucket
+        setVial2Level((prev) => prev + GAME_PARAMS.ADD_AMOUNT); // Allow overflow with bucket
       } else {
-        setVial2Level((prev) => Math.min(MAX_LEVEL, prev + ADD_AMOUNT)); // Cap without bucket
+        setVial2Level((prev) =>
+          Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+        ); // Cap without bucket
       }
     }
   };
@@ -81,28 +93,58 @@ const VialGame = () => {
   const emptyBucket = () => {
     if (!gameRunning || bucket2Level === 0 || !hasBucket) return;
 
+    // Log button press before state update
+    const currentState = {
+      vial1Level,
+      vial2Level,
+      bucket2Level,
+      hasBucket,
+      gameRunning,
+    };
+    logButtonPress("empty_bucket", currentState);
+
     setVial2Level((prev) => prev + bucket2Level);
     setBucket2Level(0);
   };
 
   const restartGame = () => {
-    setVial1Level(100);
-    setVial2Level(100);
-    setBucket2Level(0);
+    // Log button press before state update
+    const currentState = {
+      vial1Level,
+      vial2Level,
+      bucket2Level,
+      hasBucket,
+      gameRunning,
+    };
+    logButtonPress("restart", currentState);
+
+    setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+    setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+    setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
     setGameRunning(true);
-    setGameMessage("Keep both vials from emptying!");
+    setGameMessage(GAME_MESSAGES.PLAYING);
     setShowOverflow(false);
     // Note: hasBucket remains the same, determined at component mount
   };
 
   const toggleGameVersion = () => {
+    // Log button press before state update
+    const currentState = {
+      vial1Level,
+      vial2Level,
+      bucket2Level,
+      hasBucket,
+      gameRunning,
+    };
+    logButtonPress("toggle_version", currentState);
+
     setHasBucket((prev) => !prev);
     // Reset game state when switching versions
-    setVial1Level(100);
-    setVial2Level(100);
-    setBucket2Level(0);
+    setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+    setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+    setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
     setGameRunning(true);
-    setGameMessage("Keep both vials from emptying!");
+    setGameMessage(GAME_MESSAGES.PLAYING);
     setShowOverflow(false);
   };
 
@@ -127,6 +169,11 @@ const VialGame = () => {
               showOverflow={showOverflow}
               bucketLevel={bucket2Level}
             />
+            {hasBucket && (
+              <div className="bucket-label">
+                Bucket: {Math.round(bucket2Level)}%
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -144,23 +191,13 @@ const VialGame = () => {
 
       <div className="instructions">
         <p>
-          <strong>How to play:</strong> Both vials constantly drain at the same
-          rate.
+          <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
           {hasBucket ? (
-            <>
-              {" "}
-              Vial 2 has a spout that causes it to overflow into the bucket when
-              full. Add liquid to keep both vials from emptying completely.
-              Empty the bucket to return liquid to Vial 2.{" "}
-            </>
+            <> {INSTRUCTIONS.WITH_BUCKET}</>
           ) : (
-            <>
-              {" "}
-              Add liquid to keep both vials from emptying completely. Vial
-              levels are capped at 70%.{" "}
-            </>
-          )}
-          The game ends when either vial reaches 0%!
+            <> {INSTRUCTIONS.WITHOUT_BUCKET}</>
+          )}{" "}
+          {INSTRUCTIONS.ENDING}
         </p>
       </div>
     </div>

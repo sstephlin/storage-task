@@ -1,4 +1,5 @@
 import React from "react";
+import { BUTTON_LABELS } from "../params";
 import "../styles/GameControls.css";
 
 const GameControls = ({
@@ -18,7 +19,7 @@ const GameControls = ({
         onClick={onAddVial1}
         disabled={!gameRunning}
       >
-        Add to Vial 1
+        {BUTTON_LABELS.ADD_VIAL_1}
       </button>
 
       <button
@@ -26,7 +27,7 @@ const GameControls = ({
         onClick={onAddVial2}
         disabled={!gameRunning}
       >
-        Add to Vial 2
+        {BUTTON_LABELS.ADD_VIAL_2}
       </button>
 
       {hasBucket && (
@@ -35,16 +36,18 @@ const GameControls = ({
           onClick={onEmptyBucket}
           disabled={bucketLevel === 0 || !gameRunning}
         >
-          Empty Bucket
+          {BUTTON_LABELS.EMPTY_BUCKET}
         </button>
       )}
 
       <button className="restart" onClick={onRestart}>
-        Restart Game
+        {BUTTON_LABELS.RESTART}
       </button>
 
       <button className="toggle-version" onClick={onToggleVersion}>
-        {hasBucket ? "Play Without Bucket" : "Play With Bucket"}
+        {hasBucket
+          ? BUTTON_LABELS.TOGGLE_WITH_BUCKET
+          : BUTTON_LABELS.TOGGLE_WITHOUT_BUCKET}
       </button>
     </div>
   );
