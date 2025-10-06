@@ -3,13 +3,13 @@
 
 export const GAME_PARAMS = {
   // Liquid management
-  DRAIN_RATE: 0.5, // Percentage points drained per game tick
+  DRAIN_RATE: 0.9, // Percentage points drained per game tick
   ADD_AMOUNT: 15, // Percentage points added per button click
   MAX_LEVEL: 100, // Maximum percentage level for vials
 
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
-  ROUND_DURATION: 30, // Duration of each round in seconds
+  ROUND_DURATION: 300, // Duration of each round in seconds
 
   // Initial conditions
   INITIAL_VIAL_LEVEL: 70, // Starting percentage for both vials
