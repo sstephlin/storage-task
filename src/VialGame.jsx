@@ -3,10 +3,10 @@ import Vial from "./components/Vial";
 import GameControls from "./components/GameControls";
 import GameStatus from "./components/GameStatus";
 import { GAME_PARAMS, GAME_MESSAGES, INSTRUCTIONS } from "./params";
-import { logButtonPress, logVialLevels } from "./logging";
+import { logButtonPress, logVialLevels, setGameVersion } from "./logging";
 import "./styles/VialGame.css";
 
-const VialGame = () => {
+const VialGame = ({ userId }) => {
   // Randomly determine initial game version
   const [hasBucket, setHasBucket] = useState(
     () => Math.random() < GAME_PARAMS.RANDOM_VERSION_PROBABILITY
@@ -20,7 +20,6 @@ const VialGame = () => {
   const [gameRunning, setGameRunning] = useState(true);
   const [gameMessage, setGameMessage] = useState(GAME_MESSAGES.PLAYING);
   const [messageType, setMessageType] = useState("playing");
-  const [showOverflow, setShowOverflow] = useState(false);
 
   // Round management
   const [currentRound, setCurrentRound] = useState(0);
@@ -29,10 +28,82 @@ const VialGame = () => {
     GAME_PARAMS.ROUND_DURATION
   );
   const [isRoundTransition, setIsRoundTransition] = useState(false);
+  const [gameComplete, setGameComplete] = useState(false);
 
   const gameLoopRef = useRef(null);
   const roundTimerRef = useRef(null);
   const vialLoggerRef = useRef(null);
+
+  // Set game version in Firebase when component mounts or hasBucket changes
+  useEffect(() => {
+    setGameVersion(hasBucket);
+  }, [hasBucket]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Ignore key presses during round transitions
+      if (isRoundTransition || !gameRunning) return;
+
+      // Get current state for logging
+      const getCurrentState = () => ({
+        vial1Level,
+        vial2Level,
+        bucket2Level,
+        hasBucket,
+        gameRunning,
+        currentRound,
+        score,
+        roundTimeRemaining,
+      });
+
+      switch (event.key) {
+        case "ArrowLeft":
+          event.preventDefault();
+          if (vial1Level < GAME_PARAMS.MAX_LEVEL) {
+            logButtonPress("add_vial_1", getCurrentState());
+            setVial1Level((prev) =>
+              Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+            );
+          }
+          break;
+        case "ArrowRight":
+          event.preventDefault();
+          logButtonPress("add_vial_2", getCurrentState());
+          if (hasBucket) {
+            setVial2Level((prev) => prev + GAME_PARAMS.ADD_AMOUNT);
+          } else {
+            setVial2Level((prev) =>
+              Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+            );
+          }
+          break;
+        case "ArrowUp":
+          if (hasBucket && bucket2Level > 0) {
+            event.preventDefault();
+            logButtonPress("empty_bucket", getCurrentState());
+            setVial2Level((prev) => prev + bucket2Level);
+            setBucket2Level(0);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [
+    isRoundTransition,
+    gameRunning,
+    hasBucket,
+    vial1Level,
+    vial2Level,
+    bucket2Level,
+    currentRound,
+    score,
+    roundTimeRemaining,
+  ]);
 
   // Start game loop
   useEffect(() => {
@@ -73,6 +144,9 @@ const VialGame = () => {
   useEffect(() => {
     if (roundTimeRemaining === 0 && gameRunning && !isRoundTransition) {
       completeRound();
+      setHasBucket(
+        () => Math.random() < GAME_PARAMS.RANDOM_VERSION_PROBABILITY
+      );
     }
   }, [roundTimeRemaining, gameRunning, isRoundTransition]);
 
@@ -97,33 +171,32 @@ const VialGame = () => {
     }
 
     return () => clearInterval(vialLoggerRef.current);
-  }, [
-    gameRunning,
-    isRoundTransition,
-    vial1Level,
-    vial2Level,
-    bucket2Level,
-    hasBucket,
-    currentRound,
-    score,
-    roundTimeRemaining,
-  ]);
+  }, [gameRunning, isRoundTransition]);
 
   // Handle vial 2 overflow (only if bucket exists)
   useEffect(() => {
-    if (hasBucket && vial2Level > GAME_PARAMS.MAX_LEVEL) {
-      const overflow = vial2Level - GAME_PARAMS.MAX_LEVEL;
-      setBucket2Level((prev) => Math.min(100, prev + overflow));
-      setVial2Level(GAME_PARAMS.MAX_LEVEL);
-      setShowOverflow(true);
+    if (hasBucket && vial2Level > GAME_PARAMS.OPTIMAL_ZONE_MIN) {
+      // Check if bucket is full
+      if (bucket2Level < 100) {
+        // Bucket has room - transfer excess to bucket
+        const excess = vial2Level - GAME_PARAMS.OPTIMAL_ZONE_MIN;
+        const amountToTransfer = Math.min(excess, 100 - bucket2Level);
+
+        if (amountToTransfer > 0) {
+          setBucket2Level((prev) => Math.min(100, prev + amountToTransfer));
+          setVial2Level(GAME_PARAMS.OPTIMAL_ZONE_MIN);
+        }
+      }
+      // If bucket is full, vial can continue filling above 70%
+      // (no cap, just let it fill naturally)
+      else if (vial2Level > GAME_PARAMS.MAX_LEVEL) {
+        setVial2Level(GAME_PARAMS.MAX_LEVEL);
+      }
     } else if (!hasBucket && vial2Level > GAME_PARAMS.MAX_LEVEL) {
-      // Without bucket, cap at MAX_LEVEL without overflow
+      // Without bucket, cap at MAX_LEVEL
       setVial2Level(GAME_PARAMS.MAX_LEVEL);
-      setShowOverflow(false);
-    } else {
-      setShowOverflow(false);
     }
-  }, [vial2Level, hasBucket]);
+  }, [vial2Level, hasBucket, bucket2Level]);
 
   // Check for round failure (vial emptied)
   useEffect(() => {
@@ -143,6 +216,16 @@ const VialGame = () => {
     setGameMessage(GAME_MESSAGES.ROUND_COMPLETE);
     setMessageType("round-complete");
 
+    // Check if this was the final round
+    if (currentRound + 1 >= GAME_PARAMS.MAX_ROUNDS) {
+      // Game is complete after 20 rounds
+      setTimeout(() => {
+        setGameComplete(true);
+        setGameRunning(false);
+      }, 2000);
+      return;
+    }
+
     // Reset vials and bucket for next round
     setTimeout(() => {
       setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
@@ -153,7 +236,6 @@ const VialGame = () => {
       setGameMessage(GAME_MESSAGES.PLAYING);
       setMessageType("playing");
       setIsRoundTransition(false);
-      setShowOverflow(false);
     }, 2000); // 2 second pause between rounds
   };
 
@@ -162,6 +244,16 @@ const VialGame = () => {
     setIsRoundTransition(true);
     setGameMessage(GAME_MESSAGES.GAME_OVER);
     setMessageType("round-failed");
+
+    // Check if this was the final round
+    if (currentRound + 1 >= GAME_PARAMS.MAX_ROUNDS) {
+      // Game is complete after 20 rounds
+      setTimeout(() => {
+        setGameComplete(true);
+        setGameRunning(false);
+      }, 2000);
+      return;
+    }
 
     // Reset vials and bucket for next round (no score increase)
     setTimeout(() => {
@@ -173,54 +265,8 @@ const VialGame = () => {
       setGameMessage(GAME_MESSAGES.PLAYING);
       setMessageType("playing");
       setIsRoundTransition(false);
-      setShowOverflow(false);
       setGameRunning(true);
     }, 2000); // 2 second pause before next round
-  };
-
-  const addLiquid = (vialNumber) => {
-    if (!gameRunning) return;
-
-    // Log button press before state update
-    const currentState = {
-      vial1Level,
-      vial2Level,
-      bucket2Level,
-      hasBucket,
-      gameRunning,
-    };
-    logButtonPress(`add_vial_${vialNumber}`, currentState);
-
-    if (vialNumber === 1) {
-      setVial1Level((prev) =>
-        Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
-      );
-    } else if (vialNumber === 2) {
-      if (hasBucket) {
-        setVial2Level((prev) => prev + GAME_PARAMS.ADD_AMOUNT); // Allow overflow with bucket
-      } else {
-        setVial2Level((prev) =>
-          Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
-        ); // Cap without bucket
-      }
-    }
-  };
-
-  const emptyBucket = () => {
-    if (!gameRunning || bucket2Level === 0 || !hasBucket) return;
-
-    // Log button press before state update
-    const currentState = {
-      vial1Level,
-      vial2Level,
-      bucket2Level,
-      hasBucket,
-      gameRunning,
-    };
-    logButtonPress("empty_bucket", currentState);
-
-    setVial2Level((prev) => prev + bucket2Level);
-    setBucket2Level(0);
   };
 
   const restartGame = () => {
@@ -231,6 +277,9 @@ const VialGame = () => {
       bucket2Level,
       hasBucket,
       gameRunning,
+      currentRound,
+      score,
+      roundTimeRemaining,
     };
     logButtonPress("restart", currentState);
 
@@ -239,8 +288,12 @@ const VialGame = () => {
     setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
     setGameRunning(true);
     setGameMessage(GAME_MESSAGES.PLAYING);
-    setShowOverflow(false);
-    // Note: hasBucket remains the same, determined at component mount
+    setMessageType("playing");
+    setCurrentRound(0);
+    setScore(0);
+    setRoundTimeRemaining(GAME_PARAMS.ROUND_DURATION);
+    setIsRoundTransition(false);
+    setGameComplete(false);
   };
 
   const toggleGameVersion = () => {
@@ -251,6 +304,9 @@ const VialGame = () => {
       bucket2Level,
       hasBucket,
       gameRunning,
+      currentRound,
+      score,
+      roundTimeRemaining,
     };
     logButtonPress("toggle_version", currentState);
 
@@ -261,62 +317,96 @@ const VialGame = () => {
     setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
     setGameRunning(true);
     setGameMessage(GAME_MESSAGES.PLAYING);
-    setShowOverflow(false);
+    setMessageType("playing");
+    setCurrentRound(0);
+    setScore(0);
+    setRoundTimeRemaining(GAME_PARAMS.ROUND_DURATION);
+    setIsRoundTransition(false);
+    setGameComplete(false);
   };
 
   return (
     <div className="vial-game">
-      <h1>Two Vials Game</h1>
-
-      <div className="game-info">
-        <div className="score-display">Score: {score}</div>
-        <div className="round-display">Round: {currentRound + 1}</div>
-        <div className="timer-display">Time: {roundTimeRemaining}s</div>
-      </div>
-
-      <GameStatus message={gameMessage} messageType={messageType} />
-
-      <div className="game-container">
-        <div className="vial-setup">
-          <div className="liquid-level">Vial 1: {Math.round(vial1Level)}%</div>
-          <Vial level={vial1Level} hasSpout={false} showOverflow={false} />
-        </div>
-
-        <div className="vial-setup">
-          <div className="liquid-level">Vial 2: {Math.round(vial2Level)}%</div>
-          <div className="vial-and-bucket">
-            <Vial
-              level={vial2Level}
-              hasSpout={hasBucket}
-              showOverflow={showOverflow}
-              bucketLevel={bucket2Level}
-            />
+      {gameComplete ? (
+        <div className="game-complete-screen">
+          <h1>Thank You for Playing!</h1>
+          <div className="completion-stats">
+            <h2>Game Complete</h2>
+            <p className="completion-message">
+              You completed all {GAME_PARAMS.MAX_ROUNDS} rounds!
+            </p>
+            <p className="thank-you-message">
+              Thank you for participating in this experiment. Your data has been
+              recorded.
+            </p>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <h1>Two Vials Game</h1>
 
-      <GameControls
-        onAddVial1={() => addLiquid(1)}
-        onAddVial2={() => addLiquid(2)}
-        onEmptyBucket={emptyBucket}
-        onRestart={restartGame}
-        onToggleVersion={toggleGameVersion}
-        gameRunning={gameRunning && !isRoundTransition}
-        bucketLevel={bucket2Level}
-        hasBucket={hasBucket}
-      />
+          <div className="game-info">
+            <div className="score-display">Score: {score}</div>
+            <div className="round-display">
+              Round: {currentRound + 1} / {GAME_PARAMS.MAX_ROUNDS}
+            </div>
+            <div className="timer-display">Time: {roundTimeRemaining}s</div>
+          </div>
 
-      <div className="instructions">
-        <p>
-          <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
-          {hasBucket ? (
-            <> {INSTRUCTIONS.WITH_BUCKET}</>
-          ) : (
-            <> {INSTRUCTIONS.WITHOUT_BUCKET}</>
-          )}{" "}
-          {INSTRUCTIONS.ENDING}
-        </p>
-      </div>
+          <GameStatus message={gameMessage} messageType={messageType} />
+
+          <div className="game-container">
+            <div className="vial-setup">
+              <div className="liquid-level">
+                Vial 1: {Math.round(vial1Level)}%
+              </div>
+              <Vial level={vial1Level} hasSpout={false} bucketLevel={0} />
+            </div>
+
+            <div className="vial-setup">
+              <div className="liquid-level">
+                Vial 2: {Math.round(vial2Level)}%
+              </div>
+              <div className="vial-and-bucket">
+                <Vial
+                  level={vial2Level}
+                  hasSpout={hasBucket}
+                  bucketLevel={bucket2Level}
+                />
+              </div>
+            </div>
+          </div>
+
+          <GameControls
+            onAddVial1={() => {}}
+            onAddVial2={() => {}}
+            onEmptyBucket={() => {}}
+            onRestart={restartGame}
+            onToggleVersion={toggleGameVersion}
+            gameRunning={gameRunning && !isRoundTransition}
+            bucketLevel={bucket2Level}
+            hasBucket={hasBucket}
+          />
+
+          <div className="instructions">
+            <p>
+              <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
+            </p>
+            <p className="keyboard-controls">
+              <strong>Controls:</strong> {INSTRUCTIONS.CONTROLS_BASE}
+              {hasBucket && INSTRUCTIONS.CONTROLS_WITH_BUCKET}
+            </p>
+            <p>
+              {hasBucket ? (
+                <>{INSTRUCTIONS.WITH_BUCKET}</>
+              ) : (
+                <>{INSTRUCTIONS.WITHOUT_BUCKET}</>
+              )}{" "}
+              {INSTRUCTIONS.ENDING}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 };

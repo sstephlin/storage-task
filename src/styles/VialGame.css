@@ -3,10 +3,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding: 20px;
   background-color: #f0f8ff;
   min-height: 100vh;
   margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .vial-game h1 {
@@ -38,17 +41,14 @@
 }
 
 .score-display {
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   color: black;
 }
 
 .round-display {
-  /* background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); */
   color: black;
 }
 
 .timer-display {
-  /* background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); */
   color: black;
 }
 
@@ -56,7 +56,10 @@
   display: flex;
   gap: 100px;
   align-items: flex-end;
+  justify-content: center;
   margin-bottom: 30px;
+  width: 100%;
+  max-width: 800px;
 }
 
 .vial-setup {
@@ -96,8 +99,100 @@
   margin-top: 20px;
 }
 
+.instructions p {
+  margin-bottom: 10px;
+}
+
 .instructions strong {
   color: #2c3e50;
+}
+
+.keyboard-controls {
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 2px solid #3498db;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin: 15px 0;
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.game-complete-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  padding: 40px;
+}
+
+.game-complete-screen h1 {
+  font-size: 3rem;
+  color: #2c3e50;
+  margin-bottom: 40px;
+  animation: fadeInScale 0.8s ease-out;
+}
+
+.completion-stats {
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  animation: fadeInUp 1s ease-out 0.3s both;
+}
+
+.completion-stats h2 {
+  color: #27ae60;
+  font-size: 2rem;
+  margin-bottom: 30px;
+}
+
+.final-score {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 20px 0;
+}
+
+.completion-message {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin: 20px 0;
+}
+
+.thank-you-message {
+  font-size: 1.1rem;
+  color: #7f8c8d;
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 2px solid #ecf0f1;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
@@ -109,5 +204,9 @@
 
   .vial-game h1 {
     font-size: 2rem;
+  }
+
+  .game-info {
+    gap: 15px;
   }
 }

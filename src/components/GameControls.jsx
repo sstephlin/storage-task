@@ -14,32 +14,6 @@ const GameControls = ({
 }) => {
   return (
     <div className="controls">
-      <button
-        className="add-liquid"
-        onClick={onAddVial1}
-        disabled={!gameRunning}
-      >
-        {BUTTON_LABELS.ADD_VIAL_1}
-      </button>
-
-      <button
-        className="add-liquid"
-        onClick={onAddVial2}
-        disabled={!gameRunning}
-      >
-        {BUTTON_LABELS.ADD_VIAL_2}
-      </button>
-
-      {hasBucket && (
-        <button
-          className="empty-bucket"
-          onClick={onEmptyBucket}
-          disabled={bucketLevel === 0 || !gameRunning}
-        >
-          {BUTTON_LABELS.EMPTY_BUCKET}
-        </button>
-      )}
-
       <button className="restart" onClick={onRestart}>
         {BUTTON_LABELS.RESTART}
       </button>

@@ -1,15 +1,33 @@
 import React from "react";
+import { GAME_PARAMS } from "../params";
 import "../styles/Vial.css";
 
-const Vial = ({ level, hasSpout, showOverflow, bucketLevel }) => {
+const Vial = ({ level, hasSpout, bucketLevel }) => {
   const displayLevel = Math.min(level, 100);
+
+  // Determine if liquid is in optimal zone
+  const isOptimal =
+    level >= GAME_PARAMS.OPTIMAL_ZONE_MIN &&
+    level <= GAME_PARAMS.OPTIMAL_ZONE_MAX;
+
+  // Calculate if pipe should show flow (only when liquid reaches optimal zone AND bucket has room)
+  const isPipeActive =
+    hasSpout && level >= GAME_PARAMS.OPTIMAL_ZONE_MIN && bucketLevel < 100;
 
   return (
     <div className="vial-container">
-      <div className={`vial ${hasSpout ? "with-spout" : ""}`}>
-        <div className="liquid" style={{ height: `${displayLevel}%` }} />
+      <div className="vial">
+        <div
+          className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
+          style={{ height: `${displayLevel}%` }}
+        />
         {hasSpout && (
-          <div className={`overflow ${showOverflow ? "active" : ""}`} />
+          <>
+            <div className="pipe-hole" />
+            <div
+              className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
+            />
+          </>
         )}
       </div>
 

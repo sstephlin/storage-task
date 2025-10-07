@@ -3,13 +3,18 @@
 
 export const GAME_PARAMS = {
   // Liquid management
-  DRAIN_RATE: 0.9, // Percentage points drained per game tick
+  DRAIN_RATE: 0.5, // Percentage points drained per game tick
   ADD_AMOUNT: 15, // Percentage points added per button click
   MAX_LEVEL: 100, // Maximum percentage level for vials
 
+  // Optimal zone (green when in range, red when outside)
+  OPTIMAL_ZONE_MIN: 70, // Minimum level for optimal zone (green)
+  OPTIMAL_ZONE_MAX: 100, // Maximum level for optimal zone (green)
+
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
-  ROUND_DURATION: 300, // Duration of each round in seconds
+  ROUND_DURATION: 30, // Duration of each round in seconds
+  MAX_ROUNDS: 20, // Maximum number of rounds before game ends
 
   // Initial conditions
   INITIAL_VIAL_LEVEL: 70, // Starting percentage for both vials
@@ -17,6 +22,8 @@ export const GAME_PARAMS = {
 
   // Game version
   RANDOM_VERSION_PROBABILITY: 0.5, // Probability of starting with bucket (0.0 to 1.0)
+
+  EMPTY_BUCKET_AMOUNT: 15,
 };
 
 // Round-specific settings (for future customization)
@@ -64,10 +71,13 @@ export const BUTTON_LABELS = {
 // Instructions text
 export const INSTRUCTIONS = {
   INTRO: "How to play:",
-  COMMON: "Both vials constantly drain at the same rate.",
+  COMMON:
+    "Both vials constantly drain at the same rate. Use keyboard controls to play:",
+  CONTROLS_BASE: "← Left Arrow: Add to Vial 1 | → Right Arrow: Add to Vial 2",
+  CONTROLS_WITH_BUCKET: " | ↑ Up Arrow: Empty Bucket",
   WITH_BUCKET:
-    "Vial 2 has a spout that causes it to overflow into the bucket when full. Add liquid to keep both vials from emptying completely. Empty the bucket to return liquid to Vial 2.",
+    "Vial 2 has a spout that causes it to overflow into the bucket when full. Keep both vials from emptying!",
   WITHOUT_BUCKET:
-    "Add liquid to keep both vials from emptying completely. Vial levels are capped at 100%.",
+    "Keep both vials from emptying! Vial levels are capped at 100%.",
   ENDING: "Survive each round to earn points!",
 };
