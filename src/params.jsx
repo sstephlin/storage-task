@@ -4,7 +4,7 @@
 export const GAME_PARAMS = {
   // Liquid management
   DRAIN_RATE: 0.5, // Percentage points drained per game tick
-  ADD_AMOUNT: 15, // Percentage points added per button click
+  ADD_AMOUNT: 5, // Percentage points added per button click
   MAX_LEVEL: 100, // Maximum percentage level for vials
 
   // Optimal zone (green when in range, red when outside)
@@ -14,16 +14,73 @@ export const GAME_PARAMS = {
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
   ROUND_DURATION: 30, // Duration of each round in seconds
-  MAX_ROUNDS: 20, // Maximum number of rounds before game ends
+  MAX_ROUNDS: 32, // Maximum number of rounds before game ends
 
   // Initial conditions
   INITIAL_VIAL_LEVEL: 70, // Starting percentage for both vials
   INITIAL_BUCKET_LEVEL: 0, // Starting percentage for bucket
 
   // Game version
-  RANDOM_VERSION_PROBABILITY: 0.5, // Probability of starting with bucket (0.0 to 1.0)
+  // RANDOM_VERSION_PROBABILITY: 0.5, // Probability of starting with bucket (0.0 to 1.0)
 
   EMPTY_BUCKET_AMOUNT: 15,
+
+  TRANSITION_TIME: 5000,
+};
+// Drain rate configurations
+export const DRAIN_RATES = {
+  SLOW: 0.3,
+  MEDIUM_SLOW: 0.5,
+  MEDIUM_FAST: 0.7,
+  FAST: 0.9,
+};
+
+export const ROUND_CONDITIONS = [
+  { drainRate: DRAIN_RATES.SLOW, hasBucket: false, name: "Slow, No Bucket" },
+  { drainRate: DRAIN_RATES.SLOW, hasBucket: true, name: "Slow, With Bucket" },
+  {
+    drainRate: DRAIN_RATES.MEDIUM_SLOW,
+    hasBucket: false,
+    name: "Medium-Slow, No Bucket",
+  },
+  {
+    drainRate: DRAIN_RATES.MEDIUM_SLOW,
+    hasBucket: true,
+    name: "Medium-Slow, With Bucket",
+  },
+  {
+    drainRate: DRAIN_RATES.MEDIUM_FAST,
+    hasBucket: false,
+    name: "Medium-Fast, No Bucket",
+  },
+  {
+    drainRate: DRAIN_RATES.MEDIUM_FAST,
+    hasBucket: true,
+    name: "Medium-Fast, With Bucket",
+  },
+  { drainRate: DRAIN_RATES.FAST, hasBucket: false, name: "Fast, No Bucket" },
+  { drainRate: DRAIN_RATES.FAST, hasBucket: true, name: "Fast, With Bucket" },
+];
+
+/**
+ * Generate a randomized sequence of 32 rounds
+ * Each of the 8 conditions appears exactly 4 times
+ */
+export const generateRoundSequence = () => {
+  const sequence = [];
+
+  // Create 4 copies of each condition
+  for (let i = 0; i < 4; i++) {
+    sequence.push(...ROUND_CONDITIONS);
+  }
+
+  // Fisher-Yates shuffle
+  for (let i = sequence.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
+  }
+
+  return sequence;
 };
 
 // Round-specific settings (for future customization)

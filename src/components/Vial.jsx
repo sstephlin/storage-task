@@ -11,24 +11,25 @@ const Vial = ({ level, hasSpout, bucketLevel }) => {
     level <= GAME_PARAMS.OPTIMAL_ZONE_MAX;
 
   // Calculate if pipe should show flow (only when liquid reaches optimal zone AND bucket has room)
-  const isPipeActive =
-    hasSpout && level >= GAME_PARAMS.OPTIMAL_ZONE_MIN && bucketLevel < 100;
+  const isPipeActive = hasSpout && level >= GAME_PARAMS.MAX_LEVEL;
 
   return (
     <div className="vial-container">
-      <div className="vial">
-        <div
-          className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
-          style={{ height: `${displayLevel}%` }}
-        />
-        {hasSpout && (
-          <>
-            <div className="pipe-hole" />
-            <div
-              className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
-            />
-          </>
-        )}
+      <div className="vial_wrapper">
+        <div className={`optimal_zone`}></div>
+        <div className="vial">
+          <div
+            className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
+            style={{ height: `${displayLevel}%` }}
+          />
+          {hasSpout && (
+            <>
+              <div
+                className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {hasSpout && (

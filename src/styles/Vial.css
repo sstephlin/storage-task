@@ -2,7 +2,17 @@
   position: relative;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   gap: 10px;
+  width: 120px;
+}
+.vial_wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 120px;
 }
 
 .vial {
@@ -14,6 +24,9 @@
   overflow: visible;
   background-color: rgba(255, 255, 255, 0.8);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  /* display: flex; */
+  justify-content: center;
+  /* align-items: center; */
 }
 
 .liquid {
@@ -38,15 +51,14 @@
 /* Diagonal pipe from hole to bucket top */
 .pipe-flow {
   position: absolute;
-  top: 60px; /* Align with hole center */
-  right: -110px; /* Start from vial edge */
-  width: 110px; /* Length to reach bucket */
-  height: 8px;
+  top: -8px; /* Align with hole center */
+  right: -180px; /* Start from vial edge */
+  width: 175px; /* Length to reach bucket */
+  height: 10px;
   transform-origin: left center;
-  transform: rotate(70deg); /* Angle to bucket top */
+  transform: rotate(78deg); /* Angle to bucket top */
   border-radius: 4px;
   z-index: 5;
-  /* transition: background 0.3s ease; */
   border: 1px solid #34495e;
 }
 
@@ -135,4 +147,16 @@
   background: linear-gradient(180deg, #2ecc71, #27ae60);
   transition: height 0.3s ease;
   border-radius: 0 0 6px 6px;
+}
+
+.optimal_zone {
+  position: absolute;
+  top: 0; /* aligns to the top of container */
+  left: 50%; /* center horizontally */
+  transform: translateX(-50%); /* true center */
+  width: 110px;
+  height: 60px;
+  border: 3px solid #258a4f;
+  pointer-events: none; /* so key presses not blocked */
+  z-index: 10;
 }

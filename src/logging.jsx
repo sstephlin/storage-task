@@ -2,14 +2,16 @@ import {
   doc,
   setDoc,
   updateDoc,
-  arrayUnion,
+  collection,
+  addDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-// Store session information
+// Session state
 let currentUserId = null;
 let currentSessionId = null;
+let sessionStartTime = null; // Track when session started (ms)
 let lastButtonPressTime = null;
 
 /**
@@ -19,18 +21,33 @@ let lastButtonPressTime = null;
 export const initializeSession = async (userId) => {
   currentUserId = userId;
   currentSessionId = `${userId}_${Date.now()}`;
+  sessionStartTime = Date.now(); // Record start time
   lastButtonPressTime = null;
 
   try {
-    // Create initial session document
-    const sessionRef = doc(db, "user_sessions", currentSessionId);
+    const userRef = doc(db, "user_sessions", userId);
+    await setDoc(
+      userRef,
+      {
+        userId,
+        lastSession: currentSessionId,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      userId,
+      "sessions",
+      currentSessionId
+    );
     await setDoc(sessionRef, {
-      userId: userId,
       sessionId: currentSessionId,
       startTime: serverTimestamp(),
-      buttonPresses: [],
-      vialLevelSnapshots: [],
-      gameVersion: null, // Will be set when game starts
+      startTimeMs: sessionStartTime, // Store raw start time
+      gameVersion: null,
     });
 
     console.log("Session initialized:", currentSessionId);
@@ -40,47 +57,24 @@ export const initializeSession = async (userId) => {
 };
 
 /**
- * Set the game version (with or without bucket)
- * @param {boolean} hasBucket - Whether the game has a bucket
- */
-export const setGameVersion = async (hasBucket) => {
-  if (!currentSessionId) return;
-
-  try {
-    const sessionRef = doc(db, "user_sessions", currentSessionId);
-    await updateDoc(sessionRef, {
-      gameVersion: hasBucket ? "with_bucket" : "without_bucket",
-    });
-  } catch (error) {
-    console.error("Error setting game version:", error);
-  }
-};
-
-/**
  * Log a button press event
- * @param {string} buttonType - Type of button pressed
- * @param {Object} gameState - Current game state
  */
 export const logButtonPress = async (buttonType, gameState) => {
-  if (!currentSessionId) {
-    console.warn("No active session. Call initializeSession first.");
-    return;
-  }
+  if (!currentUserId || !currentSessionId) return;
 
   try {
     const currentTime = Date.now();
-    let timeSinceLastPress = null;
-
-    if (lastButtonPressTime !== null) {
-      timeSinceLastPress = currentTime - lastButtonPressTime;
-    }
-
+    const msSinceGameStart = currentTime - sessionStartTime;
+    const timeSinceLastPress =
+      lastButtonPressTime !== null ? currentTime - lastButtonPressTime : null;
     lastButtonPressTime = currentTime;
 
-    const buttonEvent = {
-      buttonType: buttonType,
-      timestamp: currentTime,
-      timeSinceLastPress: timeSinceLastPress,
+    const buttonPressData = {
+      buttonType,
+      timestampMs: currentTime,
+      timestampReadable: new Date(currentTime).toISOString(),
+      timeSinceLastPress,
+      msSinceGameStart,
       gameState: {
         vial1Level: Math.round(gameState.vial1Level * 100) / 100,
         vial2Level: Math.round(gameState.vial2Level * 100) / 100,
@@ -95,27 +89,35 @@ export const logButtonPress = async (buttonType, gameState) => {
       },
     };
 
-    const sessionRef = doc(db, "user_sessions", currentSessionId);
-    await updateDoc(sessionRef, {
-      buttonPresses: arrayUnion(buttonEvent),
-    });
+    const pressesRef = collection(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+      "button_presses"
+    );
 
-    console.log("Button press logged:", buttonType);
+    await addDoc(pressesRef, buttonPressData);
   } catch (error) {
     console.error("Error logging button press:", error);
   }
 };
 
 /**
- * Log vial levels periodically
- * @param {Object} gameState - Current game state
+ * Log vial level snapshots
  */
 export const logVialLevels = async (gameState) => {
-  if (!currentSessionId) return;
+  if (!currentUserId || !currentSessionId) return;
 
   try {
-    const snapshot = {
-      timestamp: Date.now(),
+    const currentTime = Date.now();
+    const msSinceGameStart = currentTime - sessionStartTime;
+
+    const vialSnapshot = {
+      timestampMs: currentTime,
+      timestampReadable: new Date(currentTime).toISOString(),
+      msSinceGameStart,
       vial1Level: Math.round(gameState.vial1Level * 100) / 100,
       vial2Level: Math.round(gameState.vial2Level * 100) / 100,
       hasBucket: gameState.hasBucket,
@@ -125,25 +127,37 @@ export const logVialLevels = async (gameState) => {
       currentRound: gameState.currentRound,
       score: gameState.score,
       roundTimeRemaining: gameState.roundTimeRemaining,
+      velocity: gameState.velocity,
     };
 
-    const sessionRef = doc(db, "user_sessions", currentSessionId);
-    await updateDoc(sessionRef, {
-      vialLevelSnapshots: arrayUnion(snapshot),
-    });
+    const vialRef = collection(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+      "vial_snapshots"
+    );
+
+    await addDoc(vialRef, vialSnapshot);
   } catch (error) {
     console.error("Error logging vial levels:", error);
   }
 };
-
 /**
  * End the current session
  */
 export const endSession = async () => {
-  if (!currentSessionId) return;
+  if (!currentUserId || !currentSessionId) return;
 
   try {
-    const sessionRef = doc(db, "user_sessions", currentSessionId);
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId
+    );
     await updateDoc(sessionRef, {
       endTime: serverTimestamp(),
     });
@@ -155,21 +169,4 @@ export const endSession = async () => {
   } catch (error) {
     console.error("Error ending session:", error);
   }
-};
-
-/**
- * Get current user ID
- */
-export const getCurrentUserId = () => currentUserId;
-
-/**
- * Get current session ID
- */
-export const getCurrentSessionId = () => currentSessionId;
-
-/**
- * Reset the button press timer
- */
-export const resetButtonPressTimer = () => {
-  lastButtonPressTime = null;
 };
