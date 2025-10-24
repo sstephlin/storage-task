@@ -1,32 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Clone this repo with
+git clone https://github.com/[USERNAME]/storage-task.git
 
 ## Getting Started
 
-First, run the development server:
+1. Install necessary downloads:
+   If you don’t already have Node installed, download it here: https://nodejs.org/en
+   (LTS version recommended).
+   You can verify the installation by running:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+   node -v
+   npm -v
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Now, enter the server folder:
+   cd server
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Inside the project root folder, install all required packages:
+   npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up environment variables
 
-## Learn More
+   - create a new file in server called .env
+   - paste variables into this file
+     ! Important: Never commit your .env file — it should stay private -- check .gitignore.
 
-To learn more about Next.js, take a look at the following resources:
+5. Run the server
+   npm run dev
+   Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data Storage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Ensure you have service account keys
+   create a new file inside servers/scripts called serviceAccountKey.json
+   paste firebase information into this file
+
+2. To convert data from firebase:
+   enter the scripts folder:
+   cd scripts
+   run:
+   node exportFireStore.js
+   ! Important: Never commit the data files - they should stay private -- check .gitignore
 
 # storage-task
