@@ -9,12 +9,15 @@ git clone https://github.com/[USERNAME]/storage-task.git
    You can verify the installation by running:
 
    node -v
+
    npm -v
 
 2. Now, enter the server folder:
+
    cd server
 
 3. Inside the project root folder, install all required packages:
+
    npm install
 
 4. Set up environment variables
