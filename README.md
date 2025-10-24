@@ -27,7 +27,9 @@ git clone https://github.com/[USERNAME]/storage-task.git
      ! Important: Never commit your .env file — it should stay private -- check .gitignore.
 
 5. Run the server
+
    npm run dev
+
    Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
 ## Data Storage
@@ -38,9 +40,13 @@ git clone https://github.com/[USERNAME]/storage-task.git
 
 2. To convert data from firebase:
    enter the scripts folder:
+
    cd scripts
+
    run:
+
    node exportFireStore.js
+
    ! Important: Never commit the data files - they should stay private -- check .gitignore
 
 # storage-task
