@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../styles/RoundTransition.css";
 
 const RoundTransition = ({ roundNumber, wasSuccessful, onComplete }) => {
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     const timer = setInterval(() => {

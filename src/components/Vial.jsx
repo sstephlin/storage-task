@@ -1,6 +1,7 @@
 import React from "react";
 import { GAME_PARAMS } from "../params";
 import "../styles/Vial.css";
+import ZoneMeter from "./ZoneMeter";
 
 const Vial = ({ level, hasSpout, bucketLevel }) => {
   const displayLevel = Math.min(level, 100);
@@ -16,25 +17,25 @@ const Vial = ({ level, hasSpout, bucketLevel }) => {
   return (
     <div className="vial-container">
       <div className="vial_wrapper">
-        <div className={`optimal_zone`}></div>
+        <ZoneMeter />
         <div className="vial">
           <div
             className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
             style={{ height: `${displayLevel}%` }}
           />
-          {hasSpout && (
+          {/* {hasSpout && (
             <>
               <div
-                className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
+              // className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
               />
             </>
-          )}
+          )} */}
         </div>
       </div>
 
       {hasSpout && (
         <div className="bucket-container">
-          <div className="bucket-label">Bucket: {Math.round(bucketLevel)}%</div>
+          {/* <div className="bucket-label">Bucket: {Math.round(bucketLevel)}%</div> */}
           <div className="bucket">
             <div
               className="bucket-liquid"

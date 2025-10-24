@@ -8,8 +8,11 @@ export const GAME_PARAMS = {
   MAX_LEVEL: 100, // Maximum percentage level for vials
 
   // Optimal zone (green when in range, red when outside)
-  OPTIMAL_ZONE_MIN: 70, // Minimum level for optimal zone (green)
-  OPTIMAL_ZONE_MAX: 100, // Maximum level for optimal zone (green)
+  OPTIMAL_ZONE_MIN: 40, // Minimum level for optimal zone (green)
+  OPTIMAL_ZONE_MAX: 60, // Maximum level for optimal zone (green)
+
+  DANGER_UPPER: 90,
+  DANGER_LOWER: 10,
 
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
@@ -25,7 +28,24 @@ export const GAME_PARAMS = {
 
   EMPTY_BUCKET_AMOUNT: 15,
 
-  TRANSITION_TIME: 5000,
+  TRANSITION_TIME: 3000,
+};
+export const getZonePercentages = () => {
+  const {
+    DANGER_LOWER,
+    OPTIMAL_ZONE_MIN,
+    OPTIMAL_ZONE_MAX,
+    DANGER_UPPER,
+    MAX_LEVEL,
+  } = GAME_PARAMS;
+
+  return {
+    dangerLowerHeight: DANGER_LOWER, // 0-10%
+    warningLowerHeight: OPTIMAL_ZONE_MIN - DANGER_LOWER, // 10-50%
+    optimalHeight: OPTIMAL_ZONE_MAX - OPTIMAL_ZONE_MIN, // 50-70%
+    warningUpperHeight: DANGER_UPPER - OPTIMAL_ZONE_MAX, // 70-90%
+    dangerUpperHeight: MAX_LEVEL - DANGER_UPPER, // 90-100%
+  };
 };
 // Drain rate configurations
 export const DRAIN_RATES = {
