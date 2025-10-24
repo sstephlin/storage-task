@@ -26,5 +26,3 @@ scripts/serviceAccountKey.json
 scripts/button_presses.csv
 scripts/session_meta.csv
 scripts/vial_snapshots.csv
-scripts/*.csv
-
