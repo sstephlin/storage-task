@@ -1,0 +1,78 @@
+.vial-container {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 120px;
+  gap: 10px;
+}
+.vial_wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* gap: 10px; */
+  width: 120px;
+}
+
+.vial {
+  width: 60px;
+  height: 200px;
+  border: 2px solid #34495e;
+  border-radius: 0 0 15px 15px;
+  position: relative;
+  overflow: visible;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  gap: 10px;
+}
+
+.liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: all 0.3s ease;
+  border-radius: 0 0 12px 12px;
+  background-color: rgb(127, 185, 255);
+}
+
+.bucket-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.bucket-label {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: px;
+  position: absolute;
+  top: -25px;
+  white-space: nowrap;
+}
+
+.bucket {
+  width: 40px;
+  height: 30px;
+  border: 2px solid #7f8c8d;
+  border-radius: 0 0 8px 8px;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.bucket-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgb(127, 185, 255);
+  transition: height 0.3s ease;
+  border-radius: 0 0 6px 6px;
+}
