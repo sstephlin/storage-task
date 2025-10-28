@@ -234,8 +234,8 @@ const TUTORIAL_SLIDES = [
   {
     id: 18,
     title:
-      "The closer you can keep Bleeblop’s gloop and glop levels to their ideals, the faster they will progress towards Robonia",
-
+      "The closer you can keep Bleeblop's gloop and glop levels to their ideals, the faster they will progress towards Robonia",
+    content: "",
     image: null,
     showButtons: false,
   },
@@ -263,7 +263,6 @@ const TUTORIAL_SLIDES = [
     showButtons: false,
   },
 ];
-
 const Tutorial = ({ onExit }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = TUTORIAL_SLIDES.length;
@@ -338,9 +337,13 @@ const Tutorial = ({ onExit }) => {
           )}
 
           <div className="tutorial-text">
-            {slide.content.split("\n").map((line, i) => (
-              <p key={i}>{line}</p>
-            ))}
+            {Array.isArray(slide.content)
+              ? // If content is an array, render each item as a paragraph
+                slide.content.map((line, i) => <p key={i}>{line}</p>)
+              : // If content is a string, split by newlines
+                slide.content
+                  .split("\n")
+                  .map((line, i) => <p key={i}>{line}</p>)}
           </div>
 
           {slide.showButtons && (
