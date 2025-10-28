@@ -2,8 +2,9 @@ import React from "react";
 import { GAME_PARAMS } from "../params";
 import "../styles/Vial.css";
 import ZoneMeter from "./ZoneMeter";
+import { Star } from "lucide-react";
 
-const Vial = ({ level, hasSpout, bucketLevel }) => {
+const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
   const displayLevel = Math.min(level, 100);
 
   // Determine if liquid is in optimal zone
@@ -12,34 +13,67 @@ const Vial = ({ level, hasSpout, bucketLevel }) => {
     level <= GAME_PARAMS.OPTIMAL_ZONE_MAX;
 
   // Calculate if pipe should show flow (only when liquid reaches optimal zone AND bucket has room)
-  const isPipeActive = hasSpout && level >= GAME_PARAMS.MAX_LEVEL;
+  const isPipeActive = numBuckets > 0 && level >= GAME_PARAMS.MAX_LEVEL;
 
   return (
     <div className="vial-container">
       <div className="vial_wrapper">
-        <ZoneMeter />
+        {/* <ZoneMeter /> */}
         <div className="vial">
           <div
             className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
-            style={{ height: `${displayLevel}%` }}
+            style={{ height: `${displayLevel}%`, backgroundColor: liquidColor }}
           />
-          {/* {hasSpout && (
-            <>
-              <div
-              // className={`pipe-flow ${isPipeActive ? "active" : "inactive"}`}
-              />
-            </>
-          )} */}
+          {/* Center line with heart icon */}
+          <div
+            className="center-line-container"
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: 0,
+              right: 0,
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+              zIndex: 10,
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                height: "2px",
+                backgroundColor: "#000000",
+                opacity: 0.8,
+              }}
+            ></div>
+            <Star
+              size={16}
+              fill="#000000"
+              color="#000000"
+              style={{ margin: "0 4px" }}
+            />
+            <div
+              style={{
+                flex: 1,
+                height: "2px",
+                backgroundColor: "#000000",
+                opacity: 0.8,
+              }}
+            ></div>
+          </div>
         </div>
       </div>
 
-      {hasSpout && (
+      {numBuckets > 0 && (
         <div className="bucket-container">
-          {/* <div className="bucket-label">Bucket: {Math.round(bucketLevel)}%</div> */}
           <div className="bucket">
             <div
               className="bucket-liquid"
-              style={{ height: `${bucketLevel}%` }}
+              style={{
+                height: `${bucketLevel}%`,
+                backgroundColor: liquidColor,
+              }}
             />
           </div>
         </div>

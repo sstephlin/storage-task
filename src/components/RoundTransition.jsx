@@ -35,7 +35,7 @@ const RoundTransition = ({ roundNumber, wasSuccessful, onComplete }) => {
         // "Keep trying! Next round ahead!",
         // "Stay focused! Moving on...",
         // "You've got this! Next round!",
-        "Keep going! New round starting!",
+        "Round Failed! It's OK, Let's try again...",
       ];
       return messages[Math.floor(Math.random() * messages.length)];
     }
@@ -73,7 +73,7 @@ const RoundTransition = ({ roundNumber, wasSuccessful, onComplete }) => {
           </div>
         </div>
 
-        <p className="next-round-info">Round {roundNumber} loading...</p>
+        <p className="next-round-info">Round {roundNumber + 1} loading...</p>
       </div>
     </div>
   );

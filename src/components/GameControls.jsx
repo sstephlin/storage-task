@@ -14,15 +14,15 @@ const GameControls = ({
 }) => {
   return (
     <div className="controls">
-      <button className="restart" onClick={onRestart}>
+      {/* <button className="restart" onClick={onRestart}>
         {BUTTON_LABELS.RESTART}
-      </button>
+      </button> */}
 
-      <button className="toggle-version" onClick={onToggleVersion}>
+      {/* <button className="toggle-version" onClick={onToggleVersion}>
         {hasBucket
           ? BUTTON_LABELS.TOGGLE_WITH_BUCKET
           : BUTTON_LABELS.TOGGLE_WITHOUT_BUCKET}
-      </button>
+      </button> */}
     </div>
   );
 };

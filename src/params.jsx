@@ -8,19 +8,19 @@ export const GAME_PARAMS = {
   MAX_LEVEL: 100, // Maximum percentage level for vials
 
   // Optimal zone (green when in range, red when outside)
-  OPTIMAL_ZONE_MIN: 40, // Minimum level for optimal zone (green)
-  OPTIMAL_ZONE_MAX: 60, // Maximum level for optimal zone (green)
+  OPTIMAL_ZONE_MIN: 35, // Minimum level for optimal zone (green)
+  OPTIMAL_ZONE_MAX: 50, // Maximum level for optimal zone (green)
 
   DANGER_UPPER: 90,
   DANGER_LOWER: 10,
 
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
-  ROUND_DURATION: 30, // Duration of each round in seconds
-  MAX_ROUNDS: 32, // Maximum number of rounds before game ends
+  ROUND_DURATION: 10, // Duration of each round in seconds
+  MAX_ROUNDS: 36, // Maximum number of rounds before game ends
 
   // Initial conditions
-  INITIAL_VIAL_LEVEL: 70, // Starting percentage for both vials
+  INITIAL_VIAL_LEVEL: 50, // Starting percentage for both vials
   INITIAL_BUCKET_LEVEL: 0, // Starting percentage for bucket
 
   // Game version
@@ -49,37 +49,41 @@ export const getZonePercentages = () => {
 };
 // Drain rate configurations
 export const DRAIN_RATES = {
-  SLOW: 0.3,
-  MEDIUM_SLOW: 0.5,
-  MEDIUM_FAST: 0.7,
-  FAST: 0.9,
+  SLOW: 0.7,
+  MEDIUM: 0.9,
+  FAST: 1.1,
 };
 
 export const ROUND_CONDITIONS = [
-  { drainRate: DRAIN_RATES.SLOW, hasBucket: false, name: "Slow, No Bucket" },
-  { drainRate: DRAIN_RATES.SLOW, hasBucket: true, name: "Slow, With Bucket" },
+  { drainRate: DRAIN_RATES.SLOW, numBuckets: 0, name: "Slow, No Bucket" },
+  { drainRate: DRAIN_RATES.SLOW, numBuckets: 1, name: "Slow, 1 Bucket" },
   {
-    drainRate: DRAIN_RATES.MEDIUM_SLOW,
-    hasBucket: false,
-    name: "Medium-Slow, No Bucket",
+    drainRate: DRAIN_RATES.SLOW,
+    numBuckets: 2,
+    name: "Slow, 2 Buckets",
   },
   {
-    drainRate: DRAIN_RATES.MEDIUM_SLOW,
-    hasBucket: true,
-    name: "Medium-Slow, With Bucket",
+    drainRate: DRAIN_RATES.MEDIUM,
+    numBuckets: 0,
+    name: "Medium, No Bucket",
   },
   {
-    drainRate: DRAIN_RATES.MEDIUM_FAST,
-    hasBucket: false,
+    drainRate: DRAIN_RATES.MEDIUM,
+    numBuckets: 1,
+    name: "Medium, 1 Bucket",
+  },
+  {
+    drainRate: DRAIN_RATES.MEDIUM,
+    numBuckets: 2,
+    name: "Medium, 2 Buckets",
+  },
+  {
+    drainRate: DRAIN_RATES.FAST,
+    numBuckets: 0,
     name: "Medium-Fast, No Bucket",
   },
-  {
-    drainRate: DRAIN_RATES.MEDIUM_FAST,
-    hasBucket: true,
-    name: "Medium-Fast, With Bucket",
-  },
-  { drainRate: DRAIN_RATES.FAST, hasBucket: false, name: "Fast, No Bucket" },
-  { drainRate: DRAIN_RATES.FAST, hasBucket: true, name: "Fast, With Bucket" },
+  { drainRate: DRAIN_RATES.FAST, numBuckets: 1, name: "Fast, 1 Bucket" },
+  { drainRate: DRAIN_RATES.FAST, numBuckets: 2, name: "Fast, 2 Buckets" },
 ];
 
 /**
@@ -129,9 +133,7 @@ export const ROUND_SETTINGS = [
 
 // Game messages
 export const GAME_MESSAGES = {
-  PLAYING: "Keep both vials from emptying!",
-  GAME_OVER: "Game Over! A vial emptied!",
-  ROUND_COMPLETE: "Round Complete! Starting next round...",
+  PLAYING: "Keep both vials at healthy level!",
   GAME_COMPLETE: "Congratulations! You completed all rounds!",
 };
 
