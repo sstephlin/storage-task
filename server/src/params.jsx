@@ -40,11 +40,11 @@ export const getZonePercentages = () => {
   } = GAME_PARAMS;
 
   return {
-    dangerLowerHeight: DANGER_LOWER, // 0-10%
-    warningLowerHeight: OPTIMAL_ZONE_MIN - DANGER_LOWER, // 10-50%
-    optimalHeight: OPTIMAL_ZONE_MAX - OPTIMAL_ZONE_MIN, // 50-70%
-    warningUpperHeight: DANGER_UPPER - OPTIMAL_ZONE_MAX, // 70-90%
-    dangerUpperHeight: MAX_LEVEL - DANGER_UPPER, // 90-100%
+    dangerLowerHeight: DANGER_LOWER,
+    warningLowerHeight: OPTIMAL_ZONE_MIN - DANGER_LOWER,
+    optimalHeight: OPTIMAL_ZONE_MAX - OPTIMAL_ZONE_MIN,
+    warningUpperHeight: DANGER_UPPER - OPTIMAL_ZONE_MAX,
+    dangerUpperHeight: MAX_LEVEL - DANGER_UPPER,
   };
 };
 // Drain rate configurations

@@ -50,6 +50,9 @@ const VialGame = ({ userId }) => {
   const vial1HasBucket = numBuckets === 2;
   const vial2HasBucket = numBuckets >= 1;
 
+  const vial1Paused = useRef(false);
+  const vial2Paused = useRef(false);
+
   const gameStateRef = useRef({
     vial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
     vial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
@@ -65,6 +68,7 @@ const VialGame = ({ userId }) => {
     currentDrainRate: 0.5,
     velocity: 0,
     roundWasSuccessful: true,
+    setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
   });
 
   useEffect(() => {
@@ -83,6 +87,7 @@ const VialGame = ({ userId }) => {
       currentDrainRate,
       velocity: currentDrainRate,
       roundWasSuccessful,
+      setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
     };
   }, [
     vial1Level,
@@ -120,59 +125,25 @@ const VialGame = ({ userId }) => {
         case "ArrowLeft":
           event.preventDefault();
           logButtonPress("add_vial_1", getCurrentState());
-          if (gameStateRef.current.vial1HasBucket) {
-            setVial1Level((prev) => prev + GAME_PARAMS.ADD_AMOUNT);
-          } else {
-            setVial1Level((prev) =>
-              Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
-            );
-          }
+          vial1Paused.current = true; // temporarily pause drain
+          setVial1Level((prev) =>
+            Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+          );
+          setTimeout(() => {
+            vial1Paused.current = false; // resume drain shortly after
+          }, 200); // adjust delay as needed
           break;
+
         case "ArrowRight":
           event.preventDefault();
           logButtonPress("add_vial_2", getCurrentState());
-          if (gameStateRef.current.vial2HasBucket) {
-            setVial2Level((prev) => prev + GAME_PARAMS.ADD_AMOUNT);
-          } else {
-            setVial2Level((prev) =>
-              Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
-            );
-          }
-          break;
-        case "ArrowUp":
-          event.preventDefault();
-          if (
-            gameStateRef.current.numBuckets === 2 &&
-            gameStateRef.current.bucket1Level > 0
-          ) {
-            logButtonPress("empty_bucket_1", getCurrentState());
-            setVial1Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
-            setBucket1Level((prev) =>
-              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
-            );
-          } else if (
-            gameStateRef.current.numBuckets === 1 &&
-            gameStateRef.current.bucket2Level > 0
-          ) {
-            logButtonPress("empty_bucket_2", getCurrentState());
-            setVial2Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
-            setBucket2Level((prev) =>
-              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
-            );
-          }
-          break;
-        case "ArrowDown":
-          event.preventDefault();
-          if (
-            gameStateRef.current.numBuckets === 2 &&
-            gameStateRef.current.bucket2Level > 0
-          ) {
-            logButtonPress("empty_bucket_2", getCurrentState());
-            setVial2Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
-            setBucket2Level((prev) =>
-              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
-            );
-          }
+          vial2Paused.current = true;
+          setVial2Level((prev) =>
+            Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
+          );
+          setTimeout(() => {
+            vial2Paused.current = false;
+          }, 200);
           break;
         default:
           break;
@@ -187,59 +158,57 @@ const VialGame = ({ userId }) => {
   }, [isRoundTransition, gameRunning, showTutorial]);
 
   // Game loop
+  // Game loop
+  // Game loop
   useEffect(() => {
     if (gameRunning && !isRoundTransition) {
       gameLoopRef.current = setInterval(() => {
         setVial1Level((prev) => {
-          const newLevel = prev - currentDrainRate;
+          // Skip draining if paused due to adding
+          if (vial1Paused.current) return prev;
 
+          const newLevel1 = Math.max(0, prev - currentDrainRate);
+
+          // Fill bucket only when draining (not adding)
           if (
             vial1HasBucket &&
+            newLevel1 < prev &&
             prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
-            prev <= GAME_PARAMS.DANGER_UPPER
+            prev <= GAME_PARAMS.DANGER_UPPER &&
+            newLevel1 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
           ) {
-            setBucket1Level((bucketPrev) => {
-              if (bucketPrev < 100) {
-                return Math.min(100, bucketPrev + currentDrainRate);
-              }
-              return bucketPrev;
-            });
+            setBucket1Level((bucketPrev) =>
+              Math.min(100, bucketPrev + currentDrainRate)
+            );
           }
 
-          if (!vial1HasBucket && newLevel > GAME_PARAMS.MAX_LEVEL) {
-            return GAME_PARAMS.MAX_LEVEL;
-          }
-
-          return Math.max(0, newLevel);
+          return newLevel1;
         });
+
         setVial2Level((prev) => {
-          const newLevel = Math.max(0, prev - currentDrainRate);
+          if (vial2Paused.current) return prev;
+
+          const newLevel2 = Math.max(0, prev - currentDrainRate);
 
           if (
             vial2HasBucket &&
-            newLevel < prev && // Only fill bucket when draining
+            newLevel2 < prev &&
             prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
             prev <= GAME_PARAMS.DANGER_UPPER &&
-            newLevel >= GAME_PARAMS.OPTIMAL_ZONE_MAX
+            newLevel2 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
           ) {
-            setBucket2Level((bucketPrev) => {
-              if (bucketPrev < 100) {
-                return Math.min(100, bucketPrev + currentDrainRate);
-              }
-              return bucketPrev;
-            });
+            setBucket2Level((bucketPrev) =>
+              Math.min(100, bucketPrev + currentDrainRate)
+            );
           }
 
-          if (!vial2HasBucket && newLevel > GAME_PARAMS.MAX_LEVEL) {
-            return GAME_PARAMS.MAX_LEVEL;
-          }
-
-          return newLevel;
+          return newLevel2;
         });
       }, GAME_PARAMS.GAME_SPEED);
     } else {
       clearInterval(gameLoopRef.current);
     }
+
     return () => clearInterval(gameLoopRef.current);
   }, [
     gameRunning,

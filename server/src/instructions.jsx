@@ -1,105 +1,9 @@
-// import React from "react";
-// import "../styles/InstructionsPage.css";
-
-// const InstructionsPage = ({ onStart }) => {
-//   return (
-//     <div className="instructions-page">
-//       <div className="instructions-container">
-//         <h1>Two Vials Game</h1>
-//         <h2>Instructions</h2>
-
-//         <div className="instructions-content">
-//           <section className="instruction-section">
-//             <h3>🎯 Objective</h3>
-//             <p>
-//               Keep both vials from emptying for 30 seconds per round. Complete
-//               32 rounds to finish the game.
-//             </p>
-//           </section>
-
-//           <section className="instruction-section">
-//             <h3>🎮 Controls</h3>
-//             <div className="controls-list">
-//               <div className="control-item">
-//                 <span className="key">← Left Arrow</span>
-//                 <span className="action">Add liquid to Vial 1</span>
-//               </div>
-//               <div className="control-item">
-//                 <span className="key">→ Right Arrow</span>
-//                 <span className="action">Add liquid to Vial 2</span>
-//               </div>
-//               <div className="control-item">
-//                 <span className="key">↑ Up Arrow</span>
-//                 <span className="action">
-//                   Empty the bucket (when available)
-//                 </span>
-//               </div>
-//             </div>
-//             <p className="control-note">
-//               <strong>Note:</strong> You must press the arrow key each time.
-//               Holding down the key will not work.
-//             </p>
-//           </section>
-
-//           <section className="instruction-section">
-//             <h3>🔴🟢 Color Zones</h3>
-//             <p>
-//               <span className="zone-indicator red">Red Zone (0-69%):</span>
-//               Liquid is below the optimal level
-//             </p>
-//             <p>
-//               <span className="zone-indicator green">
-//                 Green Zone (70-100%):
-//               </span>
-//               Liquid is in the optimal level
-//             </p>
-//             <p className="zone-note">
-//               Keep your vials in the green zone for best performance!
-//             </p>
-//           </section>
-
-//           <section className="instruction-section">
-//             <h3>🪣 The Bucket (Some Rounds)</h3>
-//             <p>
-//               In some rounds, Vial 2 will have a bucket attached. When Vial 2
-//               reaches 70%, excess liquid flows into the bucket through a pipe.
-//             </p>
-//             <p>
-//               Once the bucket is full, Vial 2 can continue filling above 70%.
-//               Use the Up Arrow to empty the bucket back into Vial 2.
-//             </p>
-//           </section>
-
-//           <section className="instruction-section">
-//             <h3>⚡ Game Variations</h3>
-//             <p>
-//               Each round may have different drain speeds and bucket
-//               configurations. Adapt your strategy accordingly!
-//             </p>
-//           </section>
-
-//           <section className="instruction-section">
-//             <h3>✅ Scoring</h3>
-//             <p>
-//               You earn 1 point for each round you survive the full 30 seconds.
-//               If a vial empties before time runs out, you get 0 points for that
-//               round but continue to the next round.
-//             </p>
-//           </section>
-//         </div>
-
-//         <button className="start-button" onClick={onStart}>
-//           Start Game
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default InstructionsPage;
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./instructions.css";
+
+// Set to false for production, true for debugging (disables timer)
+const DEBUG_MODE = true;
 
 // Define all tutorial slides here
 const TUTORIAL_SLIDES = [
@@ -107,7 +11,7 @@ const TUTORIAL_SLIDES = [
     id: 1,
     title: "Welcome to the Maintenance Task!",
     content: "",
-    image: null, // Path to image or gif, or null
+    image: null,
     showButtons: false,
   },
   {
@@ -115,18 +19,18 @@ const TUTORIAL_SLIDES = [
     title: "This is BleeBlop",
     content: "",
     image: "Picture1.png",
-    showButtons: false, // Enable interactive buttons on this slide
+    showButtons: false,
   },
   {
     id: 3,
-    title: "Bleeblop’s Goal is to Reach Robonia",
+    title: "Bleeblop's Goal is to Reach Robonia",
     content: "",
     image: null,
     showButtons: false,
   },
   {
     id: 4,
-    title: "But his journey there won’t be easy…",
+    title: "But his journey there won't be easy…",
     content: "",
     image: null,
     showButtons: false,
@@ -170,7 +74,7 @@ const TUTORIAL_SLIDES = [
   {
     id: 10,
     title:
-      "Your Job is to keep BleeBlop’s gloop and glop levels at the ideal height",
+      "Your Job is to keep BleeBlop's gloop and glop levels at the ideal height",
     content: "",
     image: null,
     showButtons: false,
@@ -263,16 +167,21 @@ const TUTORIAL_SLIDES = [
     showButtons: false,
   },
 ];
+
 const Tutorial = ({ onExit }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [canProceed, setCanProceed] = useState(DEBUG_MODE);
   const totalSlides = TUTORIAL_SLIDES.length;
   const slide = TUTORIAL_SLIDES[currentSlide];
 
   const goNext = () => {
+    if (!canProceed) return;
+
     if (currentSlide < totalSlides - 1) {
       setCurrentSlide(currentSlide + 1);
+      setCanProceed(DEBUG_MODE);
     } else {
-      onExit(); // Exit tutorial on last slide
+      onExit();
     }
   };
 
@@ -284,7 +193,9 @@ const Tutorial = ({ onExit }) => {
 
   const handleKeyPress = (e) => {
     if (e.key === "ArrowRight" || e.key === "Enter") {
-      goNext();
+      if (canProceed) {
+        goNext();
+      }
     } else if (e.key === "ArrowLeft") {
       goPrevious();
     } else if (e.key === "Escape") {
@@ -292,15 +203,29 @@ const Tutorial = ({ onExit }) => {
     }
   };
 
+  // Timer effect for each slide
+  React.useEffect(() => {
+    if (DEBUG_MODE) {
+      setCanProceed(true);
+      return;
+    }
+
+    setCanProceed(false);
+    const timer = setTimeout(() => {
+      setCanProceed(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [currentSlide]);
+
   React.useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentSlide]);
+  }, [currentSlide, canProceed]);
 
   return (
     <div className="tutorial-overlay">
       <div className="tutorial-container">
-        {/* Exit button */}
         <button
           className="tutorial-exit"
           onClick={onExit}
@@ -309,7 +234,6 @@ const Tutorial = ({ onExit }) => {
           <X size={24} />
         </button>
 
-        {/* Progress indicator */}
         <div className="tutorial-progress">
           <div className="progress-dots">
             {TUTORIAL_SLIDES.map((_, index) => (
@@ -326,7 +250,6 @@ const Tutorial = ({ onExit }) => {
           </div>
         </div>
 
-        {/* Slide content */}
         <div className="tutorial-content">
           <h1 className="tutorial-title">{slide.title}</h1>
 
@@ -338,10 +261,8 @@ const Tutorial = ({ onExit }) => {
 
           <div className="tutorial-text">
             {Array.isArray(slide.content)
-              ? // If content is an array, render each item as a paragraph
-                slide.content.map((line, i) => <p key={i}>{line}</p>)
-              : // If content is a string, split by newlines
-                slide.content
+              ? slide.content.map((line, i) => <p key={i}>{line}</p>)
+              : slide.content
                   .split("\n")
                   .map((line, i) => <p key={i}>{line}</p>)}
           </div>
@@ -355,7 +276,6 @@ const Tutorial = ({ onExit }) => {
           )}
         </div>
 
-        {/* Navigation buttons */}
         <div className="tutorial-navigation">
           <button
             className="nav-button prev"
@@ -366,13 +286,16 @@ const Tutorial = ({ onExit }) => {
             Previous
           </button>
 
-          <button className="nav-button next" onClick={goNext}>
+          <button
+            className="nav-button next"
+            onClick={goNext}
+            disabled={!canProceed}
+          >
             {currentSlide === totalSlides - 1 ? "Start Game" : "Next"}
             {currentSlide < totalSlides - 1 && <ChevronRight size={20} />}
           </button>
         </div>
 
-        {/* Keyboard hints */}
         <div className="keyboard-hints">
           <span>← → to navigate</span>
           <span>ESC to exit</span>
