@@ -27,3 +27,5 @@ scripts/button_presses.csv
 scripts/session_meta.csv
 scripts/vial_snapshots.csv
 .env
+src/firebase.jsx
+
