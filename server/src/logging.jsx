@@ -13,6 +13,8 @@ let currentUserId = null;
 let currentSessionId = null;
 let sessionStartTime = null; // Track when session started (ms)
 let lastButtonPressTime = null;
+let roundStartTime = null; // Track when current round started (ms)
+let currentRoundNumber = null; // Track current round
 
 /**
  * Initialize a new game session for a user
@@ -23,6 +25,8 @@ export const initializeSession = async (userId) => {
   currentSessionId = `${userId}_${Date.now()}`;
   sessionStartTime = Date.now(); // Record start time
   lastButtonPressTime = null;
+  roundStartTime = null;
+  currentRoundNumber = null;
 
   try {
     const userRef = doc(db, "user_sessions", userId);
@@ -108,6 +112,54 @@ export const updateSessionSetpoint = async (setpoint) => {
 };
 
 /**
+ * Log when a new round starts
+ * @param {number} roundNumber - The round number (0-indexed or 1-indexed depending on your system)
+ * @param {object} gameState - Current game state
+ */
+export const logRoundStart = async (roundNumber, gameState) => {
+  if (!currentUserId || !currentSessionId) return;
+
+  try {
+    roundStartTime = Date.now();
+    currentRoundNumber = roundNumber;
+    const msSinceGameStart = roundStartTime - sessionStartTime;
+
+    const roundStartData = {
+      roundNumber,
+      msSinceGameStart,
+      timestamp: serverTimestamp(),
+      gameState: {
+        vial1Level: Math.round(gameState.vial1Level * 100) / 100,
+        vial2Level: Math.round(gameState.vial2Level * 100) / 100,
+        numBuckets: gameState.numBuckets,
+        ...(gameState.numBuckets === 2 && {
+          bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
+        }),
+        ...(gameState.numBuckets >= 1 && {
+          bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
+        }),
+        currentDrainRate: gameState.currentDrainRate,
+        score: gameState.score,
+      },
+    };
+
+    const roundsRef = collection(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+      "round_starts"
+    );
+
+    await addDoc(roundsRef, roundStartData);
+    console.log(`Round ${roundNumber} started at ${msSinceGameStart}ms`);
+  } catch (error) {
+    console.error("Error logging round start:", error);
+  }
+};
+
+/**
  * Log a button press event
  */
 export const logButtonPress = async (buttonType, gameState) => {
@@ -116,6 +168,8 @@ export const logButtonPress = async (buttonType, gameState) => {
   try {
     const currentTime = Date.now();
     const msSinceGameStart = currentTime - sessionStartTime;
+    const msSinceRoundStart =
+      roundStartTime !== null ? currentTime - roundStartTime : null;
     const msSinceLastPress =
       lastButtonPressTime !== null ? currentTime - lastButtonPressTime : null;
     lastButtonPressTime = currentTime;
@@ -123,7 +177,9 @@ export const logButtonPress = async (buttonType, gameState) => {
     const buttonPressData = {
       buttonType,
       msSinceGameStart,
+      msSinceRoundStart, // NEW: Time since current round started
       msSinceLastPress,
+      roundNumber: currentRoundNumber, // NEW: Which round this press occurred in
       gameState: {
         vial1Level: Math.round(gameState.vial1Level * 100) / 100,
         vial2Level: Math.round(gameState.vial2Level * 100) / 100,
@@ -165,6 +221,8 @@ export const logVialLevels = async (gameState) => {
   try {
     const currentTime = Date.now();
     const msSinceGameStart = currentTime - sessionStartTime;
+    const msSinceRoundStart =
+      roundStartTime !== null ? currentTime - roundStartTime : null;
 
     // Calculate distance from setpoint (above is positive, below is negative)
     const vial1DistanceFromSetpoint = gameState.setpoint
@@ -176,6 +234,7 @@ export const logVialLevels = async (gameState) => {
 
     const vialSnapshot = {
       msSinceGameStart,
+      msSinceRoundStart, // NEW: Time since current round started
       vial1Level: Math.round(gameState.vial1Level * 100) / 100,
       vial2Level: Math.round(gameState.vial2Level * 100) / 100,
       vial1DistanceFromSetpoint,
@@ -189,6 +248,7 @@ export const logVialLevels = async (gameState) => {
         bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
       }),
       currentRound: gameState.currentRound,
+      roundNumber: currentRoundNumber, // NEW: Which round this snapshot is from
       score: gameState.score,
       roundTimeRemaining: gameState.roundTimeRemaining,
       velocity: gameState.velocity,
@@ -231,6 +291,8 @@ export const endSession = async () => {
     currentSessionId = null;
     currentUserId = null;
     lastButtonPressTime = null;
+    roundStartTime = null;
+    currentRoundNumber = null;
   } catch (error) {
     console.error("Error ending session:", error);
   }

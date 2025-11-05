@@ -10,7 +10,7 @@ import {
   INSTRUCTIONS,
   generateRoundSequence,
 } from "./params";
-import { logButtonPress, logVialLevels } from "./logging";
+import { logButtonPress, logVialLevels, logRoundStart } from "./logging";
 import "./styles/VialGame.css";
 
 const VialGame = ({ userId }) => {
@@ -109,6 +109,10 @@ const VialGame = ({ userId }) => {
   const handleTutorialExit = () => {
     setShowTutorial(false);
     setGameRunning(true); // Start game after tutorial
+    // Log the start of round 0
+    setTimeout(() => {
+      logRoundStart(0, gameStateRef.current);
+    }, 100);
   };
 
   // Keyboard controls
@@ -145,20 +149,53 @@ const VialGame = ({ userId }) => {
             vial2Paused.current = false;
           }, 200);
           break;
+        case "ArrowUp":
+          event.preventDefault();
+          if (
+            gameStateRef.current.numBuckets === 2 &&
+            gameStateRef.current.bucket1Level > 0
+          ) {
+            logButtonPress("empty_bucket_1", getCurrentState());
+            setVial1Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
+            setBucket1Level((prev) =>
+              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
+            );
+          } else if (
+            gameStateRef.current.numBuckets === 1 &&
+            gameStateRef.current.bucket2Level > 0
+          ) {
+            logButtonPress("empty_bucket_2", getCurrentState());
+            setVial2Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
+            setBucket2Level((prev) =>
+              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
+            );
+          }
+          break;
+        case "ArrowDown":
+          event.preventDefault();
+          if (
+            gameStateRef.current.numBuckets === 2 &&
+            gameStateRef.current.bucket2Level > 0
+          ) {
+            logButtonPress("empty_bucket_2", getCurrentState());
+            setVial2Level((prev) => prev + GAME_PARAMS.EMPTY_BUCKET_AMOUNT);
+            setBucket2Level((prev) =>
+              Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
+            );
+          }
+          break;
         default:
           break;
       }
       setTimeout(() => {
         keyLocked.current = false;
-      }, 100);
+      }, 300);
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [isRoundTransition, gameRunning, showTutorial]);
 
-  // Game loop
-  // Game loop
   // Game loop
   useEffect(() => {
     if (gameRunning && !isRoundTransition) {
@@ -276,8 +313,6 @@ const VialGame = ({ userId }) => {
     setRoundWasSuccessful(true);
     setIsRoundTransition(true);
     setGameRunning(false); // Pause game during transition
-    // setGameMessage(GAME_MESSAGES.ROUND_COMPLETE);
-    // setMessageType("round-complete");
 
     if (currentRound + 1 >= GAME_PARAMS.MAX_ROUNDS) {
       setTimeout(() => {
@@ -298,6 +333,10 @@ const VialGame = ({ userId }) => {
       setMessageType("playing");
       setIsRoundTransition(false);
       setGameRunning(true); // Resume game
+      // Log the start of the new round after state updates
+      setTimeout(() => {
+        logRoundStart(currentRound + 1, gameStateRef.current);
+      }, 100);
     }, GAME_PARAMS.TRANSITION_TIME);
   };
 
@@ -305,8 +344,6 @@ const VialGame = ({ userId }) => {
     setRoundWasSuccessful(false);
     setIsRoundTransition(true);
     setGameRunning(false); // Pause game during transition
-    // setGameMessage(GAME_MESSAGES.ROUND_FAILED);
-    // setMessageType("round-failed");
 
     if (currentRound + 1 >= GAME_PARAMS.MAX_ROUNDS) {
       setTimeout(() => {
@@ -327,25 +364,12 @@ const VialGame = ({ userId }) => {
       setMessageType("playing");
       setIsRoundTransition(false);
       setGameRunning(true); // Resume game
+      // Log the start of the new round after state updates
+      setTimeout(() => {
+        logRoundStart(currentRound + 1, gameStateRef.current);
+      }, 100);
     }, GAME_PARAMS.TRANSITION_TIME);
   };
-
-  // const restartGame = () => {
-  //   logButtonPress("restart", { ...gameStateRef.current });
-
-  //   setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-  //   setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-  //   setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-  //   setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-  //   setGameRunning(true);
-  //   setGameMessage(GAME_MESSAGES.PLAYING);
-  //   setMessageType("playing");
-  //   setCurrentRound(0);
-  //   setScore(0);
-  //   setRoundTimeRemaining(GAME_PARAMS.ROUND_DURATION);
-  //   setIsRoundTransition(false);
-  //   setGameComplete(false);
-  // };
 
   const toggleGameVersion = () => {
     logButtonPress("toggle_version", { ...gameStateRef.current });
@@ -422,18 +446,15 @@ const VialGame = ({ userId }) => {
               </div>
             </div>
           </div>
-
           <GameControls
             onAddVial1={() => {}}
             onAddVial2={() => {}}
             onEmptyBucket={() => {}}
-            // onRestart={restartGame}
             onToggleVersion={toggleGameVersion}
             gameRunning={gameRunning && !isRoundTransition}
             bucketLevel={bucket2Level}
             hasBucket={numBuckets >= 1}
           />
-
           <div className="instructions">
             <p>
               <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
@@ -444,14 +465,6 @@ const VialGame = ({ userId }) => {
               {numBuckets === 2 &&
                 " Use ↑ to empty Vial 1's bucket, ↓ to empty Vial 2's bucket."}
             </p>
-            {/* <p>
-              {numBuckets >= 1 ? (
-                <>{INSTRUCTIONS.WITH_BUCKET}</>
-              ) : (
-                <>{INSTRUCTIONS.WITHOUT_BUCKET}</>
-              )}{" "}
-              {INSTRUCTIONS.ENDING}
-            </p> */}
           </div>
         </>
       )}

@@ -17,7 +17,7 @@ export const GAME_PARAMS = {
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
   ROUND_DURATION: 10, // Duration of each round in seconds
-  MAX_ROUNDS: 36, // Maximum number of rounds before game ends
+  MAX_ROUNDS: 24, // Maximum number of rounds before game ends
 
   // Initial conditions
   INITIAL_VIAL_LEVEL: 50, // Starting percentage for both vials
@@ -49,19 +49,19 @@ export const getZonePercentages = () => {
 };
 // Drain rate configurations
 export const DRAIN_RATES = {
-  SLOW: 0.7,
-  MEDIUM: 0.9,
-  FAST: 1.1,
+  SLOW: 0.6,
+  MEDIUM: 0.8,
+  FAST: 1,
 };
 
 export const ROUND_CONDITIONS = [
   { drainRate: DRAIN_RATES.SLOW, numBuckets: 0, name: "Slow, No Bucket" },
   { drainRate: DRAIN_RATES.SLOW, numBuckets: 1, name: "Slow, 1 Bucket" },
-  {
-    drainRate: DRAIN_RATES.SLOW,
-    numBuckets: 2,
-    name: "Slow, 2 Buckets",
-  },
+  // {
+  //   drainRate: DRAIN_RATES.SLOW,
+  //   numBuckets: 2,
+  //   name: "Slow, 2 Buckets",
+  // },
   {
     drainRate: DRAIN_RATES.MEDIUM,
     numBuckets: 0,
@@ -72,18 +72,18 @@ export const ROUND_CONDITIONS = [
     numBuckets: 1,
     name: "Medium, 1 Bucket",
   },
-  {
-    drainRate: DRAIN_RATES.MEDIUM,
-    numBuckets: 2,
-    name: "Medium, 2 Buckets",
-  },
+  // {
+  //   drainRate: DRAIN_RATES.MEDIUM,
+  //   numBuckets: 2,
+  //   name: "Medium, 2 Buckets",
+  // },
   {
     drainRate: DRAIN_RATES.FAST,
     numBuckets: 0,
     name: "Medium-Fast, No Bucket",
   },
   { drainRate: DRAIN_RATES.FAST, numBuckets: 1, name: "Fast, 1 Bucket" },
-  { drainRate: DRAIN_RATES.FAST, numBuckets: 2, name: "Fast, 2 Buckets" },
+  // { drainRate: DRAIN_RATES.FAST, numBuckets: 2, name: "Fast, 2 Buckets" },
 ];
 
 /**
