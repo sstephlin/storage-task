@@ -53,7 +53,8 @@ const flattenObject = (obj, prefix = "") => {
       key.toLowerCase().includes("time") ||
       key === "startTime" ||
       key === "endTime" ||
-      key === "updatedAt"
+      key === "updatedAt" ||
+      key === "timestamp"
     ) {
       flattened[newKey] = formatTimestamp(value);
     } else {
@@ -85,12 +86,20 @@ const toCSV = (rows) => {
   // Get all unique headers from all rows
   const headers = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
 
-  // Sort headers for consistency (put userId and sessionId first)
+  // Sort headers for consistency (put important fields first)
   const sortedHeaders = headers.sort((a, b) => {
     if (a === "userId") return -1;
     if (b === "userId") return 1;
     if (a === "sessionId") return -1;
     if (b === "sessionId") return 1;
+    if (a === "roundNumber") return -1;
+    if (b === "roundNumber") return 1;
+    if (a === "msSinceGameStart") return -1;
+    if (b === "msSinceGameStart") return 1;
+    if (a === "msSinceRoundStart") return -1;
+    if (b === "msSinceRoundStart") return 1;
+    if (a === "buttonType") return -1;
+    if (b === "buttonType") return 1;
     return a.localeCompare(b);
   });
 
@@ -110,8 +119,8 @@ async function exportData() {
     console.log(`Found ${userSnapshot.size} users`);
 
     const buttonRows = [];
-    const vialRows = [];
     const sessionMetaRows = [];
+    const roundStartRows = [];
 
     for (const userDoc of userSnapshot.docs) {
       const userId = userDoc.id;
@@ -138,7 +147,7 @@ async function exportData() {
             .collection("sessions")
             .doc(sessionId)
             .collection("button_presses")
-            .orderBy("timestampMs", "asc") // Order by timestamp
+            .orderBy("msSinceGameStart", "asc") // Order by game time
             .get();
 
           console.log(
@@ -162,33 +171,33 @@ async function exportData() {
           );
         }
 
-        // VIAL SNAPSHOTS
+        // ROUND STARTS
         try {
-          const vialSnapshot = await db
+          const roundSnapshot = await db
             .collection("user_sessions")
             .doc(userId)
             .collection("sessions")
             .doc(sessionId)
-            .collection("vial_snapshots")
-            .orderBy("timestampMs", "asc") // Order by timestamp
+            .collection("round_starts")
+            .orderBy("msSinceGameStart", "asc") // Order by game time
             .get();
 
           console.log(
-            `    Session ${sessionId}: ${vialSnapshot.size} vial snapshots`
+            `    Session ${sessionId}: ${roundSnapshot.size} round starts`
           );
 
-          for (const vialDoc of vialSnapshot.docs) {
-            const vialData = vialDoc.data();
+          for (const roundDoc of roundSnapshot.docs) {
+            const roundData = roundDoc.data();
             const flattened = flattenObject({
               userId,
               sessionId,
-              ...vialData,
+              ...roundData,
             });
-            vialRows.push(flattened);
+            roundStartRows.push(flattened);
           }
         } catch (error) {
           console.error(
-            `    Error fetching vial snapshots for session ${sessionId}:`,
+            `    Error fetching round starts for session ${sessionId}:`,
             error.message
           );
         }
@@ -213,11 +222,13 @@ async function exportData() {
       console.log("⚠ No button presses found");
     }
 
-    if (vialRows.length) {
-      writeFileSync("vial_snapshots.csv", toCSV(vialRows));
-      console.log(`✓ Exported vial_snapshots.csv (${vialRows.length} rows)`);
+    if (roundStartRows.length) {
+      writeFileSync("round_starts.csv", toCSV(roundStartRows));
+      console.log(
+        `✓ Exported round_starts.csv (${roundStartRows.length} rows)`
+      );
     } else {
-      console.log("⚠ No vial snapshots found");
+      console.log("⚠ No round starts found");
     }
 
     if (sessionMetaRows.length) {
@@ -230,6 +241,16 @@ async function exportData() {
     }
 
     console.log("\n✅ Finished exporting all CSV files!");
+    console.log("\nExported files:");
+    console.log(
+      "  • button_presses.csv - All button press events with game state"
+    );
+    console.log(
+      "  • round_starts.csv - Round start timestamps and configurations"
+    );
+    console.log(
+      "  • session_meta.csv - Session metadata with setpoints and timestamps"
+    );
   } catch (error) {
     console.error("❌ Error during export:", error);
     throw error;
