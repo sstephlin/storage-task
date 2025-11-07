@@ -4,6 +4,7 @@ import GameControls from "./components/GameControls";
 import GameStatus from "./components/GameStatus";
 import RoundTransition from "./components/RoundTransition";
 import Tutorial from "./instructions";
+import GasStationIndicator from "./components/GasStationIndicator";
 import {
   GAME_PARAMS,
   GAME_MESSAGES,
@@ -28,6 +29,7 @@ const VialGame = ({ userId }) => {
   const [gameRunning, setGameRunning] = useState(false); // Start as false until tutorial exits
   const [gameMessage, setGameMessage] = useState(GAME_MESSAGES.PLAYING);
   const [messageType, setMessageType] = useState("playing");
+  const [isAddingDisabled, setIsAddingDisabled] = useState(false);
 
   // Round management
   const [currentRound, setCurrentRound] = useState(0);
@@ -46,6 +48,7 @@ const VialGame = ({ userId }) => {
   const roundTimerRef = useRef(null);
   const vialLoggerRef = useRef(null);
   const keyLocked = useRef(false);
+  const disableTimerRef = useRef(null);
 
   const vial1HasBucket = numBuckets === 2;
   const vial2HasBucket = numBuckets >= 1;
@@ -118,28 +121,37 @@ const VialGame = ({ userId }) => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyPress = (event) => {
+      // Only block all keys for tutorial, transition, or not running
       if (isRoundTransition || !gameRunning || showTutorial) return;
       if (event.repeat) return;
       if (keyLocked.current) return;
-      keyLocked.current = true;
 
       const getCurrentState = () => ({ ...gameStateRef.current });
 
       switch (event.key) {
         case "ArrowLeft":
+          // Block ONLY adding when gas station is disabled
+          if (isAddingDisabled) return;
           event.preventDefault();
+          keyLocked.current = true;
           logButtonPress("add_vial_1", getCurrentState());
-          vial1Paused.current = true; // temporarily pause drain
+          vial1Paused.current = true;
           setVial1Level((prev) =>
             Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT)
           );
           setTimeout(() => {
-            vial1Paused.current = false; // resume drain shortly after
-          }, 200); // adjust delay as needed
+            vial1Paused.current = false;
+          }, 200);
+          setTimeout(() => {
+            keyLocked.current = false;
+          }, 300);
           break;
 
         case "ArrowRight":
+          // Block ONLY adding when gas station is disabled
+          if (isAddingDisabled) return;
           event.preventDefault();
+          keyLocked.current = true;
           logButtonPress("add_vial_2", getCurrentState());
           vial2Paused.current = true;
           setVial2Level((prev) =>
@@ -148,9 +160,15 @@ const VialGame = ({ userId }) => {
           setTimeout(() => {
             vial2Paused.current = false;
           }, 200);
+          setTimeout(() => {
+            keyLocked.current = false;
+          }, 300);
           break;
+
         case "ArrowUp":
+          // Bucket emptying ALWAYS works
           event.preventDefault();
+          keyLocked.current = true;
           if (
             gameStateRef.current.numBuckets === 2 &&
             gameStateRef.current.bucket1Level > 0
@@ -170,9 +188,15 @@ const VialGame = ({ userId }) => {
               Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
             );
           }
+          setTimeout(() => {
+            keyLocked.current = false;
+          }, 300);
           break;
+
         case "ArrowDown":
+          // Bucket emptying ALWAYS works
           event.preventDefault();
+          keyLocked.current = true;
           if (
             gameStateRef.current.numBuckets === 2 &&
             gameStateRef.current.bucket2Level > 0
@@ -183,18 +207,19 @@ const VialGame = ({ userId }) => {
               Math.max(0, prev - GAME_PARAMS.EMPTY_BUCKET_AMOUNT)
             );
           }
+          setTimeout(() => {
+            keyLocked.current = false;
+          }, 300);
           break;
+
         default:
           break;
       }
-      setTimeout(() => {
-        keyLocked.current = false;
-      }, 300);
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [isRoundTransition, gameRunning, showTutorial]);
+  }, [isRoundTransition, gameRunning, showTutorial, isAddingDisabled]);
 
   // Game loop
   useEffect(() => {
@@ -274,6 +299,41 @@ const VialGame = ({ userId }) => {
     return () => clearInterval(roundTimerRef.current);
   }, [gameRunning, isRoundTransition]);
 
+  // Random disable intervals for adding to vials
+  useEffect(() => {
+    if (gameRunning && !isRoundTransition) {
+      const scheduleNextDisable = () => {
+        // Random time until next disable (2-8 seconds)
+        const timeUntilDisable = Math.random() * 6000 + 2000;
+
+        disableTimerRef.current = setTimeout(() => {
+          // Random disable duration (1-3 seconds)
+          const disableDuration = Math.random() * 2000 + 1000;
+
+          setIsAddingDisabled(true);
+
+          setTimeout(() => {
+            setIsAddingDisabled(false);
+            scheduleNextDisable(); // Schedule the next disable
+          }, disableDuration);
+        }, timeUntilDisable);
+      };
+
+      scheduleNextDisable();
+    } else {
+      if (disableTimerRef.current) {
+        clearTimeout(disableTimerRef.current);
+      }
+      setIsAddingDisabled(false);
+    }
+
+    return () => {
+      if (disableTimerRef.current) {
+        clearTimeout(disableTimerRef.current);
+      }
+    };
+  }, [gameRunning, isRoundTransition]);
+
   // Check for round completion
   useEffect(() => {
     if (roundTimeRemaining === 0 && gameRunning && !isRoundTransition) {
@@ -325,8 +385,7 @@ const VialGame = ({ userId }) => {
     setTimeout(() => {
       setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
       setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-      setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-      setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+      // Don't reset bucket levels - they persist between rounds
       setCurrentRound((prev) => prev + 1);
       setRoundTimeRemaining(GAME_PARAMS.ROUND_DURATION);
       setGameMessage(GAME_MESSAGES.PLAYING);
@@ -356,8 +415,7 @@ const VialGame = ({ userId }) => {
     setTimeout(() => {
       setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
       setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-      setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-      setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+      // Don't reset bucket levels - they persist between rounds
       setCurrentRound((prev) => prev + 1);
       setRoundTimeRemaining(GAME_PARAMS.ROUND_DURATION);
       setGameMessage(GAME_MESSAGES.PLAYING);
@@ -433,6 +491,8 @@ const VialGame = ({ userId }) => {
               />
             </div>
 
+            <GasStationIndicator isActive={!isAddingDisabled} />
+
             <div className="vial-setup">
               <div className="liquid-level">
                 Vial 2: {Math.round(vial2Level)}%
@@ -459,12 +519,12 @@ const VialGame = ({ userId }) => {
             <p>
               <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
             </p>
-            <p className="keyboard-controls">
+            {/* <p className="keyboard-controls">
               <strong>Controls:</strong> {INSTRUCTIONS.CONTROLS_BASE}
               {numBuckets === 1 && INSTRUCTIONS.CONTROLS_WITH_BUCKET}
               {numBuckets === 2 &&
                 " Use ↑ to empty Vial 1's bucket, ↓ to empty Vial 2's bucket."}
-            </p>
+            </p> */}
           </div>
         </>
       )}
