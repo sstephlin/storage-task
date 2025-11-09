@@ -342,17 +342,17 @@ const VialGame = ({ userId }) => {
   }, [roundTimeRemaining, gameRunning, isRoundTransition]);
 
   // Logging interval
-  useEffect(() => {
-    if (gameRunning && !isRoundTransition) {
-      vialLoggerRef.current = setInterval(() => {
-        logVialLevels(gameStateRef.current);
-      }, 100);
-    } else {
-      clearInterval(vialLoggerRef.current);
-    }
+  // useEffect(() => {
+  //   if (gameRunning && !isRoundTransition) {
+  //     vialLoggerRef.current = setInterval(() => {
+  //       logVialLevels(gameStateRef.current);
+  //     }, 100);
+  //   } else {
+  //     clearInterval(vialLoggerRef.current);
+  //   }
 
-    return () => clearInterval(vialLoggerRef.current);
-  }, [gameRunning, isRoundTransition]);
+  //   return () => clearInterval(vialLoggerRef.current);
+  // }, [gameRunning, isRoundTransition]);
 
   // Check for round failure
   useEffect(() => {
@@ -393,9 +393,9 @@ const VialGame = ({ userId }) => {
       setIsRoundTransition(false);
       setGameRunning(true); // Resume game
       // Log the start of the new round after state updates
-      setTimeout(() => {
-        logRoundStart(currentRound + 1, gameStateRef.current);
-      }, 100);
+      // setTimeout(() => {
+      //   logRoundStart(currentRound + 1, gameStateRef.current);
+      // }, 100);
     }, GAME_PARAMS.TRANSITION_TIME);
   };
 
@@ -423,17 +423,17 @@ const VialGame = ({ userId }) => {
       setIsRoundTransition(false);
       setGameRunning(true); // Resume game
       // Log the start of the new round after state updates
-      setTimeout(() => {
-        logRoundStart(currentRound + 1, gameStateRef.current);
-      }, 100);
+      // setTimeout(() => {
+      //   logRoundStart(currentRound + 1, gameStateRef.current);
+      // }, 100);
     }, GAME_PARAMS.TRANSITION_TIME);
   };
 
   const toggleGameVersion = () => {
-    logButtonPress("toggle_version", { ...gameStateRef.current });
-    console.warn(
-      "toggleGameVersion may not work correctly with round sequence"
-    );
+    // logButtonPress("toggle_version", { ...gameStateRef.current });
+    // console.warn(
+    //   "toggleGameVersion may not work correctly with round sequence"
+    // );
   };
 
   // Show tutorial if active
@@ -464,6 +464,8 @@ const VialGame = ({ userId }) => {
               roundNumber={currentRound + 1}
               wasSuccessful={roundWasSuccessful}
               onComplete={() => {}}
+              totalRounds={GAME_PARAMS.MAX_ROUNDS}
+              score={score}
             />
           )}
           <h1>Two Vials Game</h1>
