@@ -16,7 +16,7 @@ export const GAME_PARAMS = {
 
   // Timing
   GAME_SPEED: 100, // Milliseconds per game tick (lower = faster)
-  ROUND_DURATION: 10, // Duration of each round in seconds
+  ROUND_DURATION: 2, // Duration of each round in seconds
   MAX_ROUNDS: 24, // Maximum number of rounds before game ends
 
   // Initial conditions
@@ -55,7 +55,7 @@ export const DRAIN_RATES = {
 };
 
 export const ROUND_CONDITIONS = [
-  { drainRate: DRAIN_RATES.SLOW, numBuckets: 0, name: "Slow, No Bucket" },
+  { drainRate: DRAIN_RATES.SLOW, numBuckets: 1, name: "Slow, 1 Bucket" },
   { drainRate: DRAIN_RATES.SLOW, numBuckets: 1, name: "Slow, 1 Bucket" },
   // {
   //   drainRate: DRAIN_RATES.SLOW,
@@ -64,8 +64,8 @@ export const ROUND_CONDITIONS = [
   // },
   {
     drainRate: DRAIN_RATES.MEDIUM,
-    numBuckets: 0,
-    name: "Medium, No Bucket",
+    numBuckets: 1,
+    name: "Medium, 1 Bucket",
   },
   {
     drainRate: DRAIN_RATES.MEDIUM,
@@ -79,8 +79,8 @@ export const ROUND_CONDITIONS = [
   // },
   {
     drainRate: DRAIN_RATES.FAST,
-    numBuckets: 0,
-    name: "Medium-Fast, No Bucket",
+    numBuckets: 1,
+    name: "Fast, 1 Bucket",
   },
   { drainRate: DRAIN_RATES.FAST, numBuckets: 1, name: "Fast, 1 Bucket" },
   // { drainRate: DRAIN_RATES.FAST, numBuckets: 2, name: "Fast, 2 Buckets" },
@@ -130,6 +130,44 @@ export const ROUND_SETTINGS = [
   },
   // Add more rounds as needed
 ];
+// Phase configuration
+export const PHASE_CONFIG = {
+  STARTING_PHASE: "deprivation", // Change to 'deprivation' to start with gas station disabled
+  // STARTING_PHASE: 'deprivation', // Uncomment this line to test deprivation first
+};
+
+// Generate phase sequence based on total rounds
+export const generatePhaseSequence = (totalRounds) => {
+  const roundsPerPhase = Math.floor(totalRounds / 4);
+  const phases = [];
+
+  // Determine which phase comes first
+  const firstPhase = PHASE_CONFIG.STARTING_PHASE;
+  const secondPhase = firstPhase === "abundance" ? "deprivation" : "abundance";
+
+  // First quarter: Starting phase
+  for (let i = 0; i < roundsPerPhase; i++) {
+    phases.push(firstPhase);
+  }
+
+  // Second quarter: Opposite phase
+  for (let i = 0; i < roundsPerPhase; i++) {
+    phases.push(secondPhase);
+  }
+
+  // Third quarter: Back to starting phase
+  for (let i = 0; i < roundsPerPhase; i++) {
+    phases.push(firstPhase);
+  }
+
+  // Fourth quarter: Opposite phase (fill remaining rounds)
+  const remainingRounds = totalRounds - roundsPerPhase * 3;
+  for (let i = 0; i < remainingRounds; i++) {
+    phases.push(secondPhase);
+  }
+
+  return phases;
+};
 
 // Game messages
 export const GAME_MESSAGES = {

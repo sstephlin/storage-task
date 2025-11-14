@@ -10,6 +10,8 @@ import {
   GAME_MESSAGES,
   INSTRUCTIONS,
   generateRoundSequence,
+  generatePhaseSequence, // ADD THIS
+  PHASE_CONFIG, // ADD THIS
 } from "./params";
 import { logButtonPress, logVialLevels, logRoundStart } from "./logging";
 import "./styles/VialGame.css";
@@ -73,6 +75,11 @@ const VialGame = ({ userId }) => {
     roundWasSuccessful: true,
     setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
   });
+  const [phaseSequence] = useState(() =>
+    generatePhaseSequence(GAME_PARAMS.MAX_ROUNDS)
+  );
+  const currentPhase = phaseSequence[currentRound];
+  const isAbundancePhase = currentPhase === "abundance";
 
   useEffect(() => {
     gameStateRef.current = {
@@ -141,10 +148,10 @@ const VialGame = ({ userId }) => {
           );
           setTimeout(() => {
             vial1Paused.current = false;
-          }, 200);
+          }, 100);
           setTimeout(() => {
             keyLocked.current = false;
-          }, 300);
+          }, 200);
           break;
 
         case "ArrowRight":
@@ -159,10 +166,10 @@ const VialGame = ({ userId }) => {
           );
           setTimeout(() => {
             vial2Paused.current = false;
-          }, 200);
+          }, 100);
           setTimeout(() => {
             keyLocked.current = false;
-          }, 300);
+          }, 200);
           break;
 
         case "ArrowUp":
@@ -209,7 +216,7 @@ const VialGame = ({ userId }) => {
           }
           setTimeout(() => {
             keyLocked.current = false;
-          }, 300);
+          }, 100);
           break;
 
         default:
@@ -298,33 +305,45 @@ const VialGame = ({ userId }) => {
 
     return () => clearInterval(roundTimerRef.current);
   }, [gameRunning, isRoundTransition]);
-
-  // Random disable intervals for adding to vials
   useEffect(() => {
-    if (gameRunning && !isRoundTransition) {
-      const scheduleNextDisable = () => {
-        // Random time until next disable (2-8 seconds)
-        const timeUntilDisable = Math.random() * 6000 + 2000;
+    if (roundTimeRemaining === 0 && gameRunning && !isRoundTransition) {
+      completeRound();
+    }
+  }, [roundTimeRemaining, gameRunning, isRoundTransition]);
 
-        disableTimerRef.current = setTimeout(() => {
-          // Random disable duration (1-3 seconds)
-          const disableDuration = Math.random() * 2000 + 1000;
-
-          setIsAddingDisabled(true);
-
-          setTimeout(() => {
-            setIsAddingDisabled(false);
-            scheduleNextDisable(); // Schedule the next disable
-          }, disableDuration);
-        }, timeUntilDisable);
-      };
-
-      scheduleNextDisable();
-    } else {
+  // Gas station control based on phase
+  useEffect(() => {
+    if (isAbundancePhase) {
+      // Abundance phase: Gas station is always available
+      setIsAddingDisabled(false);
       if (disableTimerRef.current) {
         clearTimeout(disableTimerRef.current);
       }
-      setIsAddingDisabled(false);
+    } else {
+      // Deprivation phase: Random disable intervals
+      if (gameRunning && !isRoundTransition) {
+        const scheduleNextDisable = () => {
+          const timeUntilDisable = Math.random() * 6000 + 2000;
+
+          disableTimerRef.current = setTimeout(() => {
+            const disableDuration = Math.random() * 2000 + 1000;
+
+            setIsAddingDisabled(true);
+
+            setTimeout(() => {
+              setIsAddingDisabled(false);
+              scheduleNextDisable();
+            }, disableDuration);
+          }, timeUntilDisable);
+        };
+
+        scheduleNextDisable();
+      } else {
+        if (disableTimerRef.current) {
+          clearTimeout(disableTimerRef.current);
+        }
+        setIsAddingDisabled(false);
+      }
     }
 
     return () => {
@@ -332,14 +351,7 @@ const VialGame = ({ userId }) => {
         clearTimeout(disableTimerRef.current);
       }
     };
-  }, [gameRunning, isRoundTransition]);
-
-  // Check for round completion
-  useEffect(() => {
-    if (roundTimeRemaining === 0 && gameRunning && !isRoundTransition) {
-      completeRound();
-    }
-  }, [roundTimeRemaining, gameRunning, isRoundTransition]);
+  }, [gameRunning, isRoundTransition, isAbundancePhase]);
 
   // Logging interval
   // useEffect(() => {
@@ -476,6 +488,18 @@ const VialGame = ({ userId }) => {
               Round: {currentRound + 1} / {GAME_PARAMS.MAX_ROUNDS}
             </div>
             <div className="timer-display">Time: {roundTimeRemaining}s</div>
+            <div
+              className="phase-display"
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                backgroundColor: isAbundancePhase ? "#86efac" : "#fca5a5",
+                color: isAbundancePhase ? "#166534" : "#991b1b",
+              }}
+            >
+              Phase: {isAbundancePhase ? "🌟 Abundance" : "⚠️ Deprivation"}
+            </div>
           </div>
 
           <GameStatus message={gameMessage} messageType={messageType} />
