@@ -3,6 +3,7 @@ import VialGame from "./VialGame";
 import Login from "./components/Login";
 import { initializeSession, endSession } from "./logging";
 import "./styles/App.css";
+import { getGameVersion } from "./params";
 
 const App = () => {
   const [userId, setUserId] = useState(null);
@@ -31,13 +32,15 @@ const App = () => {
   }, [userId]);
 
   const handleLogin = async (newUserId) => {
-    // Update URL with user ID
     const url = new URL(window.location);
     url.searchParams.set("userId", newUserId);
     window.history.pushState({}, "", url);
 
-    // Initialize Firebase session
-    await initializeSession(newUserId);
+    // Get the game version that will be assigned
+    const gameVersion = getGameVersion();
+
+    // Initialize Firebase session with version info
+    await initializeSession(newUserId, { gameVersion });
 
     setUserId(newUserId);
     setIsLoading(false);
