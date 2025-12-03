@@ -12,11 +12,14 @@ const RoundTransition = ({
   const [showJourney, setShowJourney] = useState(true);
 
   // Calculate previous and current progress
-  const previousProgress = Math.min(
-    ((roundNumber - 1) / totalRounds) * 100,
-    100
-  );
-  const currentProgress = Math.min((roundNumber / totalRounds) * 100, 100);
+  // Add Math.max to prevent negative values
+  const previousProgress = wasSuccessful
+    ? Math.min((Math.max(0, roundNumber - 1) / totalRounds) * 100, 100)
+    : Math.min((roundNumber / totalRounds) * 100, 100); // Stay at current position on failure
+
+  const currentProgress = wasSuccessful
+    ? Math.min((roundNumber / totalRounds) * 100, 100)
+    : Math.min((roundNumber / totalRounds) * 100, 100); // Stay at current position on failure
 
   const [journeyProgress, setJourneyProgress] = useState(previousProgress);
 
@@ -38,10 +41,13 @@ const RoundTransition = ({
 
   // Calculate robot position along path
   const getRobotPosition = (percent) => {
+    // Clamp percent to valid range
+    const clampedPercent = Math.max(0, Math.min(100, percent));
+
     const totalSegments = pathDots.length - 1;
     const segmentLength = 100 / totalSegments;
-    const currentSegment = Math.floor(percent / segmentLength);
-    const segmentProgress = (percent % segmentLength) / segmentLength;
+    const currentSegment = Math.floor(clampedPercent / segmentLength);
+    const segmentProgress = (clampedPercent % segmentLength) / segmentLength;
 
     if (currentSegment >= totalSegments) {
       return pathDots[pathDots.length - 1];
@@ -87,6 +93,14 @@ const RoundTransition = ({
       const duration = 2000;
       const steps = 60;
       const progressDelta = currentProgress - previousProgress;
+
+      // If no progress change (failed round), skip animation
+      if (Math.abs(progressDelta) < 0.01) {
+        setJourneyProgress(currentProgress);
+        setTimeout(onComplete, 1500);
+        return;
+      }
+
       const increment = progressDelta / steps;
       let current = previousProgress;
 
@@ -166,7 +180,7 @@ const RoundTransition = ({
               Journey Progress
             </h2>
             <div style={{ fontSize: "1.25rem", color: "#6b7280" }}>
-              Round {roundNumber} of {totalRounds} • Score: {score}
+              Score: {score} of {totalRounds}
             </div>
           </div>
 
@@ -410,7 +424,9 @@ const RoundTransition = ({
           >
             {journeyProgress >= 100
               ? "🎉 Journey Complete!"
-              : "🤖 Traveling..."}
+              : wasSuccessful
+              ? "🤖 Moving forward..."
+              : "🤖 Staying put..."}
           </div>
         </div>
       )}

@@ -1,0 +1,588 @@
+import React, { useState, useEffect } from "react";
+import { Star, Flame, Skull } from "lucide-react";
+import Vial from "./Vial";
+
+const Robot = ({
+  vial1Level,
+  vial2Level,
+  isOverheated,
+  isPoweredDown,
+  numVials = 2,
+  scale = 0.7,
+  // bucket props forwarded from VialGame
+  vial1HasBucket = false,
+  vial2HasBucket = false,
+  bucket1Level = 0,
+  bucket2Level = 0,
+}) => {
+  const [blinkEyes, setBlinkEyes] = useState(false);
+
+  // base robot dimensions (kept in JS so scale calculations stay in-sync)
+  const BASE_WIDTH = 500;
+  const BASE_HEIGHT = 600;
+  const scaledWidth = BASE_WIDTH * scale;
+  const scaledHeight = BASE_HEIGHT * scale;
+
+  useEffect(() => {
+    if (!isOverheated && !isPoweredDown) {
+      const interval = setInterval(() => {
+        setBlinkEyes(true);
+        setTimeout(() => setBlinkEyes(false), 150);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [isOverheated, isPoweredDown]);
+
+  return (
+    // outer wrapper reserves the scaled layout space so other components/layouts
+    // behave correctly while the inner robot is scale-transformed for visual
+    // proportional shrinking.
+    <div
+      style={{
+        width: `${scaledWidth}px`,
+        height: `${scaledHeight}px`,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+      }}
+    >
+      <div
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "top center",
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            width: "500px",
+            height: "600px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          {/* Antenna */}
+          <div
+            style={{
+              width: "8px",
+              height: "50px",
+              backgroundColor: "#34495e",
+              borderRadius: "4px",
+              position: "relative",
+              zIndex: 3,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: "-15px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "24px",
+                height: "24px",
+                backgroundColor: isOverheated ? "#ff4444" : "#3498db",
+                borderRadius: "50%",
+                border: "4px solid #2c3e50",
+                animation: isOverheated
+                  ? "overheatPulse 0.4s infinite"
+                  : "gentlePulse 2s infinite",
+                boxShadow: isOverheated
+                  ? "0 0 20px rgba(255,68,68,0.8)"
+                  : "0 0 15px rgba(52,152,219,0.6)",
+              }}
+            />
+          </div>
+
+          {/* Head - rectangular with rounded corners */}
+          <div
+            style={{
+              width: "280px",
+              height: "180px",
+              backgroundColor: "#ecf0f1",
+              borderRadius: "20px",
+              position: "relative",
+              border: "6px solid #2c3e50",
+              boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+              zIndex: 2,
+            }}
+          >
+            {/* Side antenna/ears */}
+            <div
+              style={{
+                position: "absolute",
+                top: "30px",
+                left: "-40px",
+                width: "35px",
+                height: "35px",
+                backgroundColor: "#ecf0f1",
+                borderRadius: "50%",
+                border: "6px solid #2c3e50",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                top: "30px",
+                right: "-40px",
+                width: "35px",
+                height: "35px",
+                backgroundColor: "#ecf0f1",
+                borderRadius: "50%",
+                border: "6px solid #2c3e50",
+              }}
+            />
+
+            {/* Screen/display area */}
+            <div
+              style={{
+                position: "absolute",
+                top: "30px",
+                left: "30px",
+                right: "30px",
+                height: "120px",
+                backgroundColor: "#34495e",
+                borderRadius: "10px",
+                border: "4px solid #2c3e50",
+                overflow: "hidden",
+              }}
+            >
+              {/* Eyes */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "35px",
+                  left: "45px",
+                  width: "50px",
+                  height: blinkEyes || isPoweredDown ? "8px" : "50px",
+                  backgroundColor: isPoweredDown ? "#1a252f" : "#2c3e50",
+                  borderRadius: "50%",
+                  border: "4px solid #1a252f",
+                  transition: "all 0.15s ease",
+                  boxShadow: isOverheated
+                    ? "0 0 25px rgba(255,68,68,0.9)"
+                    : "none",
+                }}
+              >
+                {!blinkEyes && !isPoweredDown && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: "30px",
+                      height: "30px",
+                      backgroundColor: isOverheated ? "#ff4444" : "#3498db",
+                      borderRadius: "50%",
+                      animation: isOverheated
+                        ? "overheatPulse 0.5s infinite"
+                        : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "6px",
+                        left: "6px",
+                        width: "10px",
+                        height: "10px",
+                        backgroundColor: "rgba(255,255,255,0.8)",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "35px",
+                  right: "45px",
+                  width: "50px",
+                  height: blinkEyes || isPoweredDown ? "8px" : "50px",
+                  backgroundColor: isPoweredDown ? "#1a252f" : "#2c3e50",
+                  borderRadius: "50%",
+                  border: "4px solid #1a252f",
+                  transition: "all 0.15s ease",
+                  boxShadow: isOverheated
+                    ? "0 0 25px rgba(255,68,68,0.9)"
+                    : "none",
+                }}
+              >
+                {!blinkEyes && !isPoweredDown && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: "30px",
+                      height: "30px",
+                      backgroundColor: isOverheated ? "#ff4444" : "#3498db",
+                      borderRadius: "50%",
+                      animation: isOverheated
+                        ? "overheatPulse 0.5s infinite"
+                        : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "6px",
+                        left: "6px",
+                        width: "10px",
+                        height: "10px",
+                        backgroundColor: "rgba(255,255,255,0.8)",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Overheat steam */}
+            {isOverheated && (
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-20px",
+                    left: "20%",
+                    fontSize: "40px",
+                    animation: "steam 1s infinite",
+                  }}
+                >
+                  💨
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-25px",
+                    right: "20%",
+                    fontSize: "40px",
+                    animation: "steam 1s infinite 0.3s",
+                  }}
+                >
+                  💨
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    left: "10%",
+                    fontSize: "30px",
+                    animation: "steam 1.2s infinite 0.5s",
+                  }}
+                >
+                  💨
+                </div>
+              </>
+            )}
+
+            {/* Sleep zzz */}
+            {isPoweredDown && (
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-30px",
+                    right: "-60px",
+                    fontSize: "32px",
+                    animation: "float 2s infinite",
+                  }}
+                >
+                  💤
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-15px",
+                    right: "-75px",
+                    fontSize: "24px",
+                    animation: "float 2s infinite 0.5s",
+                    opacity: 0.7,
+                  }}
+                >
+                  💤
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Neck */}
+          <div
+            style={{
+              width: "80px",
+              height: "30px",
+              backgroundColor: "#bdc3c7",
+              border: "6px solid #2c3e50",
+              borderTop: "none",
+              borderBottom: "none",
+              zIndex: 1,
+            }}
+          />
+
+          {/* Body - rectangular with vials */}
+          <div
+            style={{
+              width: "400px",
+              height: "320px",
+              backgroundColor: "#95a5a6",
+              borderRadius: "30px",
+              position: "relative",
+              border: "6px solid #2c3e50",
+              boxShadow: isOverheated
+                ? "0 8px 35px rgba(255,68,68,0.4)"
+                : "0 8px 30px rgba(0,0,0,0.2)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "60px",
+              paddingTop: "20px",
+              animation: isOverheated ? "shake 0.3s infinite" : "none",
+              opacity: isPoweredDown ? 0.7 : 1,
+              transition: "opacity 0.5s ease",
+              zIndex: 1,
+              overflow: "hidden",
+            }}
+          >
+            {/* Status lights */}
+            <div
+              style={{
+                position: "absolute",
+                top: "25px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                gap: "15px",
+              }}
+            >
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  backgroundColor: isPoweredDown ? "#34495e" : "#2ecc71",
+                  borderRadius: "50%",
+                  border: "3px solid #2c3e50",
+                  boxShadow: isPoweredDown
+                    ? "none"
+                    : "0 0 12px rgba(46,204,113,0.7)",
+                  animation: isPoweredDown ? "none" : "gentlePulse 2s infinite",
+                }}
+              />
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  backgroundColor: isOverheated
+                    ? "#ff4444"
+                    : isPoweredDown
+                    ? "#34495e"
+                    : "#f39c12",
+                  borderRadius: "50%",
+                  border: "3px solid #2c3e50",
+                  boxShadow: isOverheated
+                    ? "0 0 18px rgba(255,68,68,0.9)"
+                    : isPoweredDown
+                    ? "none"
+                    : "0 0 12px rgba(243,156,18,0.7)",
+                  animation: isOverheated
+                    ? "overheatPulse 0.3s infinite"
+                    : isPoweredDown
+                    ? "none"
+                    : "gentlePulse 2s infinite 0.7s",
+                }}
+              />
+            </div>
+
+            {/* Vial window */}
+            <div
+              style={{
+                position: "absolute",
+                top: "70px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: numVials === 2 ? "280px" : "150px",
+                height: "210px",
+                backgroundColor: "rgba(44,62,80,0.3)",
+                borderRadius: "20px",
+                border: "5px solid #2c3e50",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px",
+                overflow: "visible",
+              }}
+            >
+              <Vial
+                level={vial1Level}
+                numBuckets={vial1HasBucket ? 1 : 0}
+                bucketLevel={bucket1Level}
+                liquidColor="#d665e5"
+              />
+              {numVials === 2 && (
+                <Vial
+                  level={vial2Level}
+                  numBuckets={vial2HasBucket ? 1 : 0}
+                  bucketLevel={bucket2Level}
+                  liquidColor="#4A90E2"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Arms (moved out of the body container so they're not clipped by the body's overflow) */}
+          <div
+            style={{
+              position: "absolute",
+              top: "330px",
+              left: "-30px",
+              width: "60px",
+              height: "140px",
+              backgroundColor: "#95a5a6",
+              borderRadius: "30px",
+              border: "6px solid #2c3e50",
+              transform: isPoweredDown ? "rotate(-30deg)" : "rotate(-15deg)",
+              transformOrigin: "top center",
+              transition: "transform 0.5s ease",
+              zIndex: 2,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-40px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "#7f8c8d",
+                borderRadius: "50%",
+                border: "6px solid #2c3e50",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "330px",
+              right: "-30px",
+              width: "60px",
+              height: "140px",
+              backgroundColor: "#95a5a6",
+              borderRadius: "30px",
+              border: "6px solid #2c3e50",
+              transform: isPoweredDown ? "rotate(30deg)" : "rotate(15deg)",
+              transformOrigin: "top center",
+              transition: "transform 0.5s ease",
+              zIndex: 2,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-40px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "#7f8c8d",
+                borderRadius: "50%",
+                border: "6px solid #2c3e50",
+              }}
+            />
+          </div>
+
+          {/* Legs */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "0px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              gap: "120px",
+            }}
+          >
+            <div
+              style={{
+                width: "70px",
+                height: "100px",
+                backgroundColor: "#95a5a6",
+                borderRadius: "15px",
+                border: "6px solid #2c3e50",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "-35px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "85px",
+                  height: "45px",
+                  backgroundColor: "#7f8c8d",
+                  borderRadius: "20px",
+                  border: "6px solid #2c3e50",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                width: "70px",
+                height: "100px",
+                backgroundColor: "#95a5a6",
+                borderRadius: "15px",
+                border: "6px solid #2c3e50",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "-35px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "85px",
+                  height: "45px",
+                  backgroundColor: "#7f8c8d",
+                  borderRadius: "20px",
+                  border: "6px solid #2c3e50",
+                }}
+              />
+            </div>
+          </div>
+
+          <style>{`
+        @keyframes gentlePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        @keyframes steam {
+          0% { opacity: 0; transform: translateY(0) scale(0.8); }
+          50% { opacity: 1; transform: translateY(-25px) scale(1); }
+          100% { opacity: 0; transform: translateY(-50px) scale(1.3); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-15px) rotate(5deg); }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          25% { transform: translateX(-5px) rotate(-1deg); }
+          75% { transform: translateX(5px) rotate(1deg); }
+        }
+        @keyframes overheatPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+        }
+      `}</style>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Robot;

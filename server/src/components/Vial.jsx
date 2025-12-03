@@ -2,7 +2,7 @@ import React from "react";
 import { GAME_PARAMS } from "../params";
 import "../styles/Vial.css";
 import ZoneMeter from "./ZoneMeter";
-import { Star } from "lucide-react";
+import { Star, Flame, Skull } from "lucide-react";
 
 const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
   const displayLevel = Math.min(level, 100);
@@ -24,7 +24,21 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
             className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
             style={{ height: `${displayLevel}%`, backgroundColor: liquidColor }}
           />
-          {/* Center line with heart icon */}
+
+          {/* Top danger line with flame icon */}
+
+          <div
+            style={{
+              position: "absolute",
+              top: "5%",
+              left: "-25px",
+              transform: "translateY(-50%)",
+            }}
+          >
+            <Flame size={20} fill="#dc2626" color="#dc2626" />
+          </div>
+
+          {/* Center line with star icon */}
           <div
             className="center-line-container"
             style={{
@@ -61,6 +75,18 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
                 opacity: 0.8,
               }}
             ></div>
+          </div>
+
+          {/* Bottom danger line with skull icon */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "5%",
+              left: "-25px",
+              transform: "translateY(50%)",
+            }}
+          >
+            <Skull size={20} fill="transparent" color="#dc2626" />
           </div>
         </div>
       </div>

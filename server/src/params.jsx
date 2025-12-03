@@ -8,7 +8,7 @@ export const GAME_PARAMS = {
   DANGER_UPPER: 90,
   DANGER_LOWER: 10,
   GAME_SPEED: 100,
-  ROUND_DURATION: 5,
+  ROUND_DURATION: 15,
   MAX_ROUNDS: 36,
   INITIAL_VIAL_LEVEL: 50,
   INITIAL_BUCKET_LEVEL: 0,
@@ -174,7 +174,7 @@ export const generateGameSequences = (version, totalRounds = 24) => {
         // ),
         velocitySequence: generatePhaseVelocities(totalRounds, velocities, 4),
         bucketSequence: generateConstantBuckets(totalRounds, 1),
-        phaseSequence: generateAlternatingPhases(totalRounds, null),
+        phaseSequence: generateAlternatingPhases(totalRounds, null, 4),
       };
 
     case GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET:
@@ -188,7 +188,7 @@ export const generateGameSequences = (version, totalRounds = 24) => {
       return {
         velocitySequence: generatePhaseVelocities(totalRounds, velocities, 4),
         bucketSequence: generateDynamicBuckets(totalRounds, 4),
-        phaseSequence: generateAlternatingPhases(totalRounds, "deprivation"),
+        phaseSequence: generateAlternatingPhases(totalRounds, "deprivation", 4),
       };
 
     default:
@@ -414,8 +414,12 @@ const generateConstantPhase = (totalRounds, phase = "abundance") => {
  * @param {number} totalRounds - Total number of rounds
  * @param {string} forceStartPhase - 'abundance', 'deprivation', or null for random
  */
-const generateAlternatingPhases = (totalRounds, forceStartPhase = null) => {
-  const roundsPerPhase = Math.floor(totalRounds / 4);
+const generateAlternatingPhases = (
+  totalRounds,
+  forceStartPhase = null,
+  numPhases
+) => {
+  const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const phases = [];
 
   // Determine starting phase based on PHASE_CONFIG or parameter
