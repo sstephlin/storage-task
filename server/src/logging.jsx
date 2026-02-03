@@ -1,3 +1,4 @@
+// Firebase Logging System - Restructured for Round-Based Data Collection
 import {
   doc,
   setDoc,
@@ -8,25 +9,76 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-// Session state
+// ============================================================================
+// STRING TO INTEGER MAPPINGS
+// ============================================================================
+
+// Button type mappings
+export const BUTTON_TYPE_MAP = {
+  add_vial_1: 1,
+  add_vial_2: 2,
+  empty_bucket_1: 3,
+  empty_bucket_2: 4,
+};
+
+// Game version mappings
+export const GAME_VERSION_MAP = {
+  one_vial_alternating: 1,
+  one_vial_always_bucket: 2,
+  two_vials_single_bucket: 3,
+  two_vials_phases: 4,
+};
+
+// Phase mappings
+export const PHASE_MAP = {
+  abundance: 1,
+  deprivation: 2,
+  none: 0, // For versions without phases
+};
+
+// Reverse mappings for reference
+export const BUTTON_TYPE_REVERSE = Object.fromEntries(
+  Object.entries(BUTTON_TYPE_MAP).map(([k, v]) => [v, k])
+);
+
+export const GAME_VERSION_REVERSE = Object.fromEntries(
+  Object.entries(GAME_VERSION_MAP).map(([k, v]) => [v, k])
+);
+
+export const PHASE_REVERSE = Object.fromEntries(
+  Object.entries(PHASE_MAP).map(([k, v]) => [v, k])
+);
+
+// ============================================================================
+// SESSION STATE
+// ============================================================================
+
 let currentUserId = null;
 let currentSessionId = null;
-let sessionStartTime = null; // Track when session started (ms)
+let sessionStartTime = null;
 let lastButtonPressTime = null;
-let roundStartTime = null; // Track when current round started (ms)
-let currentRoundNumber = null; // Track current round
+let roundStartTime = null;
+let currentRoundNumber = null;
+let currentRoundDocId = null; // Store the document ID for current round
 
 /**
  * Initialize a new game session for a user
  * @param {string} userId - The user's unique identifier
+ * @param {string} gameVersion - Game version string
+ * @param {boolean} productionMode - Whether in production mode
  */
-export const initializeSession = async (userId) => {
+export const initializeSession = async (
+  userId,
+  gameVersion,
+  productionMode
+) => {
   currentUserId = userId;
   currentSessionId = `${userId}_${Date.now()}`;
-  sessionStartTime = Date.now(); // Record start time
+  sessionStartTime = Date.now();
   lastButtonPressTime = null;
   roundStartTime = null;
   currentRoundNumber = null;
+  currentRoundDocId = null;
 
   try {
     const userRef = doc(db, "user_sessions", userId);
@@ -49,7 +101,7 @@ export const initializeSession = async (userId) => {
     );
     await setDoc(sessionRef, {
       sessionId: currentSessionId,
-      startTime: serverTimestamp(),
+      startTime: sessionStartTime,
       startTimeFormatted: new Date(sessionStartTime).toLocaleString("en-US", {
         year: "numeric",
         month: "short",
@@ -57,10 +109,12 @@ export const initializeSession = async (userId) => {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        fractionalSecondDigits: 3,
         hour12: true,
       }),
-      gameVersion: null,
-      setpoint: null, // Will be updated when game starts
+      gameVersion: gameVersion, // String for readability
+      gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0, // Integer for analysis
+      productionMode: productionMode ? 1 : 0, // Integer boolean
     });
 
     console.log("Session initialized:", currentSessionId);
@@ -70,139 +124,131 @@ export const initializeSession = async (userId) => {
 };
 
 /**
- * Update the setpoint in session metadata and reset game start time
- * @param {number} setpoint - The target setpoint value
- */
-export const updateSessionSetpoint = async (setpoint) => {
-  if (!currentUserId || !currentSessionId) return;
-
-  try {
-    // Reset the game start time to NOW (when game actually begins)
-    sessionStartTime = Date.now();
-    lastButtonPressTime = null;
-
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId
-    );
-    await updateDoc(sessionRef, {
-      setpoint: Math.round(setpoint * 100) / 100,
-      gameStartTime: serverTimestamp(),
-      gameStartTimeFormatted: new Date(sessionStartTime).toLocaleString(
-        "en-US",
-        {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        }
-      ),
-    });
-
-    console.log("Setpoint updated and game start time set:", setpoint);
-  } catch (error) {
-    console.error("Error updating setpoint:", error);
-  }
-};
-
-/**
  * Log when a new round starts
- * @param {number} roundNumber - The round number (0-indexed or 1-indexed depending on your system)
- * @param {object} gameState - Current game state
+ * Creates a new round document with metadata
+ * @param {number} roundNumber - The round number (1-indexed for storage)
+ * @param {object} roundConfig - Configuration for this round
  */
-export const logRoundStart = async (roundNumber, gameState) => {
+export const logRoundStart = async (roundNumber, roundConfig) => {
   if (!currentUserId || !currentSessionId) return;
 
   try {
+    // Convert to 1-indexed for storage
+    const roundNumberForStorage = roundNumber + 1;
+
     roundStartTime = Date.now();
-    currentRoundNumber = roundNumber;
+    currentRoundNumber = roundNumberForStorage;
+    lastButtonPressTime = null; // Reset for new round
+
     const msSinceGameStart = roundStartTime - sessionStartTime;
 
-    const roundStartData = {
-      roundNumber,
+    // Prepare round data with integer mappings
+    const roundData = {
+      roundNumber: roundNumberForStorage, // 1-indexed
       msSinceGameStart,
       timestamp: serverTimestamp(),
-      gameState: {
-        vial1Level: Math.round(gameState.vial1Level * 100) / 100,
-        vial2Level: Math.round(gameState.vial2Level * 100) / 100,
-        numBuckets: gameState.numBuckets,
-        ...(gameState.numBuckets === 2 && {
-          bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
-        }),
-        ...(gameState.numBuckets >= 1 && {
-          bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
-        }),
-        currentDrainRate: gameState.currentDrainRate,
-        score: gameState.score,
-      },
+
+      // Round configuration
+      numVials: roundConfig.numVials || 1,
+      vial1HasBucket: roundConfig.vial1HasBucket ? 1 : 0,
+      vial2HasBucket: roundConfig.vial2HasBucket ? 1 : 0,
+      velocity: Math.round(roundConfig.velocity * 100) / 100,
+      setpoint: Math.round(roundConfig.setpoint * 100) / 100,
+
+      // Phase information (if applicable)
+      phase: roundConfig.phase || "none", // String for readability
+      phaseCode: PHASE_MAP[roundConfig.phase] || 0, // Integer for analysis
+
+      // Initial state
+      initialVial1Level: Math.round(roundConfig.initialVial1Level * 100) / 100,
+      initialVial2Level: Math.round(roundConfig.initialVial2Level * 100) / 100,
+      initialBucket1Level:
+        Math.round(roundConfig.initialBucket1Level * 100) / 100,
+      initialBucket2Level:
+        Math.round(roundConfig.initialBucket2Level * 100) / 100,
+
+      // Round outcome (will be updated at round end)
+      roundComplete: 0,
+      roundSuccessful: null,
+      roundEndTime: null,
+      roundDuration: null,
     };
 
+    // Create round document
     const roundsRef = collection(
       db,
       "user_sessions",
       currentUserId,
       "sessions",
       currentSessionId,
-      "round_starts"
+      "rounds"
     );
 
-    await addDoc(roundsRef, roundStartData);
-    console.log(`Round ${roundNumber} started at ${msSinceGameStart}ms`);
+    const roundDoc = await addDoc(roundsRef, roundData);
+    currentRoundDocId = roundDoc.id;
+
+    console.log(
+      `Round ${roundNumberForStorage} started at ${msSinceGameStart}ms`
+    );
   } catch (error) {
     console.error("Error logging round start:", error);
   }
 };
 
 /**
- * Log a button press event
+ * Log a button press event within the current round
+ * @param {string} buttonType - Type of button pressed
+ * @param {object} gameState - Current game state
  */
 export const logButtonPress = async (buttonType, gameState) => {
-  if (!currentUserId || !currentSessionId) return;
+  if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
 
   try {
     const currentTime = Date.now();
-    const msSinceGameStart = currentTime - sessionStartTime;
-    const msSinceRoundStart =
-      roundStartTime !== null ? currentTime - roundStartTime : null;
-    const msSinceLastPress =
-      lastButtonPressTime !== null ? currentTime - lastButtonPressTime : null;
+    const msSinceRoundStart = roundStartTime
+      ? currentTime - roundStartTime
+      : null;
+    const msSinceLastPress = lastButtonPressTime
+      ? currentTime - lastButtonPressTime
+      : null;
     lastButtonPressTime = currentTime;
 
     const buttonPressData = {
-      buttonType,
-      msSinceGameStart,
-      msSinceRoundStart, // NEW: Time since current round started
+      buttonType: buttonType, // String for readability
+      buttonTypeCode: BUTTON_TYPE_MAP[buttonType] || 0, // Integer for analysis
+      msSinceRoundStart,
       msSinceLastPress,
-      roundNumber: currentRoundNumber, // NEW: Which round this press occurred in
-      gameState: {
-        vial1Level: Math.round(gameState.vial1Level * 100) / 100,
-        vial2Level: Math.round(gameState.vial2Level * 100) / 100,
-        numBuckets: gameState.numBuckets,
-        ...(gameState.numBuckets === 2 && {
-          bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
-        }),
-        ...(gameState.numBuckets >= 1 && {
-          bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
-        }),
-        gameRunning: gameState.gameRunning,
-        currentRound: gameState.currentRound,
-        score: gameState.score,
-        roundTimeRemaining: gameState.roundTimeRemaining,
-      },
+      timestamp: serverTimestamp(),
+
+      // Vial levels at button press
+      vial1Level: Math.round(gameState.vial1Level * 100) / 100,
+      vial2Level: Math.round(gameState.vial2Level * 100) / 100,
+
+      // Bucket levels at button press
+      bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
+      bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
+
+      // Add amount (from game params)
+      addAmount: gameState.addAmount || 5, // Default from GAME_PARAMS.ADD_AMOUNT
+
+      // Time remaining in round
+      roundTimeRemaining: gameState.roundTimeRemaining || 0,
+
+      // Additional context
+      roundNumber: currentRoundNumber,
+      velocity: Math.round(gameState.velocity * 100) / 100,
+      setpoint: Math.round(gameState.setpoint * 100) / 100,
     };
 
+    // Add to button_presses subcollection under current round
     const pressesRef = collection(
       db,
       "user_sessions",
       currentUserId,
       "sessions",
       currentSessionId,
+      "rounds",
+      currentRoundDocId,
       "button_presses"
     );
 
@@ -213,59 +259,39 @@ export const logButtonPress = async (buttonType, gameState) => {
 };
 
 /**
- * Log vial level snapshots
+ * Log round completion
+ * Updates the round document with outcome
+ * @param {boolean} successful - Whether round was completed successfully
  */
-export const logVialLevels = async (gameState) => {
-  if (!currentUserId || !currentSessionId) return;
+export const logRoundEnd = async (successful) => {
+  if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
 
   try {
-    const currentTime = Date.now();
-    const msSinceGameStart = currentTime - sessionStartTime;
-    const msSinceRoundStart =
-      roundStartTime !== null ? currentTime - roundStartTime : null;
+    const roundEndTime = Date.now();
+    const roundDuration = roundStartTime ? roundEndTime - roundStartTime : null;
 
-    // Calculate distance from setpoint (above is positive, below is negative)
-    const vial1DistanceFromSetpoint = gameState.setpoint
-      ? Math.round((gameState.vial1Level - gameState.setpoint) * 100) / 100
-      : null;
-    const vial2DistanceFromSetpoint = gameState.setpoint
-      ? Math.round((gameState.vial2Level - gameState.setpoint) * 100) / 100
-      : null;
-
-    const vialSnapshot = {
-      msSinceGameStart,
-      msSinceRoundStart, // NEW: Time since current round started
-      vial1Level: Math.round(gameState.vial1Level * 100) / 100,
-      vial2Level: Math.round(gameState.vial2Level * 100) / 100,
-      vial1DistanceFromSetpoint,
-      vial2DistanceFromSetpoint,
-      setpoint: gameState.setpoint,
-      numBuckets: gameState.numBuckets,
-      ...(gameState.numBuckets === 2 && {
-        bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
-      }),
-      ...(gameState.numBuckets >= 1 && {
-        bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
-      }),
-      currentRound: gameState.currentRound,
-      roundNumber: currentRoundNumber, // NEW: Which round this snapshot is from
-      score: gameState.score,
-      roundTimeRemaining: gameState.roundTimeRemaining,
-      velocity: gameState.velocity,
-    };
-
-    const vialRef = collection(
+    const roundRef = doc(
       db,
       "user_sessions",
       currentUserId,
       "sessions",
       currentSessionId,
-      "vial_snapshots"
+      "rounds",
+      currentRoundDocId
     );
 
-    await addDoc(vialRef, vialSnapshot);
+    await updateDoc(roundRef, {
+      roundComplete: 1,
+      roundSuccessful: successful ? 1 : 0,
+      roundEndTime,
+      roundDuration,
+    });
+
+    console.log(
+      `Round ${currentRoundNumber} ended: ${successful ? "SUCCESS" : "FAILURE"}`
+    );
   } catch (error) {
-    console.error("Error logging vial levels:", error);
+    console.error("Error logging round end:", error);
   }
 };
 
@@ -285,15 +311,48 @@ export const endSession = async () => {
     );
     await updateDoc(sessionRef, {
       endTime: serverTimestamp(),
+      sessionDuration: Date.now() - sessionStartTime,
     });
 
     console.log("Session ended:", currentSessionId);
+
+    // Reset all state
     currentSessionId = null;
     currentUserId = null;
     lastButtonPressTime = null;
     roundStartTime = null;
     currentRoundNumber = null;
+    currentRoundDocId = null;
   } catch (error) {
     console.error("Error ending session:", error);
   }
+};
+
+/**
+ * Get mapping documentation for data analysis
+ * @returns {object} All mappings and reverse mappings
+ */
+export const getMappings = () => {
+  return {
+    buttonTypes: {
+      forward: BUTTON_TYPE_MAP,
+      reverse: BUTTON_TYPE_REVERSE,
+    },
+    gameVersions: {
+      forward: GAME_VERSION_MAP,
+      reverse: GAME_VERSION_REVERSE,
+    },
+    phases: {
+      forward: PHASE_MAP,
+      reverse: PHASE_REVERSE,
+    },
+  };
+};
+
+/**
+ * Export mappings as JSON for documentation
+ * @returns {string} JSON string of all mappings
+ */
+export const exportMappingsJSON = () => {
+  return JSON.stringify(getMappings(), null, 2);
 };

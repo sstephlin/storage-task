@@ -1,7 +1,8 @@
-// Game Parameters
+import { PRODUCTION_MODE, getParticipantVersion } from "./participantConfig";
+
 export const GAME_PARAMS = {
   DRAIN_RATE: 0.5,
-  ADD_AMOUNT: 5,
+  ADD_AMOUNT: 20,
   MAX_LEVEL: 100,
   OPTIMAL_ZONE_MIN: 35,
   OPTIMAL_ZONE_MAX: 50,
@@ -14,6 +15,7 @@ export const GAME_PARAMS = {
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
   TRANSITION_TIME: 3000,
+  SETPOINT: 50,
 };
 
 export const getZonePercentages = () => {
@@ -92,14 +94,14 @@ export const VERSION_CONFIG = {
 // Version-specific velocity configurations
 export const VERSION_VELOCITIES = {
   [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: {
-    SLOW: 0.5,
-    MEDIUM: 0.7,
-    FAST: 0.9,
+    SLOW: 1.6,
+    MEDIUM: 1.8,
+    FAST: 2.0,
   },
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
-    SLOW: 0.6,
-    MEDIUM: 0.8,
-    FAST: 1.0,
+    SLOW: 1.6,
+    MEDIUM: 1.8,
+    FAST: 2.0,
   },
   [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
     SLOW: 0.6,
@@ -113,16 +115,40 @@ export const VERSION_VELOCITIES = {
   },
 };
 
+export const VERSION_BUTTON_DELAYS = {
+  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: 300,
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: 0,
+  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: 200,
+  [GAME_VERSIONS.TWO_VIALS_PHASES]: 200,
+};
+
+export const VERSION_DEPRIVATION_CONFIG = {
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
+    minTimeUntilDisable: 2000,
+    maxTimeUntilDisable: 4000,
+    minDisableDuration: 4000,
+    maxDisableDuration: 6000,
+  },
+  [GAME_VERSIONS.TWO_VIALS_PHASES]: {
+    minTimeUntilDisable: 5000,
+    maxTimeUntilDisable: 10000,
+    minDisableDuration: 2000,
+    maxDisableDuration: 4000,
+  },
+};
+
 // Configuration for ONE_VIAL_ALTERNATING version
 export const ONE_VIAL_ALTERNATING_CONFIG = {
   // Set to 'storage', 'no_storage', or null for random
-  FORCE_START_PHASE: null, // Change to 'storage' or 'no_storage' to force a starting phase
+  FORCE_START_PHASE: null,
 };
-// Configuration for phase-based versions (ONE_VIAL_ALWAYS_BUCKET and TWO_VIALS_PHASES)
+
+// Configuration for phase-based versions
 export const PHASE_CONFIG = {
   // Set to 'abundance', 'deprivation', or null for random
-  FORCE_START_PHASE: null, // Change to 'abundance' or 'deprivation' to force a starting phase
+  FORCE_START_PHASE: null,
 };
+
 // Get list of enabled versions
 export const getEnabledVersions = () => {
   return Object.entries(VERSION_CONFIG)
@@ -137,25 +163,59 @@ export const selectRandomVersion = () => {
   return enabledVersions[randomIndex];
 };
 
-// Force a specific version (for testing/debugging)
-// export const FORCE_VERSION = GAME_VERSIONS.ONE_VIAL_ALTERNATING;
-// export const FORCE_VERSION = GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET;
-// export const FORCE_VERSION = GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET;
-export const FORCE_VERSION = GAME_VERSIONS.TWO_VIALS_PHASES;
-// export const FORCE_VERSION = null; // Set to null for random
+// Force a specific version (for development/debugging only)
+// In production mode, this is ignored in favor of participant assignments
+export const FORCE_VERSION = PRODUCTION_MODE
+  ? null
+  : GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET;
 
-// Get the version to use
-export const getGameVersion = () => {
-  return FORCE_VERSION || selectRandomVersion();
+/**
+ * Get the game version to use
+ * In production: uses participant's assigned version
+ * In development: uses FORCE_VERSION or random
+ * @param {string} userId - Participant ID
+ * @returns {string} Game version identifier
+ */
+export const getGameVersion = (userId = null) => {
+  // In production mode, always use participant's assigned version
+  if (PRODUCTION_MODE && userId) {
+    const assignedVersion = getParticipantVersion(userId);
+    if (assignedVersion) {
+      console.log(`Using assigned version for ${userId}:`, assignedVersion);
+      return assignedVersion;
+    }
+    console.warn(`No version assigned to ${userId}, using random`);
+  }
+
+  // In development mode, use FORCE_VERSION if set
+  if (FORCE_VERSION) {
+    console.log("Using forced version (dev mode):", FORCE_VERSION);
+    return FORCE_VERSION;
+  }
+
+  // Fallback to random selection
+  const randomVersion = selectRandomVersion();
+  console.log("Using random version:", randomVersion);
+  return randomVersion;
 };
 
 /**
  * Generate sequences based on game version
  * Returns: { velocitySequence, bucketSequence, phaseSequence }
+ * @param {string} version - Game version identifier
+ * @param {number} totalRounds - Total number of rounds
+ * @param {object} customVelocities - Optional custom velocity config (for training mode)
  */
-export const generateGameSequences = (version, totalRounds = 24) => {
+export const generateGameSequences = (
+  version,
+  totalRounds = 24,
+  customVelocities = null,
+) => {
   const versionConfig = VERSION_CONFIG[version];
-  const velocities = VERSION_VELOCITIES[version];
+  // Use custom velocities if provided, otherwise use default VERSION_VELOCITIES
+  const velocities = customVelocities || VERSION_VELOCITIES[version];
+
+  console.log("generateGameSequences - Using velocities:", velocities);
 
   switch (version) {
     case GAME_VERSIONS.ONE_VIAL_ALTERNATING:
@@ -167,11 +227,6 @@ export const generateGameSequences = (version, totalRounds = 24) => {
 
     case GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET:
       return {
-        // velocitySequence: generateVelocitySequence(
-        //   totalRounds,
-        //   "varied",
-        //   velocities
-        // ),
         velocitySequence: generatePhaseVelocities(totalRounds, velocities, 4),
         bucketSequence: generateConstantBuckets(totalRounds, 1),
         phaseSequence: generateAlternatingPhases(totalRounds, null, 4),
@@ -196,16 +251,12 @@ export const generateGameSequences = (version, totalRounds = 24) => {
   }
 };
 
-/**
- * Generate bucket sequence for one vial alternating (Version 1)
- * 4 phases of 6 rounds each: storage -> no storage -> storage -> no storage
- * Can randomize or force starting phase
- */
+// [Rest of the helper functions remain the same as in your original code]
+
 const generateOneVialAlternatingBuckets = (totalRounds) => {
   const buckets = [];
   const roundsPerPhase = Math.floor(totalRounds / 4);
 
-  // Determine starting phase (randomize or force)
   let startWithStorage;
   if (ONE_VIAL_ALTERNATING_CONFIG.FORCE_START_PHASE === "storage") {
     startWithStorage = true;
@@ -217,10 +268,9 @@ const generateOneVialAlternatingBuckets = (totalRounds) => {
 
   console.log(
     "One Vial Alternating - Starting with:",
-    startWithStorage ? "STORAGE" : "NO STORAGE"
+    startWithStorage ? "STORAGE" : "NO STORAGE",
   );
 
-  // Generate 4 phases
   for (let phase = 0; phase < 4; phase++) {
     const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage;
 
@@ -235,79 +285,81 @@ const generateOneVialAlternatingBuckets = (totalRounds) => {
   return buckets;
 };
 
-/**
- * Generate velocity sequence for one vial alternating
- * Each phase has 2 of each velocity (slow, medium, fast) shuffled randomly
- */
+// const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
+//   const velocityArray = [];
+//   const roundsPerPhase = Math.floor(totalRounds / numPhases);
+//   const velocityIterations = roundsPerPhase / 3;
+
+//   for (let phase = 0; phase < numPhases; phase++) {
+//     const phaseVelocities = [];
+//     for (let iter = 0; iter < velocityIterations; iter++) {
+//       phaseVelocities.push(velocities.SLOW);
+//       phaseVelocities.push(velocities.MEDIUM);
+//       phaseVelocities.push(velocities.FAST);
+//     }
+
+//     shuffleArray(phaseVelocities);
+//     velocityArray.push(...phaseVelocities);
+//   }
+
+//   return velocityArray;
+// };
 const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
   const velocityArray = [];
-  const roundsPerPhase = Math.floor(totalRounds / numPhases); // 6 rounds per phase
-  const velocityIterations = roundsPerPhase / 3;
 
-  // Generate velocities for each phase
-  for (let phase = 0; phase < 4; phase++) {
+  // Handle small round counts (like training mode with 2 rounds)
+  if (totalRounds < numPhases) {
+    // For very short games, just generate velocities in order for each round
+    const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
+    for (let i = 0; i < totalRounds; i++) {
+      velocityArray.push(velocityTypes[i % 3]);
+    }
+    shuffleArray(velocityArray);
+    console.log(
+      `Generated ${totalRounds} velocities for short game:`,
+      velocityArray,
+    );
+    return velocityArray;
+  }
+
+  // Original logic for normal-length games
+  const roundsPerPhase = Math.floor(totalRounds / numPhases);
+  const velocityIterations = Math.floor(roundsPerPhase / 3);
+
+  for (let phase = 0; phase < numPhases; phase++) {
     const phaseVelocities = [];
+
+    // Generate velocity triplets
     for (let iter = 0; iter < velocityIterations; iter++) {
       phaseVelocities.push(velocities.SLOW);
       phaseVelocities.push(velocities.MEDIUM);
       phaseVelocities.push(velocities.FAST);
     }
 
-    // Shuffle this phase's velocities
-    shuffleArray(phaseVelocities);
+    // Handle remaining rounds in this phase
+    const remainingInPhase = roundsPerPhase - velocityIterations * 3;
+    const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
+    for (let i = 0; i < remainingInPhase; i++) {
+      phaseVelocities.push(velocityTypes[i % 3]);
+    }
 
-    // Add to main array
+    shuffleArray(phaseVelocities);
     velocityArray.push(...phaseVelocities);
   }
 
-  return velocityArray;
-};
-
-/**
- * Generate velocity sequence
- * mode: "constant", "varied", "increasing"
- * velocities: object with SLOW, MEDIUM, FAST values
- */
-const generateVelocitySequence = (totalRounds, mode = "varied", velocities) => {
-  const velocityArray = [];
-
-  if (mode === "constant") {
-    for (let i = 0; i < totalRounds; i++) {
-      velocityArray.push(velocities.MEDIUM);
-    }
-  } else if (mode === "varied") {
-    const rateArray = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
-    // Each rate appears totalRounds/3 times
-    const perRate = Math.floor(totalRounds / 3);
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < perRate; j++) {
-        velocityArray.push(rateArray[i]);
-      }
-    }
-    // Fill remaining rounds
-    while (velocityArray.length < totalRounds) {
-      velocityArray.push(rateArray[velocityArray.length % 3]);
-    }
-    // Shuffle
-    shuffleArray(velocityArray);
-  } else if (mode === "increasing") {
-    for (let i = 0; i < totalRounds; i++) {
-      if (i < totalRounds / 3) {
-        velocityArray.push(velocities.SLOW);
-      } else if (i < (2 * totalRounds) / 3) {
-        velocityArray.push(velocities.MEDIUM);
-      } else {
-        velocityArray.push(velocities.FAST);
-      }
-    }
+  // Handle any remaining rounds due to rounding
+  const remaining = totalRounds - velocityArray.length;
+  const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
+  for (let i = 0; i < remaining; i++) {
+    velocityArray.push(velocityTypes[i % 3]);
   }
 
+  console.log(
+    `Generated ${velocityArray.length} velocities for ${totalRounds} rounds`,
+  );
   return velocityArray;
 };
 
-/**
- * Bucket sequence for one vial always having bucket
- */
 const generateConstantBuckets = (totalRounds, vialNumber = 1) => {
   const buckets = [];
   for (let i = 0; i < totalRounds; i++) {
@@ -319,32 +371,23 @@ const generateConstantBuckets = (totalRounds, vialNumber = 1) => {
   return buckets;
 };
 
-/**
- * Two vials, single bucket alternating between them or neither
- * 6 phases total (2 iterations of 3 bucket states in randomized order)
- * Each phase lasts totalRounds/6 rounds
- */
 const generateTwoVialSingleBucket = (totalRounds) => {
   const buckets = [];
   const numPhases = Math.floor(totalRounds / 6);
   const roundsPerPhase = Math.floor(totalRounds / 6);
 
-  // Define the three bucket states
   const bucketStates = [
-    { vial1: 1, vial2: 0 }, // Left has bucket
-    { vial1: 0, vial2: 1 }, // Right has bucket
-    { vial1: 0, vial2: 0 }, // Neither has bucket
+    { vial1: 1, vial2: 0 },
+    { vial1: 0, vial2: 1 },
+    { vial1: 0, vial2: 0 },
   ];
 
-  // Create randomized order for first iteration
   const firstIteration = [...bucketStates];
   shuffleArray(firstIteration);
 
-  // Create randomized order for second iteration
   const secondIteration = [...bucketStates];
   shuffleArray(secondIteration);
 
-  // Combine both iterations
   const phaseOrder = [...firstIteration, ...secondIteration];
 
   console.log(
@@ -353,10 +396,9 @@ const generateTwoVialSingleBucket = (totalRounds) => {
       if (state.vial1 === 1) return `Phase ${idx + 1}: Left`;
       if (state.vial2 === 1) return `Phase ${idx + 1}: Right`;
       return `Phase ${idx + 1}: Neither`;
-    })
+    }),
   );
 
-  // Generate bucket sequence based on phase order
   for (let phase = 0; phase < numPhases; phase++) {
     const bucketState = phaseOrder[phase];
     for (let i = 0; i < roundsPerPhase; i++) {
@@ -371,21 +413,19 @@ const generateDynamicBuckets = (totalRounds, numPhases) => {
   const buckets = [];
   const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const options = [
-    { vial1: 1, vial2: 0 }, // Left has bucket
-    { vial1: 0, vial2: 1 }, // Right has bucket
+    { vial1: 1, vial2: 0 },
+    { vial1: 0, vial2: 1 },
   ];
 
   for (let phase = 0; phase < numPhases; phase++) {
     const bucketPhase = [];
     const pairsNeeded = Math.floor(roundsPerPhase / 2);
 
-    // Add pairs of left and right buckets
     for (let i = 0; i < pairsNeeded; i++) {
       bucketPhase.push({ ...options[0] });
       bucketPhase.push({ ...options[1] });
     }
 
-    // If odd number of rounds, add one more randomly
     if (roundsPerPhase % 2 !== 0) {
       const randomChoice = Math.floor(Math.random() * 2);
       bucketPhase.push({ ...options[randomChoice] });
@@ -398,9 +438,6 @@ const generateDynamicBuckets = (totalRounds, numPhases) => {
   return buckets;
 };
 
-/**
- * Generate constant phase
- */
 const generateConstantPhase = (totalRounds, phase = "abundance") => {
   const phases = [];
   for (let i = 0; i < totalRounds; i++) {
@@ -409,20 +446,14 @@ const generateConstantPhase = (totalRounds, phase = "abundance") => {
   return phases;
 };
 
-/**
- * Generate alternating phases
- * @param {number} totalRounds - Total number of rounds
- * @param {string} forceStartPhase - 'abundance', 'deprivation', or null for random
- */
 const generateAlternatingPhases = (
   totalRounds,
   forceStartPhase = null,
-  numPhases
+  numPhases,
 ) => {
   const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const phases = [];
 
-  // Determine starting phase based on PHASE_CONFIG or parameter
   let startingPhase;
   const configuredPhase = PHASE_CONFIG.FORCE_START_PHASE || forceStartPhase;
 
@@ -430,32 +461,26 @@ const generateAlternatingPhases = (
     startingPhase = configuredPhase;
     console.log("Using configured starting phase:", startingPhase);
   } else {
-    // Random selection
     startingPhase = Math.random() < 0.5 ? "abundance" : "deprivation";
     console.log("Randomly selected starting phase:", startingPhase);
   }
 
-  // Determine which phase comes first and second
   const firstPhase = startingPhase;
   const secondPhase =
     startingPhase === "abundance" ? "deprivation" : "abundance";
 
-  // First quarter
   for (let i = 0; i < roundsPerPhase; i++) {
     phases.push(firstPhase);
   }
 
-  // Second quarter
   for (let i = 0; i < roundsPerPhase; i++) {
     phases.push(secondPhase);
   }
 
-  // Third quarter
   for (let i = 0; i < roundsPerPhase; i++) {
     phases.push(firstPhase);
   }
 
-  // Fourth quarter (fill remaining)
   const remainingRounds = totalRounds - roundsPerPhase * 3;
   for (let i = 0; i < remainingRounds; i++) {
     phases.push(secondPhase);
@@ -464,13 +489,12 @@ const generateAlternatingPhases = (
   console.log(
     "Generated phase sequence (starting with",
     startingPhase + "):",
-    phases
+    phases,
   );
 
   return phases;
 };
 
-// Utility function for shuffling
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -501,4 +525,20 @@ export const INSTRUCTIONS = {
   CONTROLS_BASE: "← Left Arrow: Add to Vial 1 | → Right Arrow: Add to Vial 2",
   CONTROLS_WITH_BUCKET: " | ↑ Up Arrow: Empty Bucket",
   ENDING: "Survive each round to earn points!",
+};
+
+export const TRAINING_PARAMS = {
+  MAX_ROUNDS: 10, // Number of practice rounds
+  ROUND_DURATION: 15, // Seconds per round
+  REQUIRED_SURVIVAL_RATE: 0.5, // 0.5 = 50% needed to pass
+
+  VELOCITIES: {
+    // Adjust these to make training easier/harder
+    one_vial_alternating: {
+      SLOW: 1.2, // Lower = easier
+      MEDIUM: 1.4,
+      FAST: 1.6,
+    },
+    // ... other versions
+  },
 };

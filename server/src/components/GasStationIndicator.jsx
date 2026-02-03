@@ -20,46 +20,6 @@ const GasStationIndicator = ({ isActive }) => {
           height: "160px",
         }}
       >
-        {/* Canopy/Roof */}
-        {/* <div
-          style={{
-            position: "absolute",
-            top: "0",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "140px",
-            height: "8px",
-            backgroundColor: isActive ? "#4CAF50" : "#666",
-            borderRadius: "4px 4px 0 0",
-            transition: "background-color 0.3s ease",
-            boxShadow: isActive ? "0 0 20px rgba(76, 175, 80, 0.8)" : "none",
-          }}
-        /> */}
-
-        {/* Canopy Support Poles */}
-        {/* <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            left: "15px",
-            width: "4px",
-            height: "30px",
-            backgroundColor: isActive ? "#4CAF50" : "#666",
-            transition: "background-color 0.3s ease",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "15px",
-            width: "4px",
-            height: "30px",
-            backgroundColor: isActive ? "#4CAF50" : "#666",
-            transition: "background-color 0.3s ease",
-          }}
-        /> */}
-
         {/* Gas Pump Body */}
         <div
           style={{

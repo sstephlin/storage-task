@@ -1,10 +1,16 @@
 import React from "react";
 import { GAME_PARAMS } from "../params";
 import "../styles/Vial.css";
-import ZoneMeter from "./ZoneMeter";
 import { Star, Flame, Skull } from "lucide-react";
 
-const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
+const Vial = ({
+  level,
+  numBuckets,
+  bucketLevel,
+  liquidColor = "#4A90E2",
+  isTrainingMode = false,
+  trainingColors = null,
+}) => {
   const displayLevel = Math.min(level, 100);
 
   // Determine if liquid is in optimal zone
@@ -12,8 +18,12 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
     level >= GAME_PARAMS.OPTIMAL_ZONE_MIN &&
     level <= GAME_PARAMS.OPTIMAL_ZONE_MAX;
 
-  // Calculate if pipe should show flow (only when liquid reaches optimal zone AND bucket has room)
-  const isPipeActive = numBuckets > 0 && level >= GAME_PARAMS.MAX_LEVEL;
+  // Get icon colors based on training mode
+  const dangerColor =
+    isTrainingMode && trainingColors ? trainingColors.danger : "#dc2626";
+
+  const optimalColor =
+    isTrainingMode && trainingColors ? trainingColors.optimal : "#000000";
 
   return (
     <div className="vial-container">
@@ -26,19 +36,18 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
           />
 
           {/* Top danger line with flame icon */}
-
           <div
             style={{
               position: "absolute",
               top: "5%",
-              left: "-25px",
+              left: "-30px",
               transform: "translateY(-50%)",
             }}
           >
-            <Flame size={20} fill="#dc2626" color="#dc2626" />
+            <Flame size={30} fill={dangerColor} color={dangerColor} />
           </div>
 
-          {/* Center line with star icon */}
+          {/* Center line with star icon - golden/amber in training mode */}
           <div
             className="center-line-container"
             style={{
@@ -57,21 +66,21 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
               style={{
                 flex: 1,
                 height: "2px",
-                backgroundColor: "#000000",
+                backgroundColor: optimalColor,
                 opacity: 0.8,
               }}
             ></div>
             <Star
               size={16}
-              fill="#000000"
-              color="#000000"
+              fill={optimalColor}
+              color={optimalColor}
               style={{ margin: "0 4px" }}
             />
             <div
               style={{
                 flex: 1,
                 height: "2px",
-                backgroundColor: "#000000",
+                backgroundColor: optimalColor,
                 opacity: 0.8,
               }}
             ></div>
@@ -82,11 +91,11 @@ const Vial = ({ level, numBuckets, bucketLevel, liquidColor = "#4A90E2" }) => {
             style={{
               position: "absolute",
               bottom: "5%",
-              left: "-25px",
+              left: "-30px",
               transform: "translateY(50%)",
             }}
           >
-            <Skull size={20} fill="transparent" color="#dc2626" />
+            <Skull size={30} fill="transparent" color={dangerColor} />
           </div>
         </div>
       </div>

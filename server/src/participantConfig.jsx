@@ -1,109 +1,236 @@
 // Participant Configuration for Experiments
-// Add your pre-assigned participant IDs here
 
-export const PARTICIPANT_IDS = [
-  "P001",
-  "P002",
-  "P003",
-  "P004",
-  "P005",
-  "P006",
-  "P007",
-  "P008",
-  "P009",
-  "P010",
-  "P011",
-  "P012",
-  "P013",
-  "P014",
-  "P015",
-  "P016",
-  "P017",
-  "P018",
-  "P019",
-  "P020",
-  "P021",
-  "P022",
-  "P023",
-  "P024",
-  "P025",
-  "P026",
-  "P027",
-  "P028",
-  "P029",
-  "P030",
-  "P031",
-  "P032",
-  "P033",
-  "P034",
-  "P035",
-  "P036",
-  "P037",
-  "P038",
-  "P039",
-  "P040",
+// ============================================================================
+// PRODUCTION MODE CONTROL
+// ============================================================================
+// Set to true to enable all security features (PIN auth, single access, etc.)
+// Set to false for development/debugging (bypasses all restrictions)
+// Development mode (no restrictions)
+export const PRODUCTION_MODE = false;
 
-  // Add more participant IDs as needed
+// Production mode (all security features enabled)
+// export const PRODUCTION_MODE = true;
+// ============================================================================
+// PARTICIPANT DATABASE
+// ============================================================================
+// Each participant has:
+// - id: Unique participant identifier
+// - pin: 4-digit PIN for authentication
+// - version: Game version they're assigned to
+// Format: { id: string, pin: string, version: string }
+
+export const PARTICIPANTS = [
+  { id: "P001", pin: "4827", version: "one_vial_alternating" },
+  { id: "P002", pin: "9503", version: "one_vial_always_bucket" },
+  { id: "P003", pin: "1764", version: "two_vials_single_bucket" },
+  { id: "P004", pin: "6389", version: "two_vials_phases" },
+  { id: "P005", pin: "2048", version: "one_vial_alternating" },
+  { id: "P006", pin: "7196", version: "one_vial_always_bucket" },
+  { id: "P007", pin: "5831", version: "two_vials_single_bucket" },
+  { id: "P008", pin: "0946", version: "two_vials_phases" },
+  { id: "P009", pin: "8610", version: "one_vial_alternating" },
+  { id: "P010", pin: "4375", version: "one_vial_always_bucket" },
+  { id: "P011", pin: "6924", version: "two_vials_single_bucket" },
+  { id: "P012", pin: "1508", version: "two_vials_phases" },
+  { id: "P013", pin: "9736", version: "one_vial_alternating" },
+  { id: "P014", pin: "2819", version: "one_vial_always_bucket" },
+  { id: "P015", pin: "7450", version: "two_vials_single_bucket" },
+  { id: "P016", pin: "3167", version: "two_vials_phases" },
+  { id: "P017", pin: "8042", version: "one_vial_alternating" },
+  { id: "P018", pin: "5693", version: "one_vial_always_bucket" },
+  { id: "P019", pin: "1284", version: "two_vials_single_bucket" },
+  { id: "P020", pin: "9075", version: "two_vials_phases" },
+  { id: "P021", pin: "3541", version: "one_vial_alternating" },
+  { id: "P022", pin: "6680", version: "one_vial_always_bucket" },
+  { id: "P023", pin: "4926", version: "two_vials_single_bucket" },
+  { id: "P024", pin: "0159", version: "two_vials_phases" },
+  { id: "P025", pin: "7814", version: "one_vial_alternating" },
+  { id: "P026", pin: "2368", version: "one_vial_always_bucket" },
+  { id: "P027", pin: "9401", version: "two_vials_single_bucket" },
+  { id: "P028", pin: "5072", version: "two_vials_phases" },
+  { id: "P029", pin: "6195", version: "one_vial_alternating" },
+  { id: "P030", pin: "8734", version: "one_vial_always_bucket" },
+  { id: "P031", pin: "0427", version: "two_vials_single_bucket" },
+  { id: "P032", pin: "6958", version: "two_vials_phases" },
+  { id: "P033", pin: "1843", version: "one_vial_alternating" },
+  { id: "P034", pin: "9206", version: "one_vial_always_bucket" },
+  { id: "P035", pin: "3579", version: "two_vials_single_bucket" },
+  { id: "P036", pin: "4612", version: "two_vials_phases" },
+  { id: "P037", pin: "7085", version: "one_vial_alternating" },
+  { id: "P038", pin: "2390", version: "one_vial_always_bucket" },
+  { id: "P039", pin: "8561", version: "two_vials_single_bucket" },
+  { id: "P040", pin: "5148", version: "two_vials_phases" },
 ];
 
-// Experiment settings
-export const EXPERIMENT_CONFIG = {
-  // Set to true to require participants to use pre-assigned IDs only
-  REQUIRE_PREASSIGNED_ID: true,
+// ============================================================================
+// VERSION ASSIGNMENT FOR DEBUG MODE
+// ============================================================================
+const VERSIONS = [
+  "one_vial_alternating",
+  "one_vial_always_bucket",
+  "two_vials_single_bucket",
+  "two_vials_phases",
+];
 
-  // Set to true to allow custom IDs (for testing)
-  ALLOW_CUSTOM_ID: false,
+/**
+ * Get version for participant ID in debug mode
+ * Maps participant IDs to versions the same way as production
+ * @param {string} participantId - Participant ID
+ * @returns {string} Game version
+ */
+const getDebugVersion = (participantId) => {
+  // Check if it's a standard P### format
+  const match = participantId.match(/^P(\d+)$/);
 
-  // Set to true to allow random ID generation (for testing)
-  ALLOW_RANDOM_ID: false,
+  if (match) {
+    // Extract number (e.g., "P001" -> 1)
+    const num = parseInt(match[1], 10);
+    // Map to version using same pattern as PARTICIPANTS array
+    // P001, P005, P009, P013... -> one_vial_alternating
+    // P002, P006, P010, P014... -> one_vial_always_bucket
+    // P003, P007, P011, P015... -> two_vials_single_bucket
+    // P004, P008, P012, P016... -> two_vials_phases
+    return VERSIONS[(num - 1) % 4];
+  }
 
-  // Prefix for auto-generated participant IDs (if you want sequential IDs)
-  ID_PREFIX: "P",
+  // For non-standard IDs, default to first version
+  return VERSIONS[0];
+};
 
-  // ID format validation (regex pattern)
-  // Default: Alphanumeric, underscores, hyphens
-  ID_PATTERN: /^[a-zA-Z0-9_-]+$/,
+// ============================================================================
+// VALIDATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Validate participant credentials
+ * @param {string} participantId - Participant ID
+ * @param {string} pin - 4-digit PIN
+ * @returns {Object|null} Participant object if valid, null otherwise
+ */
+export const validateCredentials = (participantId, pin) => {
+  if (!PRODUCTION_MODE) {
+    // In dev mode, return mock participant with correct version mapping
+    return {
+      id: participantId || "P001",
+      pin: pin || "0000",
+      version: getDebugVersion(participantId || "P001"),
+    };
+  }
+
+  const participant = PARTICIPANTS.find(
+    (p) => p.id === participantId && p.pin === pin,
+  );
+
+  return participant || null;
 };
 
 /**
- * Generate sequential participant IDs
- * @param {number} count - Number of IDs to generate
- * @param {number} startNumber - Starting number (default: 1)
- * @returns {string[]} Array of participant IDs
+ * Check if participant ID exists
+ * @param {string} participantId - Participant ID to check
+ * @returns {boolean} True if ID exists
  */
-export const generateSequentialIds = (count, startNumber = 1) => {
-  const ids = [];
-  for (let i = 0; i < count; i++) {
-    const num = (startNumber + i).toString().padStart(3, "0");
-    ids.push(`${EXPERIMENT_CONFIG.ID_PREFIX}${num}`);
-  }
-  return ids;
+export const participantExists = (participantId) => {
+  if (!PRODUCTION_MODE) return true;
+  return PARTICIPANTS.some((p) => p.id === participantId);
 };
 
 /**
- * Check if a participant ID is valid
- * @param {string} id - Participant ID to validate
- * @returns {boolean} Whether the ID is valid
+ * Get participant by ID
+ * @param {string} participantId - Participant ID
+ * @returns {Object|null} Participant object if found, null otherwise
  */
-export const isValidParticipantId = (id) => {
-  if (EXPERIMENT_CONFIG.REQUIRE_PREASSIGNED_ID) {
-    return PARTICIPANT_IDS.includes(id);
+export const getParticipant = (participantId) => {
+  if (!PRODUCTION_MODE) {
+    return {
+      id: participantId || "P001",
+      pin: "0000",
+      version: getDebugVersion(participantId || "P001"),
+    };
   }
-  return EXPERIMENT_CONFIG.ID_PATTERN.test(id);
+
+  return PARTICIPANTS.find((p) => p.id === participantId) || null;
 };
 
 /**
- * Get validation error message
- * @param {string} id - Participant ID that failed validation
- * @returns {string} Error message
+ * Get game version for participant
+ * @param {string} participantId - Participant ID
+ * @returns {string} Game version identifier
  */
-export const getValidationError = (id) => {
-  if (EXPERIMENT_CONFIG.REQUIRE_PREASSIGNED_ID) {
-    return "Invalid Participant ID. Please use your assigned ID.";
-  }
-  return "Invalid ID format. Use only letters, numbers, underscores, and hyphens.";
+export const getParticipantVersion = (participantId) => {
+  const participant = getParticipant(participantId);
+  return participant ? participant.version : null;
 };
 
-// Example: Generate 100 sequential IDs (P001 to P100)
-// Uncomment and use this to quickly populate PARTICIPANT_IDS
-// export const PARTICIPANT_IDS = generateSequentialIds(100);
+// ============================================================================
+// UTILITY FUNCTIONS FOR SETUP
+// ============================================================================
+
+/**
+ * Generate random 4-digit PIN
+ * @returns {string} 4-digit PIN
+ */
+export const generateRandomPin = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
+/**
+ * Generate participant list with random PINs
+ * Useful for initial setup
+ * @param {string[]} participantIds - Array of participant IDs
+ * @param {string[]} versions - Array of version identifiers
+ * @returns {Object[]} Array of participant objects
+ */
+export const generateParticipantList = (participantIds, versions) => {
+  return participantIds.map((id, index) => ({
+    id,
+    pin: generateRandomPin(),
+    version: versions[index % versions.length], // Distribute versions evenly
+  }));
+};
+
+/**
+ * Export participants as CSV string for distribution
+ * @returns {string} CSV formatted participant data
+ */
+export const exportParticipantsAsCSV = () => {
+  const header = "Participant ID,PIN,Game Version\n";
+  const rows = PARTICIPANTS.map((p) => `${p.id},${p.pin},${p.version}`).join(
+    "\n",
+  );
+  return header + rows;
+};
+
+/**
+ * Get statistics about participant distribution
+ * @returns {Object} Statistics object
+ */
+export const getParticipantStats = () => {
+  const versionCounts = {};
+  PARTICIPANTS.forEach((p) => {
+    versionCounts[p.version] = (versionCounts[p.version] || 0) + 1;
+  });
+
+  return {
+    total: PARTICIPANTS.length,
+    byVersion: versionCounts,
+  };
+};
+
+// ============================================================================
+// EXAMPLE: Generate new participant list (commented out)
+// ============================================================================
+/*
+const participantIds = Array.from({ length: 40 }, (_, i) => 
+  `P${String(i + 1).padStart(3, '0')}`
+);
+
+const versions = [
+  'one_vial_alternating',
+  'one_vial_always_bucket',
+  'two_vials_single_bucket',
+  'two_vials_phases'
+];
+
+const newParticipants = generateParticipantList(participantIds, versions);
+console.log(JSON.stringify(newParticipants, null, 2));
+*/

@@ -130,7 +130,7 @@ const TUTORIAL_SLIDES = [
       options: [
         { id: "a", text: "They drain", correct: true },
         { id: "b", text: "Nothing", correct: false },
-        { id: "c", text: "They fil", correct: false },
+        { id: "c", text: "They fill", correct: false },
         {
           id: "d",
           text: "The gloop container fills, but the glep container drains",
@@ -176,7 +176,7 @@ const TUTORIAL_SLIDES = [
   {
     id: 16,
     title:
-      "Quick Check: What happens if one/both of Bleeblop’s containers empty?",
+      "Quick Check: What happens if one/both of Bleeblop's containers empty?",
     content: "",
     type: "quiz",
     quiz: {
@@ -234,7 +234,7 @@ const TUTORIAL_SLIDES = [
   },
   {
     id: 18,
-    title: "Awesome! Here’s how you can help BleeBlop:",
+    title: "Awesome! Here's how you can help BleeBlop:",
     content: "",
     image: "Picture8.png",
     showButtons: false,
@@ -365,6 +365,8 @@ const Tutorial = ({ onExit }) => {
   const [canProceed, setCanProceed] = useState(DEBUG_MODE);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [quizFeedback, setQuizFeedback] = useState(null);
+  const [quizAttempts, setQuizAttempts] = useState({});
+  const [isDisqualified, setIsDisqualified] = useState(false);
   const totalSlides = TUTORIAL_SLIDES.length;
   const slide = TUTORIAL_SLIDES[currentSlide];
 
@@ -404,7 +406,7 @@ const Tutorial = ({ onExit }) => {
       .map((opt) => opt.id);
 
     const userAnswers = Object.keys(selectedAnswers).filter(
-      (key) => selectedAnswers[key]
+      (key) => selectedAnswers[key],
     );
 
     // Check if all correct answers are selected and no incorrect ones
@@ -422,24 +424,48 @@ const Tutorial = ({ onExit }) => {
       }, 1500);
       return true;
     } else {
-      setQuizFeedback({
-        type: "error",
-        message: "Not quite right. Let's review that information again.",
-      });
-      setTimeout(() => {
-        setCurrentSlide(quiz.returnToSlide);
-        setSelectedAnswers({});
-        setQuizFeedback(null);
-      }, 2000);
-      return false;
+      // Track attempts for this slide
+      const currentAttempts = quizAttempts[slide.id] || 0;
+      const newAttempts = currentAttempts + 1;
+
+      setQuizAttempts((prev) => ({
+        ...prev,
+        [slide.id]: newAttempts,
+      }));
+
+      if (newAttempts >= 3) {
+        // Failed 3 times - disqualify
+        setQuizFeedback({
+          type: "error",
+          message:
+            "You have reached the maximum number of attempts. You will not be able to continue with the study.",
+        });
+        setTimeout(() => {
+          setIsDisqualified(true);
+        }, 2500);
+        return false;
+      } else {
+        // Show feedback with attempt count
+        const attemptsRemaining = 3 - newAttempts;
+        setQuizFeedback({
+          type: "error",
+          message: `Not quite right. Let's review that information again. (${attemptsRemaining} attempt${
+            attemptsRemaining !== 1 ? "s" : ""
+          } remaining)`,
+        });
+        setTimeout(() => {
+          setCurrentSlide(quiz.returnToSlide);
+          setSelectedAnswers({});
+          setQuizFeedback(null);
+        }, 2500);
+        return false;
+      }
     }
   };
 
   const handleCheckboxChange = (optionId) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [optionId]: !prev[optionId],
-    }));
+    // Use radio button logic - only one selection at a time
+    setSelectedAnswers({ [optionId]: true });
     setQuizFeedback(null);
   };
 
@@ -478,12 +504,51 @@ const Tutorial = ({ onExit }) => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [currentSlide, canProceed]);
 
+  // Show disqualification screen
+  if (isDisqualified) {
+    return (
+      <div className="tutorial-overlay">
+        <div className="tutorial-container">
+          <div
+            className="tutorial-content"
+            style={{ textAlign: "center", padding: "40px" }}
+          >
+            <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
+            <h1
+              className="tutorial-title"
+              style={{ color: "#e74c3c", marginBottom: "20px" }}
+            >
+              Study Participation Ended
+            </h1>
+            <div
+              className="tutorial-text"
+              style={{ fontSize: "18px", lineHeight: "1.6" }}
+            >
+              <p>
+                Unfortunately, you have reached the maximum number of attempts
+                for the comprehension questions.
+              </p>
+              <p>You will not be able to continue with this study.</p>
+              <p style={{ marginTop: "30px", color: "#666" }}>
+                Please close this window and contact the researcher if you have
+                any questions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="tutorial-overlay">
       <div className="tutorial-container">
         <button
           className="tutorial-exit"
-          onClick={onExit}
+          onClick={() => {
+            console.log("Tutorial: exit button clicked, onExit=", onExit);
+            if (typeof onExit === "function") onExit();
+          }}
           title="Exit Tutorial (ESC)"
         >
           <X size={24} />
@@ -538,11 +603,31 @@ const Tutorial = ({ onExit }) => {
           {/* Quiz section */}
           {slide.type === "quiz" && slide.quiz && (
             <div className="quiz-section">
+              {quizAttempts[slide.id] === 2 && !quizFeedback && (
+                <div
+                  className="quiz-warning"
+                  style={{
+                    background: "#fff3cd",
+                    border: "2px solid #ffc107",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    marginBottom: "20px",
+                    color: "#856404",
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    textAlign: "center",
+                  }}
+                >
+                  ⚠️ Warning: This is your final attempt. An incorrect answer
+                  will end your participation in the study.
+                </div>
+              )}
               <div className="quiz-options">
                 {slide.quiz.options.map((option) => (
                   <label key={option.id} className="quiz-option">
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name={`quiz-${slide.id}`}
                       checked={selectedAnswers[option.id] || false}
                       onChange={() => handleCheckboxChange(option.id)}
                       disabled={quizFeedback !== null}

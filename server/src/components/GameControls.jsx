@@ -12,19 +12,7 @@ const GameControls = ({
   bucketLevel,
   hasBucket,
 }) => {
-  return (
-    <div className="controls">
-      {/* <button className="restart" onClick={onRestart}>
-        {BUTTON_LABELS.RESTART}
-      </button> */}
-
-      {/* <button className="toggle-version" onClick={onToggleVersion}>
-        {hasBucket
-          ? BUTTON_LABELS.TOGGLE_WITH_BUCKET
-          : BUTTON_LABELS.TOGGLE_WITHOUT_BUCKET}
-      </button> */}
-    </div>
-  );
+  return <div className="controls"></div>;
 };
 
 export default GameControls;

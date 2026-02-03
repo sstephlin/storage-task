@@ -7,35 +7,53 @@ const RoundTransition = ({
   onComplete,
   totalRounds,
   score,
+  cumulativeProgress = 0, // Performance-based progress (0-100) - NEW position
+  previousProgress = 0, // Previous round's progress - OLD position
 }) => {
   const [countdown, setCountdown] = useState(3);
   const [showJourney, setShowJourney] = useState(true);
 
-  // Calculate previous and current progress
-  // Add Math.max to prevent negative values
-  const previousProgress = wasSuccessful
-    ? Math.min((Math.max(0, roundNumber - 1) / totalRounds) * 100, 100)
-    : Math.min((roundNumber / totalRounds) * 100, 100); // Stay at current position on failure
-
-  const currentProgress = wasSuccessful
-    ? Math.min((roundNumber / totalRounds) * 100, 100)
-    : Math.min((roundNumber / totalRounds) * 100, 100); // Stay at current position on failure
-
+  // Animated progress that will smoothly transition from previous to current
   const [journeyProgress, setJourneyProgress] = useState(previousProgress);
 
-  // Define the dotted path coordinates
+  // Define the dotted path coordinates - more points for smoother robot movement
   const pathDots = [
     { x: 15, y: 35 },
-    { x: 20, y: 45 },
+    { x: 17, y: 39 },
+    { x: 19, y: 43 },
+    { x: 21, y: 47 },
+    { x: 23, y: 51 },
     { x: 25, y: 55 },
-    { x: 32, y: 60 },
-    { x: 40, y: 62 },
-    { x: 48, y: 60 },
+    { x: 27, y: 57.5 },
+    { x: 29, y: 59.5 },
+    { x: 31, y: 60.5 },
+    { x: 33, y: 61 },
+    { x: 35, y: 61.5 },
+    { x: 37, y: 62 },
+    { x: 39, y: 62 },
+    { x: 41, y: 61.8 },
+    { x: 43, y: 61.5 },
+    { x: 45, y: 61 },
+    { x: 47, y: 60.5 },
+    { x: 49, y: 59.5 },
+    { x: 51, y: 58 },
+    { x: 53, y: 56.5 },
     { x: 55, y: 55 },
-    { x: 62, y: 48 },
-    { x: 68, y: 40 },
-    { x: 73, y: 32 },
-    { x: 78, y: 25 },
+    { x: 57, y: 53 },
+    { x: 59, y: 51 },
+    { x: 61, y: 49 },
+    { x: 63, y: 47 },
+    { x: 65, y: 44.5 },
+    { x: 67, y: 42 },
+    { x: 69, y: 39 },
+    { x: 71, y: 36 },
+    { x: 72.5, y: 34 },
+    { x: 74, y: 32 },
+    { x: 75.5, y: 30 },
+    { x: 77, y: 27.5 },
+    { x: 78.5, y: 25 },
+    { x: 80, y: 23 },
+    { x: 81, y: 21.5 },
     { x: 82, y: 20 },
   ];
 
@@ -62,13 +80,16 @@ const RoundTransition = ({
     };
   };
 
+  // Calculate goal position at 75%
+  const goalPosition = getRobotPosition(75);
+
   const robotPos = getRobotPosition(journeyProgress);
-  const currentDotIndex = Math.floor(
-    (journeyProgress / 100) * (pathDots.length - 1)
-  );
 
   // For display purposes
   const displayProgress = Math.round(journeyProgress);
+
+  // Check if robot has passed the goal
+  const hasPassedGoal = journeyProgress >= 75;
 
   // Countdown timer
   useEffect(() => {
@@ -76,8 +97,6 @@ const RoundTransition = ({
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // After countdown, show the journey map
-          setShowJourney(true);
           return 0;
         }
         return prev - 1;
@@ -87,27 +106,34 @@ const RoundTransition = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Journey animation - animate from previous position to current position
+  // Journey animation - animate from previousProgress to cumulativeProgress
   useEffect(() => {
     if (showJourney) {
-      const duration = 2000;
-      const steps = 60;
-      const progressDelta = currentProgress - previousProgress;
+      const duration = 2000; // 2 seconds for the journey animation
+      const steps = 60; // 60 steps for smooth animation
+      const progressDelta = cumulativeProgress - previousProgress;
 
-      // If no progress change (failed round), skip animation
+      // If no progress change (failed round or no change), just show current position
       if (Math.abs(progressDelta) < 0.01) {
-        setJourneyProgress(currentProgress);
-        setTimeout(onComplete, 1500);
-        return;
+        setJourneyProgress(cumulativeProgress);
+        const timer = setTimeout(onComplete, 2500);
+        return () => clearTimeout(timer);
       }
 
       const increment = progressDelta / steps;
       let current = previousProgress;
+      let stepCount = 0;
 
       const timer = setInterval(() => {
+        stepCount++;
         current += increment;
-        if (current >= currentProgress) {
-          setJourneyProgress(currentProgress);
+
+        if (
+          stepCount >= steps ||
+          (progressDelta > 0 && current >= cumulativeProgress) ||
+          (progressDelta < 0 && current <= cumulativeProgress)
+        ) {
+          setJourneyProgress(cumulativeProgress);
           clearInterval(timer);
           // Auto-close after animation + delay
           setTimeout(onComplete, 1500);
@@ -118,7 +144,7 @@ const RoundTransition = ({
 
       return () => clearInterval(timer);
     }
-  }, [showJourney, currentProgress, previousProgress, onComplete]);
+  }, [showJourney, cumulativeProgress, previousProgress, onComplete]);
 
   const getMessage = () => {
     if (wasSuccessful) {
@@ -180,8 +206,29 @@ const RoundTransition = ({
               Journey Progress
             </h2>
             <div style={{ fontSize: "1.25rem", color: "#6b7280" }}>
-              Score: {score} of {totalRounds}
+              Rounds Completed: {score} of {totalRounds}
             </div>
+            <div
+              style={{
+                fontSize: "1.125rem",
+                color: "#6b7280",
+                marginTop: "0.25rem",
+              }}
+            >
+              Performance: {displayProgress}%
+            </div>
+            {hasPassedGoal && (
+              <div
+                style={{
+                  fontSize: "1.25rem",
+                  color: "#16a34a",
+                  marginTop: "0.5rem",
+                  fontWeight: "bold",
+                }}
+              >
+                🎯 Goal Reached!
+              </div>
+            )}
           </div>
 
           {/* Map Container */}
@@ -216,17 +263,55 @@ const RoundTransition = ({
                 opacity="0.5"
               />
 
-              {/* Dotted path */}
-              {pathDots.map((dot, index) => (
-                <circle
-                  key={index}
-                  cx={dot.x}
-                  cy={dot.y}
-                  r="0.8"
-                  fill={index <= currentDotIndex ? "#374151" : "#d1d5db"}
-                  style={{ transition: "fill 0.3s" }}
+              {/* Continuous road path */}
+              <path
+                d="M 15 35 Q 20 45, 25 55 T 32 60 T 40 62 T 48 60 T 55 55 T 62 48 T 68 40 T 73 32 T 78 25 T 82 20"
+                stroke="#9ca3af"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+              />
+
+              {/* Road center line (dashed) */}
+              <path
+                d="M 15 35 Q 20 45, 25 55 T 32 60 T 40 62 T 48 60 T 55 55 T 62 48 T 68 40 T 73 32 T 78 25 T 82 20"
+                stroke="#ffffff"
+                strokeWidth="0.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray="2 2"
+                opacity="0.8"
+              />
+
+              {/* Goal marker at 75% */}
+              <g transform={`translate(${goalPosition.x}, ${goalPosition.y})`}>
+                {/* Flag pole */}
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="-8"
+                  stroke="#16a34a"
+                  strokeWidth="0.3"
                 />
-              ))}
+                {/* Flag */}
+                <path
+                  d="M 0 -8 L 3 -7 L 3 -5 L 0 -6 Z"
+                  fill={hasPassedGoal ? "#16a34a" : "#22c55e"}
+                  stroke="#16a34a"
+                  strokeWidth="0.2"
+                />
+                {/* Base circle */}
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="1.2"
+                  fill="none"
+                  stroke={hasPassedGoal ? "#16a34a" : "#22c55e"}
+                  strokeWidth="0.3"
+                  strokeDasharray="0.5 0.5"
+                />
+              </g>
 
               {/* Robot */}
               <g transform={`translate(${robotPos.x}, ${robotPos.y})`}>
@@ -424,9 +509,11 @@ const RoundTransition = ({
           >
             {journeyProgress >= 100
               ? "🎉 Journey Complete!"
-              : wasSuccessful
-              ? "🤖 Moving forward..."
-              : "🤖 Staying put..."}
+              : hasPassedGoal
+                ? "🎯 Goal achieved! Keep going!"
+                : wasSuccessful
+                  ? "🤖 Moving forward..."
+                  : "🤖 Staying put..."}
           </div>
         </div>
       )}

@@ -4,14 +4,13 @@
   align-items: flex-end;
   justify-content: center;
   width: 120px;
-  gap: 10px;
+  gap: 5px;
 }
 .vial_wrapper {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* gap: 10px; */
   width: 120px;
 }
 

@@ -1,0 +1,53 @@
+mutation SeedMovies @transaction @auth(level: NO_ACCESS) {
+  movie_insertMany(data: [
+    {
+      title: "The Shawshank Redemption",
+      year: 1994,
+      genres: ["drama"],
+      runtime: 142,
+      summary: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency."
+    },
+    {
+      title: "The Godfather",
+      year: 1972,
+      genres: ["crime", "drama"],
+      runtime: 175,
+      summary: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son."
+    },
+    {
+      title: "The Dark Knight",
+      year: 2008,
+      genres: ["action", "crime", "drama"],
+      runtime: 152,
+      summary: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice."
+    }
+  ])
+}
+
+query ListPublicMovieLists @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  movieLists(where: {isPublic: {eq: true}}) {
+    id
+    name
+    description
+  }
+}
+
+mutation CreateMovieList($name: String!, $description: String!) @auth(level: USER) {
+  movieList_insert(data: {
+    name: $name,
+    description: $description,
+    isPublic: false,
+    userId_expr: "auth.uid",
+    createdAt_expr: "request.time",
+    updatedAt_expr: "request.time"
+  })
+}
+
+query GetMyMovieLists @auth(level: USER) {
+  movieLists(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    name
+    description
+    isPublic
+  }
+}
