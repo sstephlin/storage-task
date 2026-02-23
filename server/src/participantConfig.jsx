@@ -1,12 +1,4 @@
-// Participant Configuration for Experiments
-
-// ============================================================================
-// PRODUCTION MODE CONTROL
-// ============================================================================
-// Set to true to enable all security features (PIN auth, single access, etc.)
-// Set to false for development/debugging (bypasses all restrictions)
-// Development mode (no restrictions)
-export const PRODUCTION_MODE = false;
+export const PRODUCTION_MODE = true;
 
 // Production mode (all security features enabled)
 // export const PRODUCTION_MODE = true;
@@ -21,7 +13,7 @@ export const PRODUCTION_MODE = false;
 
 export const PARTICIPANTS = [
   { id: "P001", pin: "4827", version: "one_vial_alternating" },
-  { id: "P002", pin: "9503", version: "one_vial_always_bucket" },
+  { id: "P002", pin: "9503", version: "one_vial_always_bucket_simple" },
   { id: "P003", pin: "1764", version: "two_vials_single_bucket" },
   { id: "P004", pin: "6389", version: "two_vials_phases" },
   { id: "P005", pin: "2048", version: "one_vial_alternating" },
@@ -68,6 +60,7 @@ export const PARTICIPANTS = [
 const VERSIONS = [
   "one_vial_alternating",
   "one_vial_always_bucket",
+  "one_vial_always_bucket_simple",
   "two_vials_single_bucket",
   "two_vials_phases",
 ];
@@ -86,11 +79,13 @@ const getDebugVersion = (participantId) => {
     // Extract number (e.g., "P001" -> 1)
     const num = parseInt(match[1], 10);
     // Map to version using same pattern as PARTICIPANTS array
-    // P001, P005, P009, P013... -> one_vial_alternating
-    // P002, P006, P010, P014... -> one_vial_always_bucket
-    // P003, P007, P011, P015... -> two_vials_single_bucket
-    // P004, P008, P012, P016... -> two_vials_phases
-    return VERSIONS[(num - 1) % 4];
+    // Now cycles through 5 versions instead of 4
+    // P001, P006, P011, P016... -> one_vial_alternating
+    // P002, P007, P012, P017... -> one_vial_always_bucket
+    // P003, P008, P013, P018... -> one_vial_always_bucket_simple
+    // P004, P009, P014, P019... -> two_vials_single_bucket
+    // P005, P010, P015, P020... -> two_vials_phases
+    return VERSIONS[(num - 1) % VERSIONS.length];
   }
 
   // For non-standard IDs, default to first version
@@ -108,8 +103,25 @@ const getDebugVersion = (participantId) => {
  * @returns {Object|null} Participant object if valid, null otherwise
  */
 export const validateCredentials = (participantId, pin) => {
+  // First, try to find in PARTICIPANTS array (works in both modes)
+  const participant = PARTICIPANTS.find(
+    (p) => p.id === participantId && p.pin === pin,
+  );
+
+  if (participant) {
+    return participant;
+  }
+
+  // If not found and in dev mode, accept any credentials with debug version
   if (!PRODUCTION_MODE) {
-    // In dev mode, return mock participant with correct version mapping
+    // Check if participant exists in array (but wrong PIN)
+    const participantExists = PARTICIPANTS.find((p) => p.id === participantId);
+    if (participantExists) {
+      // In dev mode, ignore wrong PIN and return the participant
+      return participantExists;
+    }
+
+    // Participant not in array at all - use debug version mapping
     return {
       id: participantId || "P001",
       pin: pin || "0000",
@@ -117,11 +129,8 @@ export const validateCredentials = (participantId, pin) => {
     };
   }
 
-  const participant = PARTICIPANTS.find(
-    (p) => p.id === participantId && p.pin === pin,
-  );
-
-  return participant || null;
+  // Production mode - strict validation
+  return null;
 };
 
 /**
@@ -140,6 +149,14 @@ export const participantExists = (participantId) => {
  * @returns {Object|null} Participant object if found, null otherwise
  */
 export const getParticipant = (participantId) => {
+  // First, try to find in PARTICIPANTS array (works in both modes)
+  const participant = PARTICIPANTS.find((p) => p.id === participantId);
+
+  if (participant) {
+    return participant;
+  }
+
+  // If not found and in dev mode, use debug version mapping
   if (!PRODUCTION_MODE) {
     return {
       id: participantId || "P001",
@@ -148,7 +165,8 @@ export const getParticipant = (participantId) => {
     };
   }
 
-  return PARTICIPANTS.find((p) => p.id === participantId) || null;
+  // Production mode and not found
+  return null;
 };
 
 /**
@@ -227,6 +245,7 @@ const participantIds = Array.from({ length: 40 }, (_, i) =>
 const versions = [
   'one_vial_alternating',
   'one_vial_always_bucket',
+  'one_vial_always_bucket_simple',
   'two_vials_single_bucket',
   'two_vials_phases'
 ];

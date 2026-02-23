@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import VialGame from "./VialGame";
 import TrainingPhase from "./TrainingPhase";
-import Tutorial from "./Tutorial";
+import Tutorial from "./instructions";
 import Login from "./components/Login";
 import ReloadWarningModal from "./components/ReloadWarningModal";
 import { initializeSession, endSession } from "./logging";

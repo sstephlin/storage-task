@@ -19,8 +19,6 @@ const Robot = ({
   isTrainingMode = false,
   trainingColors = null,
 }) => {
-  const [blinkEyes, setBlinkEyes] = useState(false);
-
   // Adjust scale based on production mode
   const effectiveScale = PRODUCTION_MODE ? scale * 1.2 : scale;
 
@@ -36,16 +34,6 @@ const Robot = ({
 
   const vial2Color =
     isTrainingMode && trainingColors ? trainingColors.secondary : "#4A90E2"; // Blue in main game
-
-  useEffect(() => {
-    if (!isOverheated && !isPoweredDown) {
-      const interval = setInterval(() => {
-        setBlinkEyes(true);
-        setTimeout(() => setBlinkEyes(false), 150);
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [isOverheated, isPoweredDown]);
 
   return (
     // outer wrapper reserves the scaled layout space so other components/layouts
@@ -174,7 +162,7 @@ const Robot = ({
                   top: "35px",
                   left: "45px",
                   width: "50px",
-                  height: blinkEyes || isPoweredDown ? "8px" : "50px",
+                  height: isPoweredDown ? "8px" : "50px",
                   backgroundColor: isPoweredDown ? "#1a252f" : "#2c3e50",
                   borderRadius: "50%",
                   border: "4px solid #1a252f",
@@ -184,7 +172,7 @@ const Robot = ({
                     : "none",
                 }}
               >
-                {!blinkEyes && !isPoweredDown && (
+                {!isPoweredDown && (
                   <div
                     style={{
                       position: "absolute",
@@ -224,7 +212,7 @@ const Robot = ({
                   top: "35px",
                   right: "45px",
                   width: "50px",
-                  height: blinkEyes || isPoweredDown ? "8px" : "50px",
+                  height: isPoweredDown ? "8px" : "50px",
                   backgroundColor: isPoweredDown ? "#1a252f" : "#2c3e50",
                   borderRadius: "50%",
                   border: "4px solid #1a252f",
@@ -234,7 +222,7 @@ const Robot = ({
                     : "none",
                 }}
               >
-                {!blinkEyes && !isPoweredDown && (
+                {!isPoweredDown && (
                   <div
                     style={{
                       position: "absolute",

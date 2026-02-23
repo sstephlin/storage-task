@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import VialGame from "./VialGame";
-import Tutorial from "./Tutorial"; // Import your Tutorial wrapper
+import Tutorial from "./instructions"; // Import your Tutorial wrapper
 import "./styles/TrainingPhase.css";
 
 // Training-specific parameters
@@ -52,6 +52,7 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showRetryMessage, setShowRetryMessage] = useState(false);
+  console.log("TrainingPhase received gameVersion:", gameVersion); // ADD THIS
 
   // Handle tutorial completion
   const handleTutorialComplete = () => {
@@ -176,7 +177,9 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
 
   // Show tutorial first
   if (showTutorial) {
-    return <Tutorial onComplete={handleTutorialComplete} />;
+    return (
+      <Tutorial onExit={handleTutorialComplete} gameVersion={gameVersion} />
+    );
   }
 
   // Training intro screen (after tutorial)
