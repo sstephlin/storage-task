@@ -5,7 +5,7 @@ import "./styles/TrainingPhase.css";
 
 // Training-specific parameters
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 2,
+  MAX_ROUNDS: 10,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5, // Must survive 50% of rounds
 
@@ -42,7 +42,13 @@ export const TRAINING_PARAMS = {
   },
 };
 
-const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
+const TrainingPhase = ({
+  userId,
+  gameVersion,
+  onComplete,
+  versionConfig,
+  onDisqualified,
+}) => {
   const [showTutorial, setShowTutorial] = useState(true); // Start with tutorial
   const [trainingAttempt, setTrainingAttempt] = useState(1);
   const [showIntro, setShowIntro] = useState(false); // Will show after tutorial
@@ -51,8 +57,8 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
   const [roundResults, setRoundResults] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState("");
-  const [showRetryMessage, setShowRetryMessage] = useState(false);
-  console.log("TrainingPhase received gameVersion:", gameVersion); // ADD THIS
+  const [showDisqualified, setShowDisqualified] = useState(false);
+  console.log("TrainingPhase received gameVersion:", gameVersion);
 
   // Handle tutorial completion
   const handleTutorialComplete = () => {
@@ -144,19 +150,20 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
     if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
       setTrainingComplete(true);
     } else {
-      setShowRetryMessage(true);
+      // Failed training - disqualify permanently
+      setShowDisqualified(true);
+
+      // Notify parent component after showing disqualification message
+      setTimeout(() => {
+        if (onDisqualified) {
+          onDisqualified();
+        }
+      }, 5000); // Give them 5 seconds to read the message
     }
   };
 
   const handleStartMainGame = () => {
     onComplete();
-  };
-
-  const handleRetry = () => {
-    setShowRetryMessage(false);
-    setTrainingAttempt((prev) => prev + 1);
-    setRoundResults([]);
-    setShowIntro(true);
   };
 
   const generateRoundFeedback = (wasSuccessful, roundNumber) => {
@@ -184,7 +191,6 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
 
   // Training intro screen (after tutorial)
   if (showIntro) {
-    const isRetry = trainingAttempt > 1;
     const reminders = getTrainingReminders(versionConfig);
 
     return (
@@ -203,37 +209,37 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
           </div>
 
           <button className="start-training-btn" onClick={handleStartTraining}>
-            {isRetry ? "Try Again" : "Start Training"}
+            Start Training
           </button>
         </div>
       </div>
     );
   }
 
-  // Training failed - retry screen
-  if (showRetryMessage) {
+  // Training failed - disqualification screen (PERMANENT)
+  if (showDisqualified) {
     const successCount = roundResults.filter((r) => r).length;
 
     return (
       <div className="training-retry">
         <div className="training-retry-content">
-          <div className="retry-icon"></div>
-          <h2>Training Not Complete</h2>
+          <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
+          <h2>Training Not Completed</h2>
 
           <div className="results-summary">
             <p className="score-display">
               You survived <strong>{successCount}</strong> out of{" "}
-              <strong>{TRAINING_PARAMS.MAX_ROUNDS}</strong> rounds
+              <strong>{TRAINING_PARAMS.MAX_ROUNDS}</strong> practice rounds
             </p>
             <p className="requirement">
-              You need to survive at least <strong>half the rounds</strong> to
+              You needed to survive at least <strong>half the rounds</strong> to
               proceed to the main game.
             </p>
+            <p style={{ marginTop: "30px", color: "#666", fontSize: "16px" }}>
+              Unfortunately, you will not be able to continue with this study.
+              Thank you for your time.
+            </p>
           </div>
-
-          <button className="retry-btn" onClick={handleRetry}>
-            Retry Training
-          </button>
         </div>
       </div>
     );
@@ -241,8 +247,6 @@ const TrainingPhase = ({ userId, gameVersion, onComplete, versionConfig }) => {
 
   // Training success screen
   if (trainingComplete) {
-    const successCount = roundResults.filter((r) => r).length;
-
     return (
       <div className="training-complete">
         <div className="training-complete-content">

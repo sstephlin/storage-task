@@ -1,4 +1,4 @@
-export const PRODUCTION_MODE = true;
+export const PRODUCTION_MODE = false;
 
 // Production mode (all security features enabled)
 // export const PRODUCTION_MODE = true;
@@ -37,7 +37,7 @@ export const PARTICIPANTS = [
   { id: "P023", pin: "4926", version: "two_vials_single_bucket" },
   { id: "P024", pin: "0159", version: "two_vials_phases" },
   { id: "P025", pin: "7814", version: "one_vial_alternating" },
-  { id: "P026", pin: "2368", version: "one_vial_always_bucket" },
+  { id: "P026", pin: "2368", version: "one_vial_always_bucket_simple_fast" },
   { id: "P027", pin: "9401", version: "two_vials_single_bucket" },
   { id: "P028", pin: "5072", version: "two_vials_phases" },
   { id: "P029", pin: "6195", version: "one_vial_alternating" },

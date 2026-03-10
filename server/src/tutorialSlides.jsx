@@ -6,8 +6,13 @@ import { GAME_VERSIONS } from "./params";
 // =============================================================================
 
 const SHARED_INTRO_SLIDES = [
-  { id: "intro-1", image: "Intro-1.png", showButtons: false },
-  { id: "intro-2", image: "Intro-2.png", showButtons: false },
+  { id: "intro-1.1", image: "Intro-1.1.png", showButtons: false },
+  { id: "intro-1.2", image: "Intro-1.2.png", showButtons: false },
+  { id: "intro-1.3", image: "Intro-1.3.png", showButtons: false },
+  { id: "intro-1.4", image: "Intro-1.4.png", showButtons: false },
+  { id: "intro-2.1", image: "Intro-2.1.png", showButtons: false },
+  { id: "intro-2.2", image: "Intro-2.2.png", showButtons: false },
+  { id: "intro-2.3", image: "Intro-2.3.png", showButtons: false },
   { id: "intro-3", image: "Intro-3.png", showButtons: false },
   { id: "intro-4", image: "Intro-4.png", showButtons: false },
   { id: "intro-5", image: "Intro-5.png", showButtons: false },
@@ -25,12 +30,12 @@ const SHARED_INTRO_SLIDES = [
 ];
 const SHARED_COMMANDS_SLIDES = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
-  { id: "commands-2", image: "Commands-2.png", showButtons: false },
+  { id: "commands-2", image: "Commands-2.mov", showButtons: false },
   { id: "commands-3", image: "Commands-3.png", showButtons: false },
-  { id: "commands-4", image: "Commands-4.png", showButtons: false },
-  { id: "commands-5", image: "Commands-5.png", showButtons: false },
-  { id: "commands-6", image: "Commands-6.png", showButtons: false },
-  { id: "commands-7", image: "Commands-7.png", showButtons: false },
+  { id: "commands-4", image: "Commands-4.mov", showButtons: false },
+  { id: "commands-5", image: "Commands-5.mov", showButtons: false },
+  { id: "commands-6", image: "Commands-6.mov", showButtons: false },
+  { id: "commands-7", image: "Commands-7.mov", showButtons: false },
   { id: "commands-8", image: "Commands-8.png", showButtons: false },
   { id: "commands-9", image: "Commands-9.png", showButtons: false },
   { id: "commands-10", image: "Commands-10.png", showButtons: false },
@@ -294,8 +299,8 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
             text: "When the main container reaches the ideal level ",
             correct: false,
           },
-          { id: "b", text: "Never", correct: false },
-          { id: "c", text: "At the end of each day", correct: true },
+          { id: "b", text: "Never", correct: true },
+          { id: "c", text: "At the end of each day", correct: false },
           { id: "d", text: "When Bleeblop reaches Robonia", correct: false },
           {
             id: "e",
@@ -315,8 +320,8 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
       quiz: {
         options: [
           { id: "a", text: "When it reaches the ideal level ", correct: false },
-          { id: "b", text: "Never", correct: true },
-          { id: "c", text: "At the end of each day", correct: false },
+          { id: "b", text: "Never", correct: false },
+          { id: "c", text: "At the end of each day", correct: true },
           { id: "d", text: "When Bleeblop reaches Robonia", correct: false },
           {
             id: "e",
@@ -501,9 +506,9 @@ const ABUND_DEPR_QUIZ_GROUP = {
           {
             id: "a",
             text: "Yes; it causes Bleeblop to go back to the nearest repair shop",
-            correct: true,
+            correct: false,
           },
-          { id: "b", text: "No; it has no direct effect ", correct: false },
+          { id: "b", text: "No; it has no direct effect ", correct: true },
           {
             id: "c",
             text: "Yes; it causes gloop to be added to Bleeblop's main gloop container",
@@ -530,8 +535,8 @@ const SHARED_ENDING_SLIDES = [
   { id: "end-1", image: "Ending1.png", showButtons: false },
   { id: "end-2", image: "Ending2.png", showButtons: false },
   { id: "end-3", image: "Ending3.png", showButtons: false },
-  { id: "end-4", image: "Ending4.png", showButtons: false },
-  { id: "end-5", image: "Ending5.png", showButtons: false },
+  // { id: "end-4", image: "Ending4.png", showButtons: false },
+  // { id: "end-5", image: "Ending5.png", showButtons: false },
 ];
 const SHARED_READY_SLIDES = [
   { id: "ready-1", image: "Ready1.png", showButtons: false },
@@ -554,6 +559,7 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES,
+    ...QUIZ_RESULT_SLIDES,
   ],
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: [
@@ -568,13 +574,26 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_READY_SLIDES,
   ],
 
-  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
-  //   ...SHARED_INTRO_SLIDES,
-  //   ...SHARED_MECHANICS_SLIDES,
-  //   ...SHARED_QUIZ_SLIDES,
-  //   ...ONE_VIAL_ALWAYS_BUCKET_SIMPLE_SPECIFIC,
-  //   ...SHARED_ENDING_SLIDES,
-  // ],
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
+    ...SHARED_INTRO_SLIDES,
+    SHARED_INTRO_QUIZ_GROUP,
+    ...SHARED_COMMANDS_SLIDES,
+    SHARED_COMMANDS_QUIZ_GROUP,
+    ...SHARED_ENDING_SLIDES,
+    SHARED_ENDING_QUIZ_GROUP,
+    ...SHARED_READY_SLIDES,
+    ...QUIZ_RESULT_SLIDES,
+  ],
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
+    ...SHARED_INTRO_SLIDES,
+    SHARED_INTRO_QUIZ_GROUP,
+    ...SHARED_COMMANDS_SLIDES,
+    SHARED_COMMANDS_QUIZ_GROUP,
+    ...SHARED_ENDING_SLIDES,
+    SHARED_ENDING_QUIZ_GROUP,
+    ...SHARED_READY_SLIDES,
+    ...QUIZ_RESULT_SLIDES,
+  ],
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: [
   //   ...SHARED_INTRO_SLIDES,

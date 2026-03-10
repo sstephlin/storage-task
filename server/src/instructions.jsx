@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./instructions.css";
 import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
+import { PRODUCTION_MODE } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = true;
+// const DEBUG_MODE = !PRODUCTION_MODE;
+const DEBUG_MODE = false;
 
 const Tutorial = ({ onExit, gameVersion }) => {
   // Get slides based on game version
@@ -19,6 +21,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
   const [quizAttempts, setQuizAttempts] = useState({});
   const [isDisqualified, setIsDisqualified] = useState(false);
   const [groupAttempts, setGroupAttempts] = useState({});
+  const [showResultOverlay, setShowResultOverlay] = useState(null); // 'correct' | 'incorrect' | 'exit'
 
   // Quiz group state
   const [groupQuizIndex, setGroupQuizIndex] = useState(0);
@@ -35,6 +38,26 @@ const Tutorial = ({ onExit, gameVersion }) => {
     }
     return s;
   }, [TUTORIAL_SLIDES, currentSlide, groupQuizIndex]);
+
+  // Show an overlay image for 3 seconds, then run a redirect function
+  const showOverlayThenRedirect = (type, redirectFn) => {
+    if (type === "exit") {
+      redirectFn();
+      return;
+    }
+    setShowResultOverlay(type);
+    if (type == "incorrect") {
+      setTimeout(() => {
+        setShowResultOverlay(null);
+        redirectFn();
+      }, 6000);
+    } else if (type == "correct") {
+      setTimeout(() => {
+        setShowResultOverlay(null);
+        redirectFn();
+      }, 2000);
+    }
+  };
 
   const goNext = () => {
     if (!canProceed) return;
@@ -85,77 +108,109 @@ const Tutorial = ({ onExit, gameVersion }) => {
       ? groupQuizIndex === group.quizzes.length - 1
       : false;
 
-    if (isCorrect) {
-      setQuizFeedback({
-        type: "success",
-        message: quiz.explanation || "Correct!",
-      });
-
-      setTimeout(() => {
-        setQuizFeedback(null);
-        setSelectedAnswers({});
-
-        if (group) {
-          if (isLastInGroup) {
-            // Finished the group
-            if (groupHadError) {
-              // At least one wrong answer — send back to returnToSlide
-              const returnIndex = getSlideIndexById(
-                TUTORIAL_SLIDES,
-                group.returnToSlide,
-              );
-              setCurrentSlide(returnIndex);
-            } else {
-              // All correct — advance past the group
-              setCurrentSlide((c) => c + 1);
-            }
-            setGroupQuizIndex(0);
-            setGroupHadError(false);
-          } else {
-            // Move to next question in the group
-            setGroupQuizIndex((i) => i + 1);
-          }
-        } else {
-          // Non-group quiz — advance normally
-          goNext();
-        }
-      }, 1500);
-
-      return true;
-    } else {
-      // Wrong answer
-      if (group) {
-        setGroupHadError(true);
+    if (group) {
+      if (isCorrect) {
         setQuizFeedback({
-          type: "error",
-          message: "Not quite right. Let's keep going and review after.",
+          type: "success",
+          message: quiz.explanation || "Correct!",
         });
-
         setTimeout(() => {
           setQuizFeedback(null);
           setSelectedAnswers({});
 
           if (isLastInGroup) {
-            // Last question — now redirect back since there was an error
-            const returnIndex = getSlideIndexById(
-              TUTORIAL_SLIDES,
-              group.returnToSlide,
-            );
-            setCurrentSlide(returnIndex);
             setGroupQuizIndex(0);
             setGroupHadError(false);
+
+            if (groupHadError) {
+              // Finished group with at least one error — increment attempt count
+              const prevAttempts = groupAttempts[group.id] || 0;
+              const newAttempts = prevAttempts + 1;
+              setGroupAttempts((prev) => ({
+                ...prev,
+                [group.id]: newAttempts,
+              }));
+
+              if (newAttempts >= 2) {
+                // Second failed attempt — show exit overlay then disqualify
+                showOverlayThenRedirect("exit", () => setIsDisqualified(true));
+              } else {
+                // First failed attempt — show incorrect overlay then return to info slide
+                showOverlayThenRedirect("incorrect", () => {
+                  const returnIndex = getSlideIndexById(
+                    TUTORIAL_SLIDES,
+                    group.returnToSlide,
+                  );
+                  setCurrentSlide(returnIndex);
+                });
+              }
+            } else {
+              // All correct — show correct overlay then advance past the group
+              showOverlayThenRedirect("correct", () => {
+                setCurrentSlide((c) => c + 1);
+              });
+            }
           } else {
-            // Not last — continue to next question in group
+            // More questions remain — advance to next
             setGroupQuizIndex((i) => i + 1);
           }
-        }, 2500);
-
-        return false;
+        });
       } else {
-        // Non-group quiz — existing attempts/disqualification logic
+        // Wrong answer — mark error and continue through remaining questions
+        setGroupHadError(true);
+        setQuizFeedback({
+          type: "error",
+          message: "Not quite right. Let's keep going.",
+        });
+        setTimeout(() => {
+          setQuizFeedback(null);
+          setSelectedAnswers({});
+
+          if (isLastInGroup) {
+            // Last question done — evaluate the group
+            setGroupQuizIndex(0);
+            setGroupHadError(false);
+
+            const prevAttempts = groupAttempts[group.id] || 0;
+            const newAttempts = prevAttempts + 1;
+            setGroupAttempts((prev) => ({ ...prev, [group.id]: newAttempts }));
+
+            if (newAttempts >= 2) {
+              // Second failed attempt — show exit overlay then disqualify
+              showOverlayThenRedirect("exit", () => setIsDisqualified(true));
+            } else {
+              // First failed attempt — show incorrect overlay then return to info slide
+              showOverlayThenRedirect("incorrect", () => {
+                const returnIndex = getSlideIndexById(
+                  TUTORIAL_SLIDES,
+                  group.returnToSlide,
+                );
+                setCurrentSlide(returnIndex);
+              });
+            }
+          } else {
+            setGroupQuizIndex((i) => i + 1);
+          }
+        });
+      }
+
+      return isCorrect;
+    } else {
+      // Non-group quiz — existing attempts/disqualification logic
+      if (isCorrect) {
+        setQuizFeedback({
+          type: "success",
+          message: quiz.explanation || "Correct!",
+        });
+        setTimeout(() => {
+          setQuizFeedback(null);
+          setSelectedAnswers({});
+          goNext();
+        }, 1500);
+        return true;
+      } else {
         const currentAttempts = quizAttempts[slide.id] || 0;
         const newAttempts = currentAttempts + 1;
-
         setQuizAttempts((prev) => ({ ...prev, [slide.id]: newAttempts }));
 
         if (newAttempts >= 3) {
@@ -164,9 +219,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
             message:
               "You have reached the maximum number of attempts. You will not be able to continue with the study.",
           });
-          setTimeout(() => {
-            setIsDisqualified(true);
-          }, 2500);
+          setTimeout(() => setIsDisqualified(true), 2500);
         } else {
           const attemptsRemaining = 3 - newAttempts;
           setQuizFeedback({
@@ -185,7 +238,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
             setQuizFeedback(null);
           }, 2500);
         }
-
         return false;
       }
     }
@@ -193,7 +245,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   const handleCheckboxChange = (optionId) => {
     if (slide.multiSelect) {
-      console.log("multi");
       // Toggle the selected option, keeping others
       setSelectedAnswers((prev) => ({
         ...prev,
@@ -205,6 +256,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
     }
     setQuizFeedback(null);
   };
+
   const handleKeyPress = (e) => {
     if (slide.type === "quiz") return;
 
@@ -275,6 +327,37 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   return (
     <div className="tutorial-overlay">
+      {/* Result overlay — shown temporarily after quiz group completion */}
+      {showResultOverlay && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0,0,0,0.85)",
+          }}
+        >
+          <img
+            src={
+              showResultOverlay === "correct"
+                ? "quiz-correct.png"
+                : showResultOverlay === "incorrect"
+                  ? "quiz-wrong.png"
+                  : "exit-slide.png"
+            }
+            alt="Result"
+            style={{
+              maxHeight: "40vh",
+              maxWidth: "50vw",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+      )}
+
       <div className="tutorial-container">
         <button
           className="tutorial-exit"
