@@ -6,7 +6,7 @@ import { PRODUCTION_MODE } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
 // const DEBUG_MODE = !PRODUCTION_MODE;
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 const Tutorial = ({ onExit, gameVersion }) => {
   // Get slides based on game version

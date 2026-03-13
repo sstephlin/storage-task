@@ -13,7 +13,12 @@ const SHARED_INTRO_SLIDES = [
   { id: "intro-2.1", image: "Intro-2.1.png", showButtons: false },
   { id: "intro-2.2", image: "Intro-2.2.png", showButtons: false },
   { id: "intro-2.3", image: "Intro-2.3.png", showButtons: false },
-  { id: "intro-3", image: "Intro-3.png", showButtons: false },
+  {
+    id: "intro-3",
+    image: "gifs/blinking.gif",
+    title: "This is Bleeblop. Bleeblop is a robot.",
+    showButtons: false,
+  },
   { id: "intro-4", image: "Intro-4.png", showButtons: false },
   { id: "intro-5", image: "Intro-5.png", showButtons: false },
   { id: "intro-6", image: "Intro-6.png", showButtons: false },
@@ -30,12 +35,41 @@ const SHARED_INTRO_SLIDES = [
 ];
 const SHARED_COMMANDS_SLIDES = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
-  { id: "commands-2", image: "Commands-2.mov", showButtons: false },
+  {
+    id: "commands-2",
+    image: "gif/leftclick.gif",
+    title: "Use the left arrow key to add to the main gloop container.",
+    showButtons: false,
+  },
   { id: "commands-3", image: "Commands-3.png", showButtons: false },
-  { id: "commands-4", image: "Commands-4.mov", showButtons: false },
-  { id: "commands-5", image: "Commands-5.mov", showButtons: false },
-  { id: "commands-6", image: "Commands-6.mov", showButtons: false },
-  { id: "commands-7", image: "Commands-7.mov", showButtons: false },
+  {
+    id: "commands-4",
+    image: "gifs/draining.gif",
+    title:
+      "When BleeBlop has more than the ideal amount of gloop, the gloop that naturally drains will fill this container.",
+    showButtons: false,
+  },
+  {
+    id: "commands-5",
+    image: "gifs/draining2.gif",
+    title:
+      "IMPORTANT: this only happens if Bleeblop has MORE than the ideal amount of gloop. If their gloop is at or below the ideal level, the draining gloop is simply lost.",
+    showButtons: false,
+  },
+  {
+    id: "commands-6",
+    image: "gifs/upclick.gif",
+    title:
+      "By clicking the up arrow, you can dump some stored gloop back into the main gloop container.",
+    showButtons: false,
+  },
+  {
+    id: "commands-7",
+    image: "gifs/map.gif",
+    title:
+      "At the end of each day, you will get to see how far you helped Bleeblop travel.",
+    showButtons: false,
+  },
   { id: "commands-8", image: "Commands-8.png", showButtons: false },
   { id: "commands-9", image: "Commands-9.png", showButtons: false },
   { id: "commands-10", image: "Commands-10.png", showButtons: false },

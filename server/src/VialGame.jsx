@@ -51,16 +51,6 @@ const VialGame = ({
     ? trainingParams.VELOCITIES[gameVersion]
     : VERSION_VELOCITIES[gameVersion];
 
-  // console.log("=== VELOCITY DEBUG ===");
-  // console.log("isTrainingMode:", isTrainingMode);
-  // console.log("gameVersion:", gameVersion);
-  // console.log("trainingParams:", trainingParams);
-  // console.log("velocityConfig:", velocityConfig);
-  // console.log(
-  //   "VERSION_VELOCITIES[gameVersion]:",
-  //   VERSION_VELOCITIES[gameVersion],
-  // );
-
   // Generate all sequences based on version and mode
   const [gameSequences] = useState(() =>
     generateGameSequences(gameVersion, maxRounds, velocityConfig),
@@ -307,15 +297,15 @@ const VialGame = ({
     notes.forEach(({ freq, start }) => {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
-      osc.type = "sine";
+      osc.type = "triangle";
       osc.connect(gainNode);
       gainNode.connect(ctx.destination);
 
       osc.frequency.setValueAtTime(freq, now + start);
 
       gainNode.gain.setValueAtTime(0, now + start);
-      gainNode.gain.linearRampToValueAtTime(0.2, now + start + 0.02);
-      gainNode.gain.linearRampToValueAtTime(0.15, now + start + noteDur - 0.05);
+      gainNode.gain.linearRampToValueAtTime(0.85, now + start + 0.02);
+      gainNode.gain.linearRampToValueAtTime(0.95, now + start + noteDur - 0.05);
       gainNode.gain.linearRampToValueAtTime(0, now + start + noteDur);
 
       osc.start(now + start);
@@ -746,10 +736,11 @@ const VialGame = ({
     logRoundEnd(true);
     const previousProgress = cumulativeProgress;
 
-    const optimalAverage = GAME_PARAMS.ADD_AMOUNT / 2;
+    // const optimalAverage = GAME_PARAMS.ADD_AMOUNT / 2;
+    const optimalAverage = 0;
     const worst_avg = Math.max(
-      GAME_PARAMS.OPTIMAL_ZONE_MAX,
-      100 - GAME_PARAMS.OPTIMAL_ZONE_MAX,
+      GAME_PARAMS.OPTIMAL_ZONE_MAX - GAME_PARAMS.ADD_AMOUNT,
+      100 - GAME_PARAMS.OPTIMAL_ZONE_MAX - GAME_PARAMS.ADD_AMOUNT,
     );
 
     const avgDistance =
@@ -769,10 +760,6 @@ const VialGame = ({
     const roundContribution = (100 / GAME_PARAMS.MAX_ROUNDS) * performanceRatio;
 
     const newProgress = previousProgress + roundContribution;
-
-    if (isTrainingMode && onRoundComplete) {
-      onRoundComplete(true);
-    }
 
     setScore((prev) => prev + 1);
     setRoundWasSuccessful(true);
