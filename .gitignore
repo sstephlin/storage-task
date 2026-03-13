@@ -28,4 +28,4 @@ scripts/session_meta.csv
 scripts/vial_snapshots.csv
 .env
 server/src/firebase.jsx
- 
+V0.1
