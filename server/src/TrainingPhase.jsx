@@ -146,6 +146,13 @@ const TrainingPhase = ({
 
     const successCount = roundResults.filter((r) => r).length;
     const successRate = successCount / TRAINING_PARAMS.MAX_ROUNDS;
+    // console.log(
+    //   "training end",
+    //   newResults,
+    //   successCount,
+    //   successRate,
+    //   TRAINING_PARAMS.MAX_ROUNDS,
+    // );
 
     if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
       setTrainingComplete(true);

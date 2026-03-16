@@ -37,14 +37,14 @@ const SHARED_COMMANDS_SLIDES = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
   {
     id: "commands-2",
-    image: "gif/leftclick.gif",
+    image: "gifs/leftclick.gif",
     title: "Use the left arrow key to add to the main gloop container.",
     showButtons: false,
   },
   { id: "commands-3", image: "Commands-3.png", showButtons: false },
   {
     id: "commands-4",
-    image: "gifs/draining.gif",
+    image: "gifs/draining1.gif",
     title:
       "When BleeBlop has more than the ideal amount of gloop, the gloop that naturally drains will fill this container.",
     showButtons: false,
