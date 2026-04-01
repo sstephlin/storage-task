@@ -85,6 +85,7 @@ const RoundTransition = ({
 
   // Calculate goal position at 75%
   const goalPosition = getRobotPosition(75);
+  const repairShopPosition = getRobotPosition(cumulativeProgress);
 
   const robotPos = getRobotPosition(journeyProgress);
 
@@ -330,6 +331,21 @@ const RoundTransition = ({
                   strokeDasharray="0.5 0.5"
                 />
               </g>
+              {/* Repair Shop - only shown on failed rounds */}
+              {!wasSuccessful && (
+                <g
+                  transform={`translate(${repairShopPosition.x}, ${repairShopPosition.y})`}
+                >
+                  <image
+                    href="/RepairShopLogo.svg"
+                    x="-4"
+                    y="-8"
+                    width="10"
+                    height="10"
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                </g>
+              )}
 
               {/* Robot */}
               <g transform={`translate(${robotPos.x}, ${robotPos.y})`}>

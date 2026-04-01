@@ -37,8 +37,8 @@ const VialGame = ({
   // Check if this version allows unrestricted bucket filling
   const allowUnrestrictedBucketFilling =
     versionConfig.allowUnrestrictedBucketFilling || false;
-  console.log("gameVersion:", gameVersion);
-  console.log("versionConfig:", versionConfig);
+  // console.log("gameVersion:", gameVersion);
+  // console.log("versionConfig:", versionConfig);
 
   // Use training parameters if in training mode
   const maxRounds = isTrainingMode
@@ -47,9 +47,11 @@ const VialGame = ({
   const roundDuration = isTrainingMode
     ? trainingParams.ROUND_DURATION
     : GAME_PARAMS.ROUND_DURATION;
-  const velocityConfig = isTrainingMode
-    ? trainingParams.VELOCITIES[gameVersion]
-    : VERSION_VELOCITIES[gameVersion];
+  const velocityConfig = VERSION_VELOCITIES[gameVersion];
+
+  // const velocityConfig = isTrainingMode
+  //   ? trainingParams.VELOCITIES[gameVersion]
+  //   : VERSION_VELOCITIES[gameVersion];
 
   // console.log("=== VELOCITY DEBUG ===");
   // console.log("isTrainingMode:", isTrainingMode);
@@ -63,7 +65,9 @@ const VialGame = ({
 
   // Generate all sequences based on version and mode
   const [gameSequences] = useState(() =>
-    generateGameSequences(gameVersion, maxRounds, velocityConfig),
+    isTrainingMode && trainingParams?.sequences
+      ? trainingParams.sequences
+      : generateGameSequences(gameVersion, maxRounds, velocityConfig),
   );
 
   const [vial1Level, setVial1Level] = useState(GAME_PARAMS.INITIAL_VIAL_LEVEL);
@@ -137,7 +141,7 @@ const VialGame = ({
   });
 
   const [wasRunningBeforePause, setWasRunningBeforePause] = useState(false);
-
+  const [frozenAddingDisabled, setFrozenAddingDisabled] = useState(false);
   // Handle pausing/resuming
   useEffect(() => {
     if (isPaused) {
@@ -742,11 +746,19 @@ const VialGame = ({
     }
   }, [gameComplete, onComplete]);
 
+  useEffect(() => {
+    if (showingAnimation) {
+      setFrozenAddingDisabled(isAddingDisabled);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showingAnimation]);
+
   const completeRound = () => {
     logRoundEnd(true);
     const previousProgress = cumulativeProgress;
 
-    const optimalAverage = GAME_PARAMS.ADD_AMOUNT / 2;
+    // const optimalAverage = GAME_PARAMS.ADD_AMOUNT / 2;
+    const optimalAverage = 0;
     const worst_avg = Math.max(
       GAME_PARAMS.OPTIMAL_ZONE_MAX,
       100 - GAME_PARAMS.OPTIMAL_ZONE_MAX,
@@ -779,7 +791,19 @@ const VialGame = ({
     setGameRunning(false);
     playSuccessSound();
 
+    // if (currentRound + 1 >= maxRounds) {
+    //   setTimeout(() => {
+    //     setShowingAnimation(false);
+    //     setIsCelebrating(false);
+    //     setGameComplete(true);
+    //     setGameRunning(false);
+    //   }, 2000);
+    //   return;
+    // }
     if (currentRound + 1 >= maxRounds) {
+      if (isTrainingMode && onRoundComplete) {
+        onRoundComplete(true);
+      }
       setTimeout(() => {
         setShowingAnimation(false);
         setIsCelebrating(false);
@@ -806,8 +830,8 @@ const VialGame = ({
       setTimeout(() => {
         setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
         setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-        setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-        setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+        // setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+        // setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
         setCurrentRound((prev) => prev + 1);
         setRoundTimeRemaining(roundDuration);
         setGameMessage(GAME_MESSAGES.PLAYING);
@@ -865,7 +889,12 @@ const VialGame = ({
     setGameRunning(false);
 
     if (currentRound + 1 >= maxRounds) {
+      if (isTrainingMode && onRoundComplete) {
+        onRoundComplete(true);
+      }
       setTimeout(() => {
+        setShowingAnimation(false);
+        setIsCelebrating(false);
         setGameComplete(true);
         setGameRunning(false);
       }, 2000);
@@ -875,8 +904,8 @@ const VialGame = ({
     setTimeout(() => {
       setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
       setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-      setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-      setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+      // setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+      // setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
       setCurrentRound((prev) => prev + 1);
       setRoundTimeRemaining(roundDuration);
       setGameMessage(GAME_MESSAGES.PLAYING);
@@ -1021,7 +1050,11 @@ const VialGame = ({
             />
 
             {versionConfig.hasPhases && (
-              <GasStationIndicator isActive={!isAddingDisabled} />
+              <GasStationIndicator
+                isActive={
+                  showingAnimation ? !frozenAddingDisabled : !isAddingDisabled
+                }
+              />
             )}
           </div>
 

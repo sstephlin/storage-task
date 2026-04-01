@@ -19,7 +19,13 @@ const SHARED_INTRO_SLIDES = [
     title: "This is Bleeblop. Bleeblop is a robot.",
     showButtons: false,
   },
-  { id: "intro-4", image: "Intro-4.png", showButtons: false },
+  {
+    id: "intro-4",
+    image: "gifs/thinking.gif",
+    title:
+      "Bleeblop's Goal is to Reach Robonia in time for the yearly Roboday celebration,",
+    showButtons: false,
+  },
   { id: "intro-5", image: "Intro-5.png", showButtons: false },
   { id: "intro-6", image: "Intro-6.png", showButtons: false },
   { id: "intro-7", image: "Intro-7.png", showButtons: false },
@@ -593,7 +599,7 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES,
-    ...QUIZ_RESULT_SLIDES,
+    // ...QUIZ_RESULT_SLIDES,
   ],
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: [
@@ -616,7 +622,7 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES,
-    ...QUIZ_RESULT_SLIDES,
+    // ...QUIZ_RESULT_SLIDES,
   ],
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
     ...SHARED_INTRO_SLIDES,
@@ -626,7 +632,7 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES,
-    ...QUIZ_RESULT_SLIDES,
+    // ...QUIZ_RESULT_SLIDES,
   ],
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: [

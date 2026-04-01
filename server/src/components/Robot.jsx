@@ -98,7 +98,7 @@ const Robot = ({
                   ? "overheatPulse 0.4s infinite"
                   : isCelebrating
                     ? "celebrateAntenna 0.6s ease-in-out infinite"
-                    : "gentlePulse 2s infinite",
+                    : "none",
                 boxShadow: isOverheated
                   ? "0 0 20px rgba(255,68,68,0.8)"
                   : isTrainingMode
@@ -214,13 +214,13 @@ const Robot = ({
                       <div
                         style={{
                           position: "absolute",
-                          bottom: "-8px",
+                          bottom: "-15px",
                           left: "50%",
                           transform: "translateX(-50%)",
                           width: "20px",
                           height: "10px",
-                          borderBottom: "3px solid #000",
-                          borderRadius: "0 0 20px 20px",
+                          borderTop: "3px solid #000",
+                          borderRadius: "20px 20px 0 0",
                         }}
                       />
                     )}
@@ -279,13 +279,13 @@ const Robot = ({
                       <div
                         style={{
                           position: "absolute",
-                          bottom: "-8px",
+                          bottom: "-15px",
                           left: "50%",
                           transform: "translateX(-50%)",
                           width: "20px",
                           height: "10px",
-                          borderBottom: "3px solid #000",
-                          borderRadius: "0 0 20px 20px",
+                          borderTop: "3px solid #000",
+                          borderRadius: "20px 20px 0 0",
                         }}
                       />
                     )}
@@ -469,25 +469,19 @@ const Robot = ({
                     ? "#ff4444"
                     : isPoweredDown
                       ? "#34495e"
-                      : isTrainingMode
-                        ? "#a78bfa"
-                        : "#ffffff",
+                      : "#ffffff",
                   borderRadius: "50%",
                   border: "3px solid #2c3e50",
                   boxShadow: isOverheated
                     ? "0 0 18px rgba(255,68,68,0.9)"
-                    : isPoweredDown
-                      ? "none"
-                      : isTrainingMode
-                        ? "0 0 12px rgba(167,139,250,0.8)"
-                        : "0 0 12px ffffff",
+                    : "none",
                   animation: isOverheated
                     ? "overheatPulse 0.3s infinite"
                     : isPoweredDown
                       ? "none"
                       : isCelebrating
                         ? "celebrateLights 1s ease-in-out infinite"
-                        : "gentlePulse 2s infinite",
+                        : "none",
                 }}
               />
               <div
@@ -498,25 +492,19 @@ const Robot = ({
                     ? "#ff4444"
                     : isPoweredDown
                       ? "#34495e"
-                      : isTrainingMode
-                        ? "#a78bfa"
-                        : "#ffffff",
+                      : "#ffffff",
                   borderRadius: "50%",
                   border: "3px solid #2c3e50",
                   boxShadow: isOverheated
                     ? "0 0 18px rgba(255,68,68,0.9)"
-                    : isPoweredDown
-                      ? "none"
-                      : isTrainingMode
-                        ? "0 0 12px rgba(167,139,250,0.8)"
-                        : "0 0 12px ffffff",
+                    : "none",
                   animation: isOverheated
                     ? "overheatPulse 0.3s infinite"
                     : isPoweredDown
                       ? "none"
                       : isCelebrating
-                        ? "celebrateLights 1s ease-in-out infinite 0.3s"
-                        : "gentlePulse 2s infinite 0.7s",
+                        ? "celebrateLights 1s ease-in-out infinite"
+                        : "none",
                 }}
               />
             </div>
@@ -666,10 +654,6 @@ const Robot = ({
           </div>
 
           <style>{`
-        @keyframes gentlePulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
-        }
         @keyframes steam {
           0% { opacity: 0; transform: translateY(0) scale(0.8); }
           50% { opacity: 1; transform: translateY(-25px) scale(1); }

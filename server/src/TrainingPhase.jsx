@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import VialGame from "./VialGame";
-import Tutorial from "./instructions"; // Import your Tutorial wrapper
+import Tutorial from "./instructions";
 import "./styles/TrainingPhase.css";
 
-// Training-specific parameters
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 2,
+  MAX_ROUNDS: 10,
   ROUND_DURATION: 10,
-  REQUIRED_SURVIVAL_RATE: 0.5, // Must survive 50% of rounds
+  REQUIRED_SURVIVAL_RATE: 0.5,
 
-  // Slower velocities for training
   VELOCITIES: {
     one_vial_alternating: {
       SLOW: 1.2,
@@ -33,13 +31,244 @@ export const TRAINING_PARAMS = {
     },
   },
 
-  // Training uses different vial colors
   VIAL_COLORS: {
-    primary: "#a78bfa", // Purple instead of blue
-    secondary: "#34d399", // Green instead of red
-    optimal: "#fbbf24", // Amber for optimal zone
-    danger: "#f87171", // Light red for danger
+    primary: "#a78bfa",
+    secondary: "#34d399",
+    optimal: "#fbbf24",
+    danger: "#f87171",
   },
+};
+const TRAINING_ROUND_TEMPLATES = {
+  one_vial_alternating: [
+    // bucket
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+
+    // no bucket
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
+      bucket: { vial1: 0, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+      bucket: { vial1: 0, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
+      bucket: { vial1: 0, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+      bucket: { vial1: 0, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST,
+      bucket: { vial1: 0, vial2: 0 },
+      phase: "abundance",
+    },
+  ],
+  one_vial_always_bucket: [
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "deprivation",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "deprivation",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "deprivation",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "deprivation",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "abundance",
+    },
+    {
+      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
+      bucket: { vial1: 1, vial2: 0 },
+      phase: "deprivation",
+    },
+  ],
+  one_vial_always_bucket_simple: [
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+  ],
+  one_vial_always_bucket_simple_fast: [
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+    // {
+    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+    //   bucket: { vial1: 1, vial2: 0 },
+    //   phase: "abundance",
+    // },
+  ],
+  two_vials_single_bucket: [
+    // { velocity: 1.4, bucket: { vial1: 1, vial2: 0 }, phase: "abundance" },
+  ],
+  two_vials_phases: [
+    // { velocity: 1.4, bucket: { vial1: 1, vial2: 0 }, phase: "abundance" },
+  ],
+};
+const buildTrainingSequences = (gameVersion) => {
+  const templates = TRAINING_ROUND_TEMPLATES[gameVersion] ?? [];
+  const shuffled = [...templates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return {
+    velocitySequence: shuffled.map((r) => r.velocity),
+    bucketSequence: shuffled.map((r) => r.bucket),
+    phaseSequence: shuffled.map((r) => r.phase),
+  };
 };
 
 const TrainingPhase = ({
@@ -49,44 +278,46 @@ const TrainingPhase = ({
   versionConfig,
   onDisqualified,
 }) => {
-  const [showTutorial, setShowTutorial] = useState(true); // Start with tutorial
-  const [trainingAttempt, setTrainingAttempt] = useState(1);
-  const [showIntro, setShowIntro] = useState(false); // Will show after tutorial
+  const [showTutorial, setShowTutorial] = useState(true);
+  // const [trainingAttempt, setTrainingAttempt] = useState(1);
+  const [showIntro, setShowIntro] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
   const [roundResults, setRoundResults] = useState([]);
+  const roundResultsRef = useRef([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showDisqualified, setShowDisqualified] = useState(false);
+  const [trainingSequences] = useState(() =>
+    buildTrainingSequences(gameVersion),
+  );
+
   console.log("TrainingPhase received gameVersion:", gameVersion);
 
-  // Handle tutorial completion
   const handleTutorialComplete = () => {
     setShowTutorial(false);
-    setShowIntro(true); // Show training intro after tutorial
+    setShowIntro(true);
   };
 
   const handleStartTraining = () => {
     setShowIntro(false);
     setIsTraining(true);
     setRoundResults([]);
+    roundResultsRef.current = [];
   };
 
   const REMINDER_BANK = {
     core: ["Try not to let the vials overflow or empty completely."],
-
     controls: {
       oneVial: ["Use ← to add to the vial."],
       twoVials: ["Use ← / → to add to the left / right vial."],
       bucketGeneral: ["Use ↑ to empty the bucket when it's available."],
     },
-
     bucketBehavior: {
       alternating: [
         "The bucket may not always be available—take advantage when it's available.",
       ],
     },
-
     phases: [
       "During deprivation phases, plan ahead before availability changes.",
       "Stabilize both vials early at the start of each phase.",
@@ -98,27 +329,18 @@ const TrainingPhase = ({
       return ["Stay steady and keep the vials in a safe range."];
 
     const reminders = [];
-
-    // Always include core
     reminders.push(...REMINDER_BANK.core);
-
-    // Controls based on number of vials
     reminders.push(
       ...(versionConfig.numVials === 2
         ? REMINDER_BANK.controls.twoVials
         : REMINDER_BANK.controls.oneVial),
     );
-
-    // Bucket control hint
     reminders.push(...REMINDER_BANK.controls.bucketGeneral);
 
-    // Bucket-behavior-specific strategy
     const behavior = versionConfig.bucketBehavior;
     if (REMINDER_BANK.bucketBehavior[behavior]) {
       reminders.push(...REMINDER_BANK.bucketBehavior[behavior]);
     }
-
-    // Phase-specific tips
     if (versionConfig.hasPhases) {
       reminders.push(...REMINDER_BANK.phases);
     }
@@ -126,16 +348,29 @@ const TrainingPhase = ({
     return reminders.slice(0, 6);
   };
 
-  const handleRoundComplete = (wasSuccessful) => {
-    const newResults = [...roundResults, wasSuccessful];
-    setRoundResults(newResults);
+  const generateRoundFeedback = (wasSuccessful, roundNumber) => {
+    if (!wasSuccessful) {
+      return "Round failed! Remember to keep vials in the optimal zone.";
+    } else {
+      return `Great job! Round ${roundNumber} complete!`;
+    }
+  };
 
-    // Generate feedback
+  const handleRoundComplete = (wasSuccessful) => {
+    const newResults = [...roundResultsRef.current, wasSuccessful];
+    roundResultsRef.current = newResults;
+    setRoundResults(newResults);
+    console.log(
+      "handleRoundComplete called:",
+      wasSuccessful,
+      "| ref now:",
+      roundResultsRef.current,
+    );
+
     const feedback = generateRoundFeedback(wasSuccessful, newResults.length);
     setCurrentFeedback(feedback);
     setShowFeedback(true);
 
-    // Hide feedback after 3 seconds
     setTimeout(() => {
       setShowFeedback(false);
     }, 3000);
@@ -143,29 +378,25 @@ const TrainingPhase = ({
 
   const handleTrainingEnd = () => {
     setIsTraining(false);
+    console.log(
+      "handleTrainingEnd | ref:",
+      roundResultsRef.current,
+      "| state:",
+      roundResults,
+    );
 
-    const successCount = roundResults.filter((r) => r).length;
+    const successCount = roundResultsRef.current.filter((r) => r).length;
     const successRate = successCount / TRAINING_PARAMS.MAX_ROUNDS;
-    // console.log(
-    //   "training end",
-    //   newResults,
-    //   successCount,
-    //   successRate,
-    //   TRAINING_PARAMS.MAX_ROUNDS,
-    // );
 
     if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
       setTrainingComplete(true);
     } else {
-      // Failed training - disqualify permanently
       setShowDisqualified(true);
-
-      // Notify parent component after showing disqualification message
       setTimeout(() => {
         if (onDisqualified) {
           onDisqualified();
         }
-      }, 5000); // Give them 5 seconds to read the message
+      }, 5000);
     }
   };
 
@@ -173,33 +404,14 @@ const TrainingPhase = ({
     onComplete();
   };
 
-  const generateRoundFeedback = (wasSuccessful, roundNumber) => {
-    if (!wasSuccessful) {
-      const failureMessages = [
-        "Round failed! Remember to keep vials in the optimal zone.",
-      ];
-      return failureMessages[
-        Math.floor(Math.random() * failureMessages.length)
-      ];
-    } else {
-      const successMessages = [`Great job! Round ${roundNumber} complete!`];
-      return successMessages[
-        Math.floor(Math.random() * successMessages.length)
-      ];
-    }
-  };
-
-  // Show tutorial first
   if (showTutorial) {
     return (
       <Tutorial onExit={handleTutorialComplete} gameVersion={gameVersion} />
     );
   }
 
-  // Training intro screen (after tutorial)
   if (showIntro) {
     const reminders = getTrainingReminders(versionConfig);
-
     return (
       <div className="training-intro">
         <div className="training-intro-content">
@@ -214,7 +426,6 @@ const TrainingPhase = ({
               </ul>
             </div>
           </div>
-
           <button className="start-training-btn" onClick={handleStartTraining}>
             Start Training
           </button>
@@ -223,16 +434,13 @@ const TrainingPhase = ({
     );
   }
 
-  // Training failed - disqualification screen (PERMANENT)
   if (showDisqualified) {
-    const successCount = roundResults.filter((r) => r).length;
-
+    const successCount = roundResultsRef.current.filter((r) => r).length;
     return (
       <div className="training-retry">
         <div className="training-retry-content">
           <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
           <h2>Training Not Completed</h2>
-
           <div className="results-summary">
             <p className="score-display">
               You survived <strong>{successCount}</strong> out of{" "}
@@ -252,7 +460,6 @@ const TrainingPhase = ({
     );
   }
 
-  // Training success screen
   if (trainingComplete) {
     return (
       <div className="training-complete">
@@ -269,21 +476,19 @@ const TrainingPhase = ({
     );
   }
 
-  // Active training - render VialGame with training parameters
   if (isTraining) {
     return (
       <div className="training-active">
         {showFeedback && (
           <div className="training-feedback">{currentFeedback}</div>
         )}
-
         <VialGame
           userId={userId}
           gameVersion={gameVersion}
           onComplete={handleTrainingEnd}
           isPaused={false}
           isTrainingMode={true}
-          trainingParams={TRAINING_PARAMS}
+          trainingParams={{ ...TRAINING_PARAMS, sequences: trainingSequences }}
           onRoundComplete={handleRoundComplete}
         />
       </div>

@@ -190,7 +190,7 @@ const GasStationIndicator = ({ isActive }) => {
           transition: "all 0.3s ease",
         }}
       >
-        {isActive ? "⛽ REFUEL AVAILABLE" : "🚫 STATION CLOSED"}
+        {isActive ? "REFUEL AVAILABLE" : "STATION CLOSED"}
       </div>
     </div>
   );

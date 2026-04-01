@@ -2,7 +2,7 @@ import { PRODUCTION_MODE, getParticipantVersion } from "./participantConfig";
 
 export const GAME_PARAMS = {
   DRAIN_RATE: 0.5,
-  ADD_AMOUNT: 20,
+  ADD_AMOUNT: 10,
   MAX_LEVEL: 100,
   OPTIMAL_ZONE_MIN: 35,
   OPTIMAL_ZONE_MAX: 50,
@@ -215,21 +215,21 @@ export const getGameVersion = (userId = null) => {
   if (userId) {
     const assignedVersion = getParticipantVersion(userId);
     if (assignedVersion) {
-      console.log(`Using assigned version for ${userId}:`, assignedVersion);
+      // console.log(`Using assigned version for ${userId}:`, assignedVersion);
       return assignedVersion;
     }
-    console.warn(`No version assigned to ${userId}, falling back...`);
+    // console.warn(`No version assigned to ${userId}, falling back...`);
   }
 
   // In development mode, use FORCE_VERSION if set
   if (!PRODUCTION_MODE && FORCE_VERSION) {
-    console.log("Using forced version (dev mode):", FORCE_VERSION);
+    // console.log("Using forced version (dev mode):", FORCE_VERSION);
     return FORCE_VERSION;
   }
 
   // Fallback to random selection
   const randomVersion = selectRandomVersion();
-  console.log("Using random version:", randomVersion);
+  // console.log("Using random version:", randomVersion);
   return randomVersion;
 };
 
@@ -249,7 +249,7 @@ export const generateGameSequences = (
   // Use custom velocities if provided, otherwise use default VERSION_VELOCITIES
   const velocities = customVelocities || VERSION_VELOCITIES[version];
 
-  console.log("generateGameSequences - Using velocities:", velocities);
+  // console.log("generateGameSequences - Using velocities:", velocities);
 
   switch (version) {
     case GAME_VERSIONS.ONE_VIAL_ALTERNATING:
@@ -313,10 +313,10 @@ const generateOneVialAlternatingBuckets = (totalRounds) => {
     startWithStorage = Math.random() < 0.5;
   }
 
-  console.log(
-    "One Vial Alternating - Starting with:",
-    startWithStorage ? "STORAGE" : "NO STORAGE",
-  );
+  // console.log(
+  //   "One Vial Alternating - Starting with:",
+  //   startWithStorage ? "STORAGE" : "NO STORAGE",
+  // );
 
   for (let phase = 0; phase < 4; phase++) {
     const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage;
@@ -343,10 +343,10 @@ const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
       velocityArray.push(velocityTypes[i % 3]);
     }
     shuffleArray(velocityArray);
-    console.log(
-      `Generated ${totalRounds} velocities for short game:`,
-      velocityArray,
-    );
+    // console.log(
+    //   `Generated ${totalRounds} velocities for short game:`,
+    //   velocityArray,
+    // );
     return velocityArray;
   }
 
@@ -382,9 +382,9 @@ const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
     velocityArray.push(velocityTypes[i % 3]);
   }
 
-  console.log(
-    `Generated ${velocityArray.length} velocities for ${totalRounds} rounds`,
-  );
+  // console.log(
+  //   `Generated ${velocityArray.length} velocities for ${totalRounds} rounds`,
+  // );
   return velocityArray;
 };
 
@@ -418,14 +418,14 @@ const generateTwoVialSingleBucket = (totalRounds) => {
 
   const phaseOrder = [...firstIteration, ...secondIteration];
 
-  console.log(
-    "Two Vials Single Bucket - Phase order:",
-    phaseOrder.map((state, idx) => {
-      if (state.vial1 === 1) return `Phase ${idx + 1}: Left`;
-      if (state.vial2 === 1) return `Phase ${idx + 1}: Right`;
-      return `Phase ${idx + 1}: Neither`;
-    }),
-  );
+  // console.log(
+  //   "Two Vials Single Bucket - Phase order:",
+  //   phaseOrder.map((state, idx) => {
+  //     if (state.vial1 === 1) return `Phase ${idx + 1}: Left`;
+  //     if (state.vial2 === 1) return `Phase ${idx + 1}: Right`;
+  //     return `Phase ${idx + 1}: Neither`;
+  //   }),
+  // );
 
   for (let phase = 0; phase < numPhases; phase++) {
     const bucketState = phaseOrder[phase];
@@ -487,10 +487,10 @@ const generateAlternatingPhases = (
 
   if (configuredPhase === "abundance" || configuredPhase === "deprivation") {
     startingPhase = configuredPhase;
-    console.log("Using configured starting phase:", startingPhase);
+    // console.log("Using configured starting phase:", startingPhase);
   } else {
     startingPhase = Math.random() < 0.5 ? "abundance" : "deprivation";
-    console.log("Randomly selected starting phase:", startingPhase);
+    // console.log("Randomly selected starting phase:", startingPhase);
   }
 
   const firstPhase = startingPhase;
@@ -514,11 +514,11 @@ const generateAlternatingPhases = (
     phases.push(secondPhase);
   }
 
-  console.log(
-    "Generated phase sequence (starting with",
-    startingPhase + "):",
-    phases,
-  );
+  // console.log(
+  //   "Generated phase sequence (starting with",
+  //   startingPhase + "):",
+  //   phases,
+  // );
 
   return phases;
 };
