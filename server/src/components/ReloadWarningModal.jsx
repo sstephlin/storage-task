@@ -1,14 +1,106 @@
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
+// import { PRODUCTION_MODE } from "../participantConfig";
+
+// /**
+//  * Modal that intercepts navigation attempts and warns users
+//  * Shows a custom, descriptive warning before they can leave/reload
+//  * @param {boolean} isActive - Whether warnings are active
+//  * @param {string} userId - Participant ID
+//  * @param {Function} onModalOpen - Callback when modal opens (to pause game)
+//  * @param {Function} onModalClose - Callback when modal closes (to resume game)
+//  */
+// const ReloadWarningModal = ({
+//   isActive,
+//   userId,
+//   onModalOpen,
+//   onModalClose,
+// }) => {
+//   const [showModal, setShowModal] = useState(false);
+//   const [attemptedAction, setAttemptedAction] = useState(null);
+
+//   useEffect(() => {
+//     if (!isActive || !PRODUCTION_MODE) return;
+
+//     // Track if user is trying to leave
+//     let isNavigatingAway = false;
+
+//     // Intercept beforeunload (browser navigation/reload/close)
+//     const handleBeforeUnload = (e) => {
+//       if (!isNavigatingAway) {
+//         setAttemptedAction("reload");
+//         setShowModal(true);
+//         if (onModalOpen) onModalOpen(); // Pause game
+//       }
+
+//       // Still show browser's default warning as backup
+//       e.preventDefault();
+//       e.returnValue = "";
+//       return "";
+//     };
+
+//     // Intercept back/forward button
+//     const handlePopState = (e) => {
+//       if (!isNavigatingAway) {
+//         setAttemptedAction("navigate");
+//         setShowModal(true);
+//         if (onModalOpen) onModalOpen(); // Pause game
+//         // Push state back to prevent navigation
+//         window.history.pushState(null, "", window.location.href);
+//       }
+//     };
+
+//     // Add a state to detect back button
+//     window.history.pushState(null, "", window.location.href);
+
+//     window.addEventListener("beforeunload", handleBeforeUnload);
+//     window.addEventListener("popstate", handlePopState);
+
+//     // Detect common reload shortcuts
+//     const handleKeyDown = (e) => {
+//       // Ctrl+R, Cmd+R, F5, Ctrl+F5
+//       if (
+//         (e.key === "r" && (e.ctrlKey || e.metaKey)) ||
+//         e.key === "F5" ||
+//         (e.key === "F5" && e.ctrlKey)
+//       ) {
+//         e.preventDefault();
+//         setAttemptedAction("reload");
+//         setShowModal(true);
+//         if (onModalOpen) onModalOpen(); // Pause game
+//       }
+//     };
+
+//     document.addEventListener("keydown", handleKeyDown);
+
+//     return () => {
+//       window.removeEventListener("beforeunload", handleBeforeUnload);
+//       window.removeEventListener("popstate", handlePopState);
+//       document.removeEventListener("keydown", handleKeyDown);
+//     };
+//   }, [isActive, onModalOpen]);
+
+//   const handleClose = () => {
+//     setShowModal(false);
+//     if (onModalClose) onModalClose(); // Resume game
+//   };
+
+//   const handleForceLeave = () => {
+//     // User really wants to leave - let them
+//     setShowModal(false);
+//     if (onModalClose) onModalClose(); // Clean up before leaving
+//     window.removeEventListener("beforeunload", () => {});
+
+//     if (attemptedAction === "reload") {
+//       window.location.reload();
+//     } else {
+//       window.history.back();
+//     }
+//   };
+
+//   if (!showModal) return null;
+import React, { useState, useEffect, useRef } from "react"; // ✅ add useRef
 import { PRODUCTION_MODE } from "../participantConfig";
 
-/**
- * Modal that intercepts navigation attempts and warns users
- * Shows a custom, descriptive warning before they can leave/reload
- * @param {boolean} isActive - Whether warnings are active
- * @param {string} userId - Participant ID
- * @param {Function} onModalOpen - Callback when modal opens (to pause game)
- * @param {Function} onModalClose - Callback when modal closes (to resume game)
- */
 const ReloadWarningModal = ({
   isActive,
   userId,
@@ -17,47 +109,34 @@ const ReloadWarningModal = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [attemptedAction, setAttemptedAction] = useState(null);
+  const beforeUnloadRef = useRef(null); // ✅ store handler so it can be removed
 
   useEffect(() => {
     if (!isActive || !PRODUCTION_MODE) return;
 
-    // Track if user is trying to leave
     let isNavigatingAway = false;
 
-    // Intercept beforeunload (browser navigation/reload/close)
     const handleBeforeUnload = (e) => {
       if (!isNavigatingAway) {
         setAttemptedAction("reload");
         setShowModal(true);
-        if (onModalOpen) onModalOpen(); // Pause game
+        if (onModalOpen) onModalOpen();
       }
-
-      // Still show browser's default warning as backup
       e.preventDefault();
       e.returnValue = "";
       return "";
     };
 
-    // Intercept back/forward button
-    const handlePopState = (e) => {
+    const handlePopState = () => {
       if (!isNavigatingAway) {
         setAttemptedAction("navigate");
         setShowModal(true);
-        if (onModalOpen) onModalOpen(); // Pause game
-        // Push state back to prevent navigation
+        if (onModalOpen) onModalOpen();
         window.history.pushState(null, "", window.location.href);
       }
     };
 
-    // Add a state to detect back button
-    window.history.pushState(null, "", window.location.href);
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("popstate", handlePopState);
-
-    // Detect common reload shortcuts
     const handleKeyDown = (e) => {
-      // Ctrl+R, Cmd+R, F5, Ctrl+F5
       if (
         (e.key === "r" && (e.ctrlKey || e.metaKey)) ||
         e.key === "F5" ||
@@ -66,29 +145,40 @@ const ReloadWarningModal = ({
         e.preventDefault();
         setAttemptedAction("reload");
         setShowModal(true);
-        if (onModalOpen) onModalOpen(); // Pause game
+        if (onModalOpen) onModalOpen();
       }
     };
 
+    beforeUnloadRef.current = handleBeforeUnload; // ✅ save reference
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      // ✅ Correctly removes the exact listener that was added
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);
+      beforeUnloadRef.current = null;
     };
   }, [isActive, onModalOpen]);
 
   const handleClose = () => {
     setShowModal(false);
-    if (onModalClose) onModalClose(); // Resume game
+    if (onModalClose) onModalClose();
   };
 
   const handleForceLeave = () => {
-    // User really wants to leave - let them
     setShowModal(false);
-    if (onModalClose) onModalClose(); // Clean up before leaving
-    window.removeEventListener("beforeunload", () => {});
+    if (onModalClose) onModalClose();
+
+    // ✅ Remove using the stored reference — the old anonymous () => {} removed nothing
+    if (beforeUnloadRef.current) {
+      window.removeEventListener("beforeunload", beforeUnloadRef.current);
+      beforeUnloadRef.current = null;
+    }
 
     if (attemptedAction === "reload") {
       window.location.reload();

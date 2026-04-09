@@ -1,4 +1,4 @@
-import { PRODUCTION_MODE, getParticipantVersion } from "./participantConfig";
+import { PRODUCTION_MODE } from "./participantConfig";
 
 export const GAME_PARAMS = {
   DRAIN_RATE: 0.5,
@@ -10,7 +10,7 @@ export const GAME_PARAMS = {
   DANGER_LOWER: 10,
   GAME_SPEED: 100,
   ROUND_DURATION: 15,
-  MAX_ROUNDS: 36,
+  MAX_ROUNDS: 1,
   INITIAL_VIAL_LEVEL: 50,
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
@@ -43,7 +43,19 @@ export const DRAIN_RATES = {
   FAST: 1,
 };
 
-// Game Version Definitions
+// ============================================================================
+// GAME VERSION DEFINITIONS
+// Note: version strings here correspond to the values in VERSION_CODE_MAP
+// in participantConfig.js. If you add a version, update both files.
+//
+//   URL code  →  version key (here)
+//   0.1       →  one_vial_alternating
+//   0.2       →  one_vial_always_bucket
+//   0.3       →  one_vial_always_bucket_simple
+//   0.4       →  one_vial_always_bucket_simple_fast
+//   0.5       →  two_vials_single_bucket
+//   0.6       →  two_vials_phases
+// ============================================================================
 export const GAME_VERSIONS = {
   ONE_VIAL_ALTERNATING: "one_vial_alternating",
   ONE_VIAL_ALWAYS_BUCKET: "one_vial_always_bucket",
@@ -80,17 +92,18 @@ export const VERSION_CONFIG = {
     numVials: 1,
     hasPhases: false,
     bucketBehavior: "always",
-    allowUnrestrictedBucketFilling: true, // New flag for unrestricted bucket filling
+    allowUnrestrictedBucketFilling: true,
     enabled: true,
   },
+
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
-    name: "One Vial - Simple Storage",
+    name: "One Vial - Simple Storage Fast",
     description:
       "Single vial with constant storage and no phases - simplified version",
     numVials: 1,
     hasPhases: false,
     bucketBehavior: "always",
-    allowUnrestrictedBucketFilling: true, // New flag for unrestricted bucket filling
+    allowUnrestrictedBucketFilling: true,
     enabled: true,
   },
 
@@ -188,55 +201,13 @@ export const PHASE_CONFIG = {
 export const getEnabledVersions = () => {
   return Object.entries(VERSION_CONFIG)
     .filter(([_, config]) => config.enabled)
-    .map(([versionId, _]) => versionId);
-};
-
-// Randomly select a version from enabled versions
-export const selectRandomVersion = () => {
-  const enabledVersions = getEnabledVersions();
-  const randomIndex = Math.floor(Math.random() * enabledVersions.length);
-  return enabledVersions[randomIndex];
-};
-
-// Force a specific version (for development/debugging only)
-// In production mode, this is ignored in favor of participant assignments
-// Set to null to use participant-based assignment even in dev mode
-export const FORCE_VERSION = null;
-
-/**
- * Get the game version to use
- * In production: uses participant's assigned version
- * In development: uses participant assignment, or FORCE_VERSION, or random
- * @param {string} userId - Participant ID
- * @returns {string} Game version identifier
- */
-export const getGameVersion = (userId = null) => {
-  // If we have a userId, try to get their assigned version (works in both prod and dev)
-  if (userId) {
-    const assignedVersion = getParticipantVersion(userId);
-    if (assignedVersion) {
-      // console.log(`Using assigned version for ${userId}:`, assignedVersion);
-      return assignedVersion;
-    }
-    // console.warn(`No version assigned to ${userId}, falling back...`);
-  }
-
-  // In development mode, use FORCE_VERSION if set
-  if (!PRODUCTION_MODE && FORCE_VERSION) {
-    // console.log("Using forced version (dev mode):", FORCE_VERSION);
-    return FORCE_VERSION;
-  }
-
-  // Fallback to random selection
-  const randomVersion = selectRandomVersion();
-  // console.log("Using random version:", randomVersion);
-  return randomVersion;
+    .map(([versionId]) => versionId);
 };
 
 /**
- * Generate sequences based on game version
+ * Generate sequences based on game version.
  * Returns: { velocitySequence, bucketSequence, phaseSequence }
- * @param {string} version - Game version identifier
+ * @param {string} version - Game version identifier (resolved from URL code)
  * @param {number} totalRounds - Total number of rounds
  * @param {object} customVelocities - Optional custom velocity config (for training mode)
  */
@@ -245,11 +216,7 @@ export const generateGameSequences = (
   totalRounds = 24,
   customVelocities = null,
 ) => {
-  const versionConfig = VERSION_CONFIG[version];
-  // Use custom velocities if provided, otherwise use default VERSION_VELOCITIES
   const velocities = customVelocities || VERSION_VELOCITIES[version];
-
-  // console.log("generateGameSequences - Using velocities:", velocities);
 
   switch (version) {
     case GAME_VERSIONS.ONE_VIAL_ALTERNATING:
@@ -272,6 +239,7 @@ export const generateGameSequences = (
         bucketSequence: generateConstantBuckets(totalRounds, 1),
         phaseSequence: generateConstantPhase(totalRounds, "abundance"),
       };
+
     case GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST:
       return {
         velocitySequence: generatePhaseVelocities(totalRounds, velocities, 4),
@@ -298,7 +266,9 @@ export const generateGameSequences = (
   }
 };
 
-// [Rest of the helper functions remain the same as in your original code]
+// ============================================================================
+// SEQUENCE HELPERS
+// ============================================================================
 
 const generateOneVialAlternatingBuckets = (totalRounds) => {
   const buckets = [];
@@ -313,19 +283,10 @@ const generateOneVialAlternatingBuckets = (totalRounds) => {
     startWithStorage = Math.random() < 0.5;
   }
 
-  // console.log(
-  //   "One Vial Alternating - Starting with:",
-  //   startWithStorage ? "STORAGE" : "NO STORAGE",
-  // );
-
   for (let phase = 0; phase < 4; phase++) {
     const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage;
-
     for (let i = 0; i < roundsPerPhase; i++) {
-      buckets.push({
-        vial1: hasStorage ? 1 : 0,
-        vial2: 0,
-      });
+      buckets.push({ vial1: hasStorage ? 1 : 0, vial2: 0 });
     }
   }
 
@@ -335,36 +296,27 @@ const generateOneVialAlternatingBuckets = (totalRounds) => {
 const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
   const velocityArray = [];
 
-  // Handle small round counts (like training mode with 2 rounds)
   if (totalRounds < numPhases) {
-    // For very short games, just generate velocities in order for each round
     const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
     for (let i = 0; i < totalRounds; i++) {
       velocityArray.push(velocityTypes[i % 3]);
     }
     shuffleArray(velocityArray);
-    // console.log(
-    //   `Generated ${totalRounds} velocities for short game:`,
-    //   velocityArray,
-    // );
     return velocityArray;
   }
 
-  // Original logic for normal-length games
   const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const velocityIterations = Math.floor(roundsPerPhase / 3);
 
   for (let phase = 0; phase < numPhases; phase++) {
     const phaseVelocities = [];
 
-    // Generate velocity triplets
     for (let iter = 0; iter < velocityIterations; iter++) {
       phaseVelocities.push(velocities.SLOW);
       phaseVelocities.push(velocities.MEDIUM);
       phaseVelocities.push(velocities.FAST);
     }
 
-    // Handle remaining rounds in this phase
     const remainingInPhase = roundsPerPhase - velocityIterations * 3;
     const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
     for (let i = 0; i < remainingInPhase; i++) {
@@ -375,26 +327,19 @@ const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
     velocityArray.push(...phaseVelocities);
   }
 
-  // Handle any remaining rounds due to rounding
   const remaining = totalRounds - velocityArray.length;
   const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
   for (let i = 0; i < remaining; i++) {
     velocityArray.push(velocityTypes[i % 3]);
   }
 
-  // console.log(
-  //   `Generated ${velocityArray.length} velocities for ${totalRounds} rounds`,
-  // );
   return velocityArray;
 };
 
 const generateConstantBuckets = (totalRounds, vialNumber = 1) => {
   const buckets = [];
   for (let i = 0; i < totalRounds; i++) {
-    buckets.push({
-      vial1: vialNumber === 1 ? 1 : 0,
-      vial2: 0,
-    });
+    buckets.push({ vial1: vialNumber === 1 ? 1 : 0, vial2: 0 });
   }
   return buckets;
 };
@@ -417,15 +362,6 @@ const generateTwoVialSingleBucket = (totalRounds) => {
   shuffleArray(secondIteration);
 
   const phaseOrder = [...firstIteration, ...secondIteration];
-
-  // console.log(
-  //   "Two Vials Single Bucket - Phase order:",
-  //   phaseOrder.map((state, idx) => {
-  //     if (state.vial1 === 1) return `Phase ${idx + 1}: Left`;
-  //     if (state.vial2 === 1) return `Phase ${idx + 1}: Right`;
-  //     return `Phase ${idx + 1}: Neither`;
-  //   }),
-  // );
 
   for (let phase = 0; phase < numPhases; phase++) {
     const bucketState = phaseOrder[phase];
@@ -455,8 +391,7 @@ const generateDynamicBuckets = (totalRounds, numPhases) => {
     }
 
     if (roundsPerPhase % 2 !== 0) {
-      const randomChoice = Math.floor(Math.random() * 2);
-      bucketPhase.push({ ...options[randomChoice] });
+      bucketPhase.push({ ...options[Math.floor(Math.random() * 2)] });
     }
 
     shuffleArray(bucketPhase);
@@ -467,11 +402,7 @@ const generateDynamicBuckets = (totalRounds, numPhases) => {
 };
 
 const generateConstantPhase = (totalRounds, phase = "abundance") => {
-  const phases = [];
-  for (let i = 0; i < totalRounds; i++) {
-    phases.push(phase);
-  }
-  return phases;
+  return Array(totalRounds).fill(phase);
 };
 
 const generateAlternatingPhases = (
@@ -482,43 +413,24 @@ const generateAlternatingPhases = (
   const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const phases = [];
 
-  let startingPhase;
   const configuredPhase = PHASE_CONFIG.FORCE_START_PHASE || forceStartPhase;
-
-  if (configuredPhase === "abundance" || configuredPhase === "deprivation") {
-    startingPhase = configuredPhase;
-    // console.log("Using configured starting phase:", startingPhase);
-  } else {
-    startingPhase = Math.random() < 0.5 ? "abundance" : "deprivation";
-    // console.log("Randomly selected starting phase:", startingPhase);
-  }
+  const startingPhase =
+    configuredPhase === "abundance" || configuredPhase === "deprivation"
+      ? configuredPhase
+      : Math.random() < 0.5
+        ? "abundance"
+        : "deprivation";
 
   const firstPhase = startingPhase;
   const secondPhase =
     startingPhase === "abundance" ? "deprivation" : "abundance";
 
-  for (let i = 0; i < roundsPerPhase; i++) {
-    phases.push(firstPhase);
-  }
-
-  for (let i = 0; i < roundsPerPhase; i++) {
-    phases.push(secondPhase);
-  }
-
-  for (let i = 0; i < roundsPerPhase; i++) {
-    phases.push(firstPhase);
-  }
+  for (let i = 0; i < roundsPerPhase; i++) phases.push(firstPhase);
+  for (let i = 0; i < roundsPerPhase; i++) phases.push(secondPhase);
+  for (let i = 0; i < roundsPerPhase; i++) phases.push(firstPhase);
 
   const remainingRounds = totalRounds - roundsPerPhase * 3;
-  for (let i = 0; i < remainingRounds; i++) {
-    phases.push(secondPhase);
-  }
-
-  // console.log(
-  //   "Generated phase sequence (starting with",
-  //   startingPhase + "):",
-  //   phases,
-  // );
+  for (let i = 0; i < remainingRounds; i++) phases.push(secondPhase);
 
   return phases;
 };
@@ -530,13 +442,15 @@ const shuffleArray = (array) => {
   }
 };
 
-// Game messages
+// ============================================================================
+// GAME MESSAGES / LABELS
+// ============================================================================
+
 export const GAME_MESSAGES = {
   PLAYING: "Keep both vials at healthy level!",
   GAME_COMPLETE: "Congratulations! You completed all rounds!",
 };
 
-// Button labels
 export const BUTTON_LABELS = {
   ADD_VIAL_1: "Add to Vial 1",
   ADD_VIAL_2: "Add to Vial 2",
@@ -546,7 +460,6 @@ export const BUTTON_LABELS = {
   TOGGLE_WITHOUT_BUCKET: "Play With Bucket",
 };
 
-// Instructions text
 export const INSTRUCTIONS = {
   INTRO: "How to play:",
   COMMON: "Vials constantly drain. Use keyboard controls to play:",
@@ -556,14 +469,13 @@ export const INSTRUCTIONS = {
 };
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 10, // Number of practice rounds
-  ROUND_DURATION: 15, // Seconds per round
-  REQUIRED_SURVIVAL_RATE: 0.5, // 0.5 = 50% needed to pass
+  MAX_ROUNDS: 10,
+  ROUND_DURATION: 15,
+  REQUIRED_SURVIVAL_RATE: 0.5,
 
   VELOCITIES: {
-    // Adjust these to make training easier/harder
     one_vial_alternating: {
-      SLOW: 1.2, // Lower = easier
+      SLOW: 1.2,
       MEDIUM: 1.4,
       FAST: 1.6,
     },
@@ -572,6 +484,26 @@ export const TRAINING_PARAMS = {
       MEDIUM: 1.4,
       FAST: 1.6,
     },
-    // ... other versions
   },
+};
+
+// ============================================================================
+// POST-GAME REDIRECT URLS
+// After the main game ends, participants are sent to a version-specific link.
+// Update the placeholder URLs below before deploying.
+// Keyed by the same internal version strings used throughout the app.
+// ============================================================================
+export const VERSION_REDIRECT_URLS = {
+  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
+    "https://brown.co1.qualtrics.com/jfe/form/SV_cLObwj6KBpKvEF0",
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
+    "https://brown.co1.qualtrics.com/jfe/form/SV_9mErNW5zeKEL0SW",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
+  //   "https://your-survey.com/redirect/0.3",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
+  //   "https://your-survey.com/redirect/0.4",
+  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
+    "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
+  [GAME_VERSIONS.TWO_VIALS_PHASES]:
+    "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
 };

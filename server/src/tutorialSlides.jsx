@@ -64,9 +64,23 @@ const SHARED_COMMANDS_SLIDES = [
   },
   {
     id: "commands-6",
-    image: "gifs/upclick.gif",
+    image: "gifs/upclicklimited.gif",
     title:
       "By clicking the up arrow, you can dump some stored gloop back into the main gloop container.",
+    showButtons: false,
+  },
+  {
+    id: "commands-6.1",
+    image: "gifs/upclicklimited.gif",
+    title:
+      "Note that adding stored gloop cannot not bring Bleeblop’s gloop levels any higher than the ideal.",
+    showButtons: false,
+  },
+  {
+    id: "commands-6.2",
+    image: "gifs/upclicklimited.gif",
+    title:
+      "*If you choose to add stored gloop and doing so would cause Bleeblop's gloop levels to go over the ideal, only the amount that would bring Bleeblop's gloop levels to the ideal will be added",
     showButtons: false,
   },
   {
@@ -320,6 +334,40 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
           {
             id: "e",
             text: "The main gloop container is filled above its max",
+            correct: false,
+          },
+        ],
+        explanation: "Correct!",
+      },
+      showButtons: false,
+    },
+    {
+      id: "quiz-13",
+      title:
+        "Can Bleeblop's stored gloop be used to bring their gloop levels above the ideal?",
+      content: "",
+      type: "quiz",
+      quiz: {
+        options: [
+          {
+            id: "a",
+            text: "Always",
+            correct: true,
+          },
+          { id: "b", text: "Never", correct: false },
+          {
+            id: "c",
+            text: "Only if it is a round where storage is available",
+            correct: false,
+          },
+          {
+            id: "d",
+            text: "Only if it is a round where storage is not available",
+            correct: false,
+          },
+          {
+            id: "e",
+            text: "Only if the storage container is full",
             correct: false,
           },
         ],

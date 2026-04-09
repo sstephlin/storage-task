@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // ✅ add useRef
 import VialGame from "./VialGame";
 import TrainingPhase from "./TrainingPhase";
-import Tutorial from "./instructions";
-import Login from "./components/Login";
+import PrelimQuestion from "./components/PrelimQuestions";
 import ReloadWarningModal from "./components/ReloadWarningModal";
-import { initializeSession, endSession } from "./logging";
+import {
+  initializeSession,
+  endSession,
+  logGameCompletion,
+  logPrelimAnswer,
+} from "./logging";
 import "./styles/App.css";
-import { PRODUCTION_MODE, getParticipantVersion } from "./participantConfig";
+
+import {
+  PRODUCTION_MODE,
+  validateUrlParams,
+  VERSION_REDIRECT_URLS,
+  getVersionCode,
+} from "./participantConfig";
+
 import {
   initializeAccess,
   completeSession,
   setupReloadWarning,
   checkReloadAttempt,
 } from "./accessControl";
+
 import { VERSION_CONFIG } from "./params";
 
 const App = () => {
@@ -23,47 +35,104 @@ const App = () => {
   const [showReloadModal, setShowReloadModal] = useState(false);
   const [isGamePaused, setIsGamePaused] = useState(false);
 
-  // Phase states - progression: login -> tutorial -> training -> game
-  const [tutorialComplete, setTutorialComplete] = useState(false);
+  const [prelimAnswered, setPrelimAnswered] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+  const [gameComplete, setGameComplete] = useState(false);
 
-  // Check for reload attempts on mount
+  // ✅ Declare the ref so handleGameComplete can actually use it
+  const reloadWarningCleanupRef = useRef(null);
+
+  // ─── Bootstrap ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    const { isReload, shouldBlock } = checkReloadAttempt();
+    const bootstrap = async () => {
+      const {
+        valid,
+        participantId,
+        version,
+        error: paramError,
+      } = validateUrlParams();
 
-    if (shouldBlock && PRODUCTION_MODE) {
-      setShowReloadModal(true);
-      setError("Page was reloaded. Cannot continue experiment.");
-      setIsLoading(false);
-      return;
-    }
+      if (participantId) setUserId(participantId);
+      if (version) setGameVersion(version);
 
-    // Check URL parameters on mount (for development convenience)
-    if (!PRODUCTION_MODE) {
-      const params = new URLSearchParams(window.location.search);
-      const userIdFromUrl = params.get("userId");
-
-      if (userIdFromUrl) {
-        handleLogin(userIdFromUrl, "one_vial_alternating");
+      if (!valid) {
+        setError(paramError);
+        setIsLoading(false);
         return;
       }
-    }
 
-    setIsLoading(false);
+      const { shouldBlock } = checkReloadAttempt();
+      if (shouldBlock && PRODUCTION_MODE) {
+        setShowReloadModal(true);
+        setError("Page was reloaded. Cannot continue experiment.");
+        setIsLoading(false);
+        return;
+      }
+
+      const accessResult = await initializeAccess(participantId);
+      if (!accessResult.success) {
+        setError(accessResult.error);
+        setIsLoading(false);
+        return;
+      }
+
+      await initializeSession(participantId, version, PRODUCTION_MODE);
+      setIsLoading(false);
+    };
+
+    bootstrap();
   }, []);
 
-  // Setup reload warning when user is logged in
+  // ─── Reload warning ─────────────────────────────────────────────────────────
+  // ✅ Store cleanup in ref instead of local variable so handleGameComplete can reach it
   useEffect(() => {
-    let cleanup;
     if (userId && PRODUCTION_MODE) {
-      cleanup = setupReloadWarning();
+      reloadWarningCleanupRef.current = setupReloadWarning();
     }
     return () => {
-      if (cleanup) cleanup();
+      if (reloadWarningCleanupRef.current) {
+        reloadWarningCleanupRef.current();
+        reloadWarningCleanupRef.current = null;
+      }
     };
   }, [userId]);
 
-  // Cleanup session on unmount
+  // ─── Redirect logic ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!showReloadModal) return;
+
+    // Kill the beforeunload listener immediately when reload is detected
+    if (reloadWarningCleanupRef.current) {
+      reloadWarningCleanupRef.current();
+      reloadWarningCleanupRef.current = null;
+    }
+
+    const { participantId, version } = validateUrlParams();
+    const redirectUrl = version ? VERSION_REDIRECT_URLS[version] : null;
+    if (!redirectUrl) return;
+
+    const versionCode = getVersionCode(version);
+    const url = new URL(redirectUrl);
+    if (participantId) url.searchParams.set("pid", participantId);
+    if (versionCode) url.searchParams.set("v", versionCode);
+    const finalUrl = url.toString();
+
+    const interval = setInterval(() => {
+      setRedirectCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          window.location.href = finalUrl;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showReloadModal]);
+
+  // ─── Cleanup on unmount ──────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
       if (userId) {
@@ -73,289 +142,127 @@ const App = () => {
     };
   }, [userId]);
 
-  const handleLogin = async (newUserId, assignedVersion) => {
-    setIsLoading(true);
-    setError(null);
+  // ─── Handlers ───────────────────────────────────────────────────────────────
+  const handleTrainingComplete = () => setTrainingComplete(true);
 
-    try {
-      // Initialize access control (checks for prior access, marks accessed)
-      const accessResult = await initializeAccess(newUserId);
-
-      if (!accessResult.success) {
-        setError(accessResult.error);
-        setIsLoading(false);
-        return;
-      }
-
-      // Get participant's assigned game version
-      const version = assignedVersion || getParticipantVersion(newUserId);
-
-      if (!version) {
-        setError("No game version assigned to this participant.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Update URL with userId (for tracking)
-      const url = new URL(window.location);
-      url.searchParams.set("userId", newUserId);
-      window.history.pushState({}, "", url);
-
-      // Initialize Firebase session with version info
-      await initializeSession(newUserId, version, PRODUCTION_MODE);
-
-      setUserId(newUserId);
-      setGameVersion(version);
-      setTutorialComplete(false); // Reset to show tutorial first
-      setTrainingComplete(false); // Reset training status
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(
-        "An error occurred during login. Please try again or contact the researcher.",
-      );
-      setIsLoading(false);
+  const handleGameComplete = async ({
+    finalScore,
+    totalRounds,
+    cumulativeProgress,
+  } = {}) => {
+    // ✅ Remove beforeunload listener BEFORE any async work or redirect
+    if (reloadWarningCleanupRef.current) {
+      reloadWarningCleanupRef.current();
+      reloadWarningCleanupRef.current = null;
     }
-  };
 
-  const handleTrainingComplete = () => {
-    console.log("Training phase completed");
-    setTrainingComplete(true);
-  };
+    setGameComplete(true);
+    console.log("cumulative", cumulativeProgress);
 
-  const handleTutorialComplete = () => {
-    console.log("Tutorial phase completed");
-    setTutorialComplete(true);
-  };
-
-  const handleGameComplete = async () => {
-    // Called when participant completes the experiment
     if (userId) {
-      await completeSession(userId);
+      await logGameCompletion({
+        finalScore: finalScore ?? 0,
+        totalRounds: totalRounds ?? 0,
+        cumulativeProgress: cumulativeProgress ?? 0,
+        isTrainingMode: false,
+      });
+      await completeSession(userId); // also calls clearSession() internally
       await endSession();
     }
-  };
 
-  const handleModalOpen = () => {
-    setIsGamePaused(true);
-  };
+    const redirectUrl = VERSION_REDIRECT_URLS[gameVersion];
+    if (redirectUrl) {
+      const versionCode = getVersionCode(gameVersion);
+      const url = new URL(redirectUrl);
+      if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+      if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
 
-  const handleModalClose = () => {
-    setIsGamePaused(false);
-  };
-
-  // Development-only logout function
-  const handleLogout = async () => {
-    if (PRODUCTION_MODE) {
-      console.warn("Logout is disabled in production mode");
-      return;
+      setTimeout(() => {
+        window.location.replace(url.toString());
+      }, 5000);
     }
+  };
 
-    await completeSession(userId);
-    await endSession();
+  const handleModalOpen = () => setIsGamePaused(true);
+  const handleModalClose = () => setIsGamePaused(false);
 
-    const url = new URL(window.location);
-    url.searchParams.delete("userId");
-    window.history.pushState({}, "", url);
-
+  const handleDevReset = () => {
+    if (PRODUCTION_MODE) return;
     setUserId(null);
     setGameVersion(null);
-    setTutorialComplete(false);
+    setPrelimAnswered(false);
     setTrainingComplete(false);
+    setError(null);
+    setIsLoading(true);
+    window.location.reload();
   };
 
-  // Reload warning modal
+  const DevOverlay = ({ status }) =>
+    PRODUCTION_MODE ? null : (
+      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
+        <div>User: {userId}</div>
+        <div>Version: {gameVersion}</div>
+        <div>Status: {status}</div>
+        <button onClick={handleDevReset}>Reset</button>
+      </div>
+    );
+
+  // ─── Reload Block Screen ─────────────────────────────────────────────────────
   if (showReloadModal) {
+    const { version } = validateUrlParams();
+    const redirectUrl = version ? VERSION_REDIRECT_URLS[version] : null;
+
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          background: "rgba(0,0,0,0.8)",
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            padding: "40px",
-            borderRadius: "12px",
-            maxWidth: "500px",
-            textAlign: "center",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-          }}
-        >
-          <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
-          <h2
-            style={{
-              color: "#e74c3c",
-              marginBottom: "20px",
-              fontSize: "24px",
-            }}
-          >
-            Experiment Terminated
-          </h2>
-          <p
-            style={{
-              color: "#555",
-              fontSize: "16px",
-              lineHeight: "1.6",
-              marginBottom: "20px",
-            }}
-          >
+      <div className="reload-overlay">
+        <div className="reload-card">
+          <div className="reload-icon">⚠️</div>
+          <h2 className="reload-title">Experiment Terminated</h2>
+          <p className="reload-text">
             This page was reloaded, which is not allowed during the experiment.
-            Your session has been terminated.
+            Your session has been terminated. You will be redirected shortly.
           </p>
-          <p
-            style={{
-              color: "#777",
-              fontSize: "14px",
-            }}
-          >
-            Please close this window and contact the researcher for further
-            instructions.
-          </p>
+          {redirectUrl ? (
+            <p className="reload-countdown">
+              Redirecting in <strong>{redirectCountdown}</strong> second
+              {redirectCountdown !== 1 ? "s" : ""}…
+            </p>
+          ) : (
+            <p className="reload-fallback">
+              Please close this window and contact the researcher.
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
-  // Loading state
-  if (isLoading) {
+  if (isLoading) return <div>Loading…</div>;
+  if (error) return <div>{error}</div>;
+
+  if (userId && !prelimAnswered) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          fontSize: "18px",
-          color: "#666",
+      <PrelimQuestion
+        onComplete={async (answer) => {
+          await logPrelimAnswer(answer);
+          setPrelimAnswered(true);
         }}
-      >
-        Loading...
-      </div>
+      />
     );
   }
 
-  // Error state
-  if (error && !userId) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          padding: "20px",
-        }}
-      >
-        <div
-          style={{
-            background: "#fee",
-            border: "2px solid #fcc",
-            borderRadius: "12px",
-            padding: "30px",
-            maxWidth: "500px",
-            textAlign: "center",
-          }}
-        >
-          <h2 style={{ color: "#c33", marginBottom: "15px" }}>Error</h2>
-          <p style={{ color: "#555", fontSize: "16px" }}>{error}</p>
-          <button
-            onClick={() => {
-              setError(null);
-              setIsLoading(false);
-            }}
-            style={{
-              marginTop: "20px",
-              padding: "10px 20px",
-              background: "#667eea",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold",
-            }}
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Login screen
-  if (!userId) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  // if (!tutorialComplete) {
-  //   return <Tutorial />;
-  // }
-
-  // Training phase (if not complete)
   if (!trainingComplete) {
     return (
       <>
-        <ReloadWarningModal
-          isActive={!!userId}
-          userId={userId}
-          onModalOpen={handleModalOpen}
-          onModalClose={handleModalClose}
-        />
-
-        {!PRODUCTION_MODE && (
-          <div
-            style={{
-              position: "fixed",
-              top: "10px",
-              right: "10px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              background: "white",
-              padding: "15px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              fontSize: "12px",
-              zIndex: 1000,
-              minWidth: "200px",
-            }}
-          >
-            <div style={{ color: "#666" }}>
-              <strong style={{ color: "#2c3e50" }}>Development Mode</strong>
-            </div>
-            <div style={{ color: "#666" }}>
-              User: <strong style={{ color: "#2c3e50" }}>{userId}</strong>
-            </div>
-            <div style={{ color: "#666" }}>
-              Version:{" "}
-              <strong style={{ color: "#2c3e50" }}>{gameVersion}</strong>
-            </div>
-            <div style={{ color: "#666" }}>
-              Status: <strong style={{ color: "#f59e0b" }}>TRAINING</strong>
-            </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "6px 12px",
-                background: "#e74c3c",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-              }}
-            >
-              Logout (Dev Only)
-            </button>
-          </div>
+        {/* ✅ ReloadWarningModal also gated on !gameComplete here */}
+        {!gameComplete && (
+          <ReloadWarningModal
+            isActive={!!userId}
+            userId={userId}
+            onModalOpen={handleModalOpen}
+            onModalClose={handleModalClose}
+          />
         )}
-
+        <DevOverlay status="TRAINING" />
         <TrainingPhase
           userId={userId}
           gameVersion={gameVersion}
@@ -366,72 +273,18 @@ const App = () => {
     );
   }
 
-  // Main game screen (after training)
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
-    >
-      <ReloadWarningModal
-        isActive={!!userId}
-        userId={userId}
-        onModalOpen={handleModalOpen}
-        onModalClose={handleModalClose}
-      />
-
-      {/* Debug info (only shown in dev mode) */}
-      {!PRODUCTION_MODE && (
-        <div
-          style={{
-            position: "fixed",
-            top: "10px",
-            right: "10px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            background: "white",
-            padding: "15px",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            fontSize: "12px",
-            zIndex: 1000,
-            minWidth: "200px",
-          }}
-        >
-          <div style={{ color: "#666" }}>
-            <strong style={{ color: "#2c3e50" }}>Development Mode</strong>
-          </div>
-          <div style={{ color: "#666" }}>
-            User: <strong style={{ color: "#2c3e50" }}>{userId}</strong>
-          </div>
-          <div style={{ color: "#666" }}>
-            Version: <strong style={{ color: "#2c3e50" }}>{gameVersion}</strong>
-          </div>
-          <div style={{ color: "#666" }}>
-            Status: <strong style={{ color: "#10b981" }}>MAIN GAME</strong>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "6px 12px",
-              background: "#e74c3c",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: "bold",
-            }}
-          >
-            Logout (Dev Only)
-          </button>
-        </div>
+    <div>
+      {/* ✅ isActive already false when gameComplete, but gating render too avoids any modal re-mount */}
+      {!gameComplete && (
+        <ReloadWarningModal
+          isActive={!!userId}
+          userId={userId}
+          onModalOpen={handleModalOpen}
+          onModalClose={handleModalClose}
+        />
       )}
-
+      <DevOverlay status="MAIN GAME" />
       <VialGame
         userId={userId}
         gameVersion={gameVersion}

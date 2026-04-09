@@ -4,18 +4,24 @@ import GameControls from "./components/GameControls";
 import RoundTransition from "./components/RoundTransition";
 import Tutorial from "./instructions";
 import GasStationIndicator from "./components/GasStationIndicator";
-import { logButtonPress, logRoundStart, logRoundEnd } from "./logging";
+import {
+  logButtonPress,
+  logRoundStart,
+  logRoundEnd,
+  logGameCompletion,
+} from "./logging";
 import { PRODUCTION_MODE } from "./participantConfig";
+import { getVersionCode } from "./participantConfig";
 import {
   GAME_PARAMS,
   GAME_MESSAGES,
   INSTRUCTIONS,
-  getGameVersion,
   VERSION_CONFIG,
   generateGameSequences,
   VERSION_BUTTON_DELAYS,
   VERSION_DEPRIVATION_CONFIG,
   VERSION_VELOCITIES,
+  VERSION_REDIRECT_URLS,
 } from "./params";
 import "./styles/VialGame.css";
 
@@ -37,8 +43,6 @@ const VialGame = ({
   // Check if this version allows unrestricted bucket filling
   const allowUnrestrictedBucketFilling =
     versionConfig.allowUnrestrictedBucketFilling || false;
-  // console.log("gameVersion:", gameVersion);
-  // console.log("versionConfig:", versionConfig);
 
   // Use training parameters if in training mode
   const maxRounds = isTrainingMode
@@ -48,20 +52,6 @@ const VialGame = ({
     ? trainingParams.ROUND_DURATION
     : GAME_PARAMS.ROUND_DURATION;
   const velocityConfig = VERSION_VELOCITIES[gameVersion];
-
-  // const velocityConfig = isTrainingMode
-  //   ? trainingParams.VELOCITIES[gameVersion]
-  //   : VERSION_VELOCITIES[gameVersion];
-
-  // console.log("=== VELOCITY DEBUG ===");
-  // console.log("isTrainingMode:", isTrainingMode);
-  // console.log("gameVersion:", gameVersion);
-  // console.log("trainingParams:", trainingParams);
-  // console.log("velocityConfig:", velocityConfig);
-  // console.log(
-  //   "VERSION_VELOCITIES[gameVersion]:",
-  //   VERSION_VELOCITIES[gameVersion],
-  // );
 
   // Generate all sequences based on version and mode
   const [gameSequences] = useState(() =>
@@ -140,21 +130,30 @@ const VialGame = ({
     setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
   });
 
-  const [wasRunningBeforePause, setWasRunningBeforePause] = useState(false);
+  const wasRunningBeforePauseRef = useRef(false);
   const [frozenAddingDisabled, setFrozenAddingDisabled] = useState(false);
-  // Handle pausing/resuming
+
+  const finalProgressRef = useRef(0);
+
+  // Replace the existing pause useEffect with this:
   useEffect(() => {
     if (isPaused) {
-      setWasRunningBeforePause(gameRunning);
+      // ✅ Capture synchronously before anything else changes gameRunning
+      wasRunningBeforePauseRef.current = gameRunning;
       if (gameRunning) {
         setGameRunning(false);
       }
     } else {
-      if (wasRunningBeforePause && !isRoundTransition && !showingAnimation) {
+      if (
+        wasRunningBeforePauseRef.current &&
+        !isRoundTransition &&
+        !showingAnimation
+      ) {
         setGameRunning(true);
+        wasRunningBeforePauseRef.current = false;
       }
     }
-  }, [isPaused, gameRunning, isRoundTransition, showingAnimation]);
+  }, [isPaused]); // ✅ ONLY depend on isPaused — removing gameRunning prevents the race
 
   const isAbundancePhase = currentPhase === "abundance";
 
@@ -195,19 +194,23 @@ const VialGame = ({
     setShowTutorial(false);
     setGameRunning(true);
     setTimeout(() => {
-      logRoundStart(0, {
-        numVials: versionConfig.numVials,
-        vial1HasBucket: vial1HasBucket,
-        vial2HasBucket: vial2HasBucket,
-        velocity: currentDrainRate,
-        setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-        phase: currentPhase,
-        initialVial1Level: vial1Level,
-        initialVial2Level: vial2Level,
-        initialBucket1Level: bucket1Level,
-        initialBucket2Level: bucket2Level,
-        isTrainingMode: isTrainingMode,
-      });
+      logRoundStart(
+        0,
+        {
+          numVials: versionConfig.numVials,
+          vial1HasBucket: vial1HasBucket,
+          vial2HasBucket: vial2HasBucket,
+          velocity: currentDrainRate,
+          setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+          phase: currentPhase,
+          initialVial1Level: vial1Level,
+          initialVial2Level: vial2Level,
+          initialBucket1Level: bucket1Level,
+          initialBucket2Level: bucket2Level,
+          isTrainingMode: isTrainingMode,
+        },
+        isTrainingMode,
+      );
     }, 100);
   };
 
@@ -228,19 +231,23 @@ const VialGame = ({
     if (!showTutorial && !gameRunning && currentRound === 0) {
       setGameRunning(true);
       setTimeout(() => {
-        logRoundStart(0, {
-          numVials: versionConfig.numVials,
-          vial1HasBucket: vial1HasBucket,
-          vial2HasBucket: vial2HasBucket,
-          velocity: currentDrainRate,
-          setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-          phase: currentPhase,
-          initialVial1Level: vial1Level,
-          initialVial2Level: vial2Level,
-          initialBucket1Level: bucket1Level,
-          initialBucket2Level: bucket2Level,
-          isTrainingMode: isTrainingMode,
-        });
+        logRoundStart(
+          0,
+          {
+            numVials: versionConfig.numVials,
+            vial1HasBucket: vial1HasBucket,
+            vial2HasBucket: vial2HasBucket,
+            velocity: currentDrainRate,
+            setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+            phase: currentPhase,
+            initialVial1Level: vial1Level,
+            initialVial2Level: vial2Level,
+            initialBucket1Level: bucket1Level,
+            initialBucket2Level: bucket2Level,
+            isTrainingMode: isTrainingMode,
+          },
+          isTrainingMode,
+        );
       }, 100);
     }
   }, [showTutorial]); // Only run once when component mounts
@@ -348,14 +355,18 @@ const VialGame = ({
           if (isAddingDisabled) return;
           event.preventDefault();
           keyLocked.current = true;
-          logButtonPress("add_vial_1", {
-            ...getCurrentState(),
-            addAmount: GAME_PARAMS.ADD_AMOUNT,
-            bucket1Level: bucket1Level,
-            bucket2Level: bucket2Level,
-            velocity: currentDrainRate,
-            setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-          });
+          logButtonPress(
+            "add_vial_1",
+            {
+              ...getCurrentState(),
+              addAmount: GAME_PARAMS.ADD_AMOUNT,
+              bucket1Level: bucket1Level,
+              bucket2Level: bucket2Level,
+              velocity: currentDrainRate,
+              setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+            },
+            isTrainingMode,
+          );
           vial1Paused.current = true;
           setVial1Level((prev) =>
             Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT),
@@ -372,14 +383,18 @@ const VialGame = ({
           if (versionConfig.numVials !== 2 || isAddingDisabled) return;
           event.preventDefault();
           keyLocked.current = true;
-          logButtonPress("add_vial_2", {
-            ...getCurrentState(),
-            addAmount: GAME_PARAMS.ADD_AMOUNT,
-            bucket1Level: bucket1Level,
-            bucket2Level: bucket2Level,
-            velocity: currentDrainRate,
-            setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-          });
+          logButtonPress(
+            "add_vial_2",
+            {
+              ...getCurrentState(),
+              addAmount: GAME_PARAMS.ADD_AMOUNT,
+              bucket1Level: bucket1Level,
+              bucket2Level: bucket2Level,
+              velocity: currentDrainRate,
+              setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+            },
+            isTrainingMode,
+          );
           vial2Paused.current = true;
           setVial2Level((prev) =>
             Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT),
@@ -397,23 +412,26 @@ const VialGame = ({
           keyLocked.current = true;
           if (vial1HasBucket && bucket1Level > 0) {
             setVial1Level((prev) => {
-              // For simple version, allow filling to any level up to MAX
               const maxAddAmount = allowUnrestrictedBucketFilling
                 ? GAME_PARAMS.MAX_LEVEL - prev
                 : GAME_PARAMS.OPTIMAL_ZONE_MAX - prev;
 
-              if (maxAddAmount <= 0) return prev; // Already at max allowed level
+              if (maxAddAmount <= 0) return prev;
 
               const availableInBucket = bucket1Level;
               const amountToAdd = Math.min(maxAddAmount, availableInBucket);
-              logButtonPress("empty_bucket_1", {
-                ...getCurrentState(),
-                addAmount: amountToAdd,
-                bucket1Level: bucket1Level,
-                bucket2Level: bucket2Level,
-                velocity: currentDrainRate,
-                setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-              });
+              logButtonPress(
+                "empty_bucket_1",
+                {
+                  ...getCurrentState(),
+                  addAmount: amountToAdd,
+                  bucket1Level: bucket1Level,
+                  bucket2Level: bucket2Level,
+                  velocity: currentDrainRate,
+                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                },
+                isTrainingMode,
+              );
               setBucket1Level((bucketPrev) =>
                 Math.max(0, bucketPrev - amountToAdd),
               );
@@ -425,23 +443,26 @@ const VialGame = ({
             versionConfig.numVials === 2
           ) {
             setVial2Level((prev) => {
-              // For simple version, allow filling to any level up to MAX
               const maxAddAmount = allowUnrestrictedBucketFilling
                 ? GAME_PARAMS.MAX_LEVEL - prev
                 : GAME_PARAMS.OPTIMAL_ZONE_MAX - prev;
 
-              if (maxAddAmount <= 0) return prev; // Already at max allowed level
+              if (maxAddAmount <= 0) return prev;
 
               const availableInBucket = bucket2Level;
               const amountToAdd = Math.min(maxAddAmount, availableInBucket);
-              logButtonPress("empty_bucket_2", {
-                ...getCurrentState(),
-                addAmount: amountToAdd,
-                bucket1Level: bucket1Level,
-                bucket2Level: bucket2Level,
-                velocity: currentDrainRate,
-                setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-              });
+              logButtonPress(
+                "empty_bucket_2",
+                {
+                  ...getCurrentState(),
+                  addAmount: amountToAdd,
+                  bucket1Level: bucket1Level,
+                  bucket2Level: bucket2Level,
+                  velocity: currentDrainRate,
+                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                },
+                isTrainingMode,
+              );
               setBucket2Level((bucketPrev) =>
                 Math.max(0, bucketPrev - amountToAdd),
               );
@@ -459,12 +480,11 @@ const VialGame = ({
           keyLocked.current = true;
           if (vial2HasBucket && bucket2Level > 0) {
             setVial2Level((prev) => {
-              // For simple version, allow filling to any level up to MAX
               const maxAddAmount = allowUnrestrictedBucketFilling
                 ? GAME_PARAMS.MAX_LEVEL - prev
                 : GAME_PARAMS.OPTIMAL_ZONE_MAX - prev;
 
-              if (maxAddAmount <= 0) return prev; // Already at max allowed level
+              if (maxAddAmount <= 0) return prev;
 
               const availableInBucket = bucket2Level;
               const amountToAdd = Math.min(maxAddAmount, availableInBucket);
@@ -507,17 +527,14 @@ const VialGame = ({
           if (vial1Paused.current) return prev;
           const newLevel1 = Math.max(0, prev - currentDrainRate);
 
-          // Modified bucket filling logic for simple version
           if (vial1HasBucket && newLevel1 < prev) {
             if (allowUnrestrictedBucketFilling) {
-              // Simple version: only add to bucket when draining from ABOVE optimal zone
               if (prev > GAME_PARAMS.OPTIMAL_ZONE_MAX) {
                 setBucket1Level((bucketPrev) =>
                   Math.min(100, bucketPrev + currentDrainRate),
                 );
               }
             } else {
-              // Original version: only add to bucket when in specific range
               if (
                 prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
                 prev <= GAME_PARAMS.DANGER_UPPER &&
@@ -537,17 +554,14 @@ const VialGame = ({
             if (vial2Paused.current) return prev;
             const newLevel2 = Math.max(0, prev - currentDrainRate);
 
-            // Modified bucket filling logic for simple version
             if (vial2HasBucket && newLevel2 < prev) {
               if (allowUnrestrictedBucketFilling) {
-                // Simple version: only add to bucket when draining from ABOVE optimal zone
                 if (prev > GAME_PARAMS.OPTIMAL_ZONE_MAX) {
                   setBucket2Level((bucketPrev) =>
                     Math.min(100, bucketPrev + currentDrainRate),
                   );
                 }
               } else {
-                // Original version: only add to bucket when in specific range
                 if (
                   prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
                   prev <= GAME_PARAMS.DANGER_UPPER &&
@@ -573,7 +587,6 @@ const VialGame = ({
               ? Math.abs(vial2Level - GAME_PARAMS.OPTIMAL_ZONE_MAX)
               : 0;
 
-          // Average distance across all vials
           const avgDistance =
             versionConfig.numVials === 2
               ? (vial1Distance + vial2Distance) / 2
@@ -737,14 +750,31 @@ const VialGame = ({
     if (gameComplete && onComplete) {
       const timer = setTimeout(() => {
         try {
-          onComplete();
+          onComplete({
+            finalScore: score,
+            totalRounds: maxRounds,
+            cumulativeProgress: finalProgressRef.current,
+          });
+
+          if (!isTrainingMode) {
+            const redirectUrl = VERSION_REDIRECT_URLS[gameVersion];
+            if (redirectUrl) {
+              setTimeout(() => {
+                const url = new URL(redirectUrl);
+                const versionCode = getVersionCode(gameVersion);
+                if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+                if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+                window.location.href = url.toString();
+              }, 5000);
+            }
+          }
         } catch (e) {
           console.error("Error calling onComplete:", e);
         }
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [gameComplete, onComplete]);
+  }, [gameComplete, onComplete, isTrainingMode]);
 
   useEffect(() => {
     if (showingAnimation) {
@@ -754,10 +784,9 @@ const VialGame = ({
   }, [showingAnimation]);
 
   const completeRound = () => {
-    logRoundEnd(true);
+    logRoundEnd(true, isTrainingMode);
     const previousProgress = cumulativeProgress;
 
-    // const optimalAverage = GAME_PARAMS.ADD_AMOUNT / 2;
     const optimalAverage = 0;
     const worst_avg = Math.max(
       GAME_PARAMS.OPTIMAL_ZONE_MAX,
@@ -779,46 +808,37 @@ const VialGame = ({
     );
 
     const roundContribution = (100 / GAME_PARAMS.MAX_ROUNDS) * performanceRatio;
-
     const newProgress = previousProgress + roundContribution;
 
     setScore((prev) => prev + 1);
     setRoundWasSuccessful(true);
 
-    // Trigger celebration animation
     setIsCelebrating(true);
     setShowingAnimation(true);
     setGameRunning(false);
     playSuccessSound();
 
-    // if (currentRound + 1 >= maxRounds) {
-    //   setTimeout(() => {
-    //     setShowingAnimation(false);
-    //     setIsCelebrating(false);
-    //     setGameComplete(true);
-    //     setGameRunning(false);
-    //   }, 2000);
-    //   return;
-    // }
     if (currentRound + 1 >= maxRounds) {
       if (isTrainingMode && onRoundComplete) {
         onRoundComplete(true);
       }
       setTimeout(() => {
+        setCumulativeProgress(newProgress);
+        setPreviousRoundProgress(previousProgress);
         setShowingAnimation(false);
         setIsCelebrating(false);
+        finalProgressRef.current = newProgress;
+        setCumulativeProgress(newProgress);
         setGameComplete(true);
         setGameRunning(false);
       }, 2000);
       return;
     }
 
-    // After celebration (2s), show transition screen
     setTimeout(() => {
       setShowingAnimation(false);
       setIsCelebrating(false);
 
-      // NOW update the progress states right before showing transition
       setPreviousRoundProgress(previousProgress);
       setCumulativeProgress(newProgress);
       setIsRoundTransition(true);
@@ -826,20 +846,16 @@ const VialGame = ({
       if (isTrainingMode && onRoundComplete) {
         onRoundComplete(true);
       }
-      // After transition screen (3s), start next round
+
       setTimeout(() => {
         setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
         setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-        // setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-        // setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
         setCurrentRound((prev) => prev + 1);
         setRoundTimeRemaining(roundDuration);
         setGameMessage(GAME_MESSAGES.PLAYING);
         setMessageType("playing");
         setIsRoundTransition(false);
         setGameRunning(true);
-
-        // Reset distance samples for next round
         setDistanceSamples([]);
 
         const nextRound = currentRound + 1;
@@ -850,36 +866,37 @@ const VialGame = ({
         };
         const nextPhase = gameSequences.phaseSequence[nextRound] || "abundance";
 
-        logRoundStart(nextRound, {
-          numVials: versionConfig.numVials,
-          vial1HasBucket: nextBucketConfig.vial1 === 1,
-          vial2HasBucket: nextBucketConfig.vial2 === 1,
-          velocity: nextDrainRate,
-          setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-          phase: nextPhase,
-          initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-          initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-          initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-          initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-          isTrainingMode: isTrainingMode,
-        });
+        logRoundStart(
+          nextRound,
+          {
+            numVials: versionConfig.numVials,
+            vial1HasBucket: nextBucketConfig.vial1 === 1,
+            vial2HasBucket: nextBucketConfig.vial2 === 1,
+            velocity: nextDrainRate,
+            setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+            phase: nextPhase,
+            initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
+            initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
+            initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+            initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+            isTrainingMode: isTrainingMode,
+          },
+          isTrainingMode,
+        );
       }, GAME_PARAMS.TRANSITION_TIME);
     }, 2000);
   };
 
   const failRound = () => {
-    logRoundEnd(false);
+    logRoundEnd(false, isTrainingMode);
 
-    const stepBack = 100 / GAME_PARAMS.MAX_ROUNDS; // one round's worth of progress (main game scale)
+    const stepBack = 100 / GAME_PARAMS.MAX_ROUNDS;
     const newProgress = Math.max(0, cumulativeProgress - stepBack);
 
-    setPreviousRoundProgress(cumulativeProgress); // robot starts from current position
+    setPreviousRoundProgress(cumulativeProgress);
     setCumulativeProgress(newProgress);
-
-    // On failure, no progress is added (robot stays in place)
     setDistanceSamples([]);
 
-    // Call training callback if in training mode
     if (isTrainingMode && onRoundComplete) {
       onRoundComplete(false);
     }
@@ -904,8 +921,6 @@ const VialGame = ({
     setTimeout(() => {
       setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
       setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
-      // setBucket1Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
-      // setBucket2Level(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
       setCurrentRound((prev) => prev + 1);
       setRoundTimeRemaining(roundDuration);
       setGameMessage(GAME_MESSAGES.PLAYING);
@@ -921,24 +936,28 @@ const VialGame = ({
       };
       const nextPhase = gameSequences.phaseSequence[nextRound] || "abundance";
 
-      logRoundStart(nextRound, {
-        numVials: versionConfig.numVials,
-        vial1HasBucket: nextBucketConfig.vial1 === 1,
-        vial2HasBucket: nextBucketConfig.vial2 === 1,
-        velocity: nextDrainRate,
-        setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-        phase: nextPhase,
-        initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-        initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-        initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-        initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-        isTrainingMode: isTrainingMode,
-      });
+      logRoundStart(
+        nextRound,
+        {
+          numVials: versionConfig.numVials,
+          vial1HasBucket: nextBucketConfig.vial1 === 1,
+          vial2HasBucket: nextBucketConfig.vial2 === 1,
+          velocity: nextDrainRate,
+          setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+          phase: nextPhase,
+          initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
+          initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
+          initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+          initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+          isTrainingMode: isTrainingMode,
+        },
+        isTrainingMode,
+      );
     }, GAME_PARAMS.TRANSITION_TIME);
   };
 
   if (showTutorial) {
-    return <Tutorial onExit={handleTutorialExit} />;
+    return <Tutorial onExit={handleTutorialExit} gameVersion={gameVersion} />;
   }
   if (gameComplete && isTrainingMode) {
     return null;
@@ -953,19 +972,11 @@ const VialGame = ({
           </h1>
           <div className="completion-stats">
             <h2>Game Complete</h2>
-            <p className="completion-message">
-              You completed all {maxRounds} rounds!
-            </p>
-            <p className="final-score">
-              Final Score: {score} / {maxRounds}
-            </p>
-            <p className="final-progress">
-              Journey Progress: {Math.round(cumulativeProgress)}%
-            </p>
             {!isTrainingMode && (
               <p className="thank-you-message">
                 Thank you for participating in this experiment. Your data has
-                been recorded.
+                been recorded. You will soon be redirected to a Qualtrics survey
+                to complete your experiment.
               </p>
             )}
           </div>
@@ -1066,11 +1077,6 @@ const VialGame = ({
             bucketLevel={bucket2Level}
             hasBucket={vial1HasBucket || vial2HasBucket}
           />
-          <div className="instructions">
-            <p>
-              <strong>{INSTRUCTIONS.INTRO}</strong> {INSTRUCTIONS.COMMON}
-            </p>
-          </div>
         </>
       )}
     </div>

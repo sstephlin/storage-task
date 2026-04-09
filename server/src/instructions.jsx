@@ -3,13 +3,12 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./instructions.css";
 import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
 import { PRODUCTION_MODE } from "./participantConfig";
+import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-// const DEBUG_MODE = !PRODUCTION_MODE;
 const DEBUG_MODE = true;
 
 const Tutorial = ({ onExit, gameVersion }) => {
-  // Get slides based on game version
   const TUTORIAL_SLIDES = React.useMemo(() => {
     return getTutorialSlides(gameVersion);
   }, [gameVersion]);
@@ -21,16 +20,13 @@ const Tutorial = ({ onExit, gameVersion }) => {
   const [quizAttempts, setQuizAttempts] = useState({});
   const [isDisqualified, setIsDisqualified] = useState(false);
   const [groupAttempts, setGroupAttempts] = useState({});
-  const [showResultOverlay, setShowResultOverlay] = useState(null); // 'correct' | 'incorrect' | 'exit'
+  const [showResultOverlay, setShowResultOverlay] = useState(null);
 
-  // Quiz group state
   const [groupQuizIndex, setGroupQuizIndex] = useState(0);
   const [groupHadError, setGroupHadError] = useState(false);
 
   const totalSlides = TUTORIAL_SLIDES.length;
 
-  // If current slide is a quizGroup, pull out the active question
-  // and attach the parent group as _group for reference
   const slide = React.useMemo(() => {
     const s = TUTORIAL_SLIDES[currentSlide];
     if (s?.type === "quizGroup") {
@@ -39,24 +35,33 @@ const Tutorial = ({ onExit, gameVersion }) => {
     return s;
   }, [TUTORIAL_SLIDES, currentSlide, groupQuizIndex]);
 
-  // Show an overlay image for 3 seconds, then run a redirect function
+  // ─── Helper: log slide navigation ──────────────────────────────────────────
+  const logSlideChange = (newSlideIndex, direction) => {
+    const targetSlide = TUTORIAL_SLIDES[newSlideIndex];
+    // A slide is a quiz slide if it's type "quiz" or a "quizGroup"
+    const isQuizSlide =
+      targetSlide?.type === "quiz" || targetSlide?.type === "quizGroup";
+
+    logTutorialSlideChange({
+      slideIndex: newSlideIndex,
+      slideId: targetSlide?.id ?? String(newSlideIndex),
+      isQuizSlide,
+      direction,
+      gameVersion,
+    });
+  };
+
   const showOverlayThenRedirect = (type, redirectFn) => {
     if (type === "exit") {
       redirectFn();
       return;
     }
     setShowResultOverlay(type);
-    if (type == "incorrect") {
-      setTimeout(() => {
-        setShowResultOverlay(null);
-        redirectFn();
-      }, 6000);
-    } else if (type == "correct") {
-      setTimeout(() => {
-        setShowResultOverlay(null);
-        redirectFn();
-      }, 2000);
-    }
+    const delay = type === "incorrect" ? 6000 : 2000;
+    setTimeout(() => {
+      setShowResultOverlay(null);
+      redirectFn();
+    }, delay);
   };
 
   const goNext = () => {
@@ -68,7 +73,9 @@ const Tutorial = ({ onExit, gameVersion }) => {
     }
 
     if (currentSlide < totalSlides - 1) {
-      setCurrentSlide(currentSlide + 1);
+      const nextIndex = currentSlide + 1;
+      logSlideChange(nextIndex, "next");
+      setCurrentSlide(nextIndex);
       setGroupQuizIndex(0);
       setGroupHadError(false);
       setCanProceed(DEBUG_MODE);
@@ -81,7 +88,9 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   const goPrevious = () => {
     if (currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
+      const prevIndex = currentSlide - 1;
+      logSlideChange(prevIndex, "prev");
+      setCurrentSlide(prevIndex);
       setGroupQuizIndex(0);
       setGroupHadError(false);
       setSelectedAnswers({});
@@ -108,6 +117,20 @@ const Tutorial = ({ onExit, gameVersion }) => {
       ? groupQuizIndex === group.quizzes.length - 1
       : false;
 
+    // ── Determine attempt number for this quiz ────────────────────────────────
+    const attemptKey = group ? group.id : slide.id;
+    const attemptNumber = (quizAttempts[attemptKey] || 0) + 1;
+
+    // ── Log the answer ────────────────────────────────────────────────────────
+    logTutorialQuizAnswer({
+      quizId: slide.id,
+      slideId: group ? group.id : slide.id,
+      selectedIds: userAnswers,
+      isCorrect,
+      attemptNumber,
+      gameVersion,
+    });
+
     if (group) {
       if (isCorrect) {
         setQuizFeedback({
@@ -123,7 +146,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
             setGroupHadError(false);
 
             if (groupHadError) {
-              // Finished group with at least one error — increment attempt count
               const prevAttempts = groupAttempts[group.id] || 0;
               const newAttempts = prevAttempts + 1;
               setGroupAttempts((prev) => ({
@@ -132,31 +154,29 @@ const Tutorial = ({ onExit, gameVersion }) => {
               }));
 
               if (newAttempts >= 2) {
-                // Second failed attempt — show exit overlay then disqualify
                 showOverlayThenRedirect("exit", () => setIsDisqualified(true));
               } else {
-                // First failed attempt — show incorrect overlay then return to info slide
                 showOverlayThenRedirect("incorrect", () => {
                   const returnIndex = getSlideIndexById(
                     TUTORIAL_SLIDES,
                     group.returnToSlide,
                   );
+                  logSlideChange(returnIndex, "redirect-incorrect");
                   setCurrentSlide(returnIndex);
                 });
               }
             } else {
-              // All correct — show correct overlay then advance past the group
               showOverlayThenRedirect("correct", () => {
-                setCurrentSlide((c) => c + 1);
+                const nextIndex = currentSlide + 1;
+                logSlideChange(nextIndex, "redirect-correct");
+                setCurrentSlide(nextIndex);
               });
             }
           } else {
-            // More questions remain — advance to next
             setGroupQuizIndex((i) => i + 1);
           }
         });
       } else {
-        // Wrong answer — mark error and continue through remaining questions
         setGroupHadError(true);
         setQuizFeedback({
           type: "error",
@@ -167,7 +187,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
           setSelectedAnswers({});
 
           if (isLastInGroup) {
-            // Last question done — evaluate the group
             setGroupQuizIndex(0);
             setGroupHadError(false);
 
@@ -176,15 +195,14 @@ const Tutorial = ({ onExit, gameVersion }) => {
             setGroupAttempts((prev) => ({ ...prev, [group.id]: newAttempts }));
 
             if (newAttempts >= 2) {
-              // Second failed attempt — show exit overlay then disqualify
               showOverlayThenRedirect("exit", () => setIsDisqualified(true));
             } else {
-              // First failed attempt — show incorrect overlay then return to info slide
               showOverlayThenRedirect("incorrect", () => {
                 const returnIndex = getSlideIndexById(
                   TUTORIAL_SLIDES,
                   group.returnToSlide,
                 );
+                logSlideChange(returnIndex, "redirect-incorrect");
                 setCurrentSlide(returnIndex);
               });
             }
@@ -196,7 +214,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
       return isCorrect;
     } else {
-      // Non-group quiz — existing attempts/disqualification logic
+      // Non-group quiz
       if (isCorrect) {
         setQuizFeedback({
           type: "success",
@@ -233,6 +251,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
               TUTORIAL_SLIDES,
               quiz.returnToSlide,
             );
+            logSlideChange(returnIndex, "redirect-incorrect");
             setCurrentSlide(returnIndex);
             setSelectedAnswers({});
             setQuizFeedback(null);
@@ -245,13 +264,8 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   const handleCheckboxChange = (optionId) => {
     if (slide.multiSelect) {
-      // Toggle the selected option, keeping others
-      setSelectedAnswers((prev) => ({
-        ...prev,
-        [optionId]: !prev[optionId],
-      }));
+      setSelectedAnswers((prev) => ({ ...prev, [optionId]: !prev[optionId] }));
     } else {
-      // Radio behavior — only one at a time
       setSelectedAnswers({ [optionId]: true });
     }
     setQuizFeedback(null);
@@ -259,28 +273,22 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   const handleKeyPress = (e) => {
     if (slide.type === "quiz") return;
-
     if (e.key === "ArrowRight" || e.key === "Enter") {
       if (canProceed) goNext();
     } else if (e.key === "ArrowLeft") {
       goPrevious();
     } else if (e.key === "Escape") {
-      onExit();
+      if (DEBUG_MODE) onExit();
     }
   };
 
-  // Timer effect for each slide
   React.useEffect(() => {
     if (DEBUG_MODE || slide.type === "quiz") {
       setCanProceed(true);
       return;
     }
-
     setCanProceed(false);
-    const timer = setTimeout(() => {
-      setCanProceed(true);
-    }, 2000);
-
+    const timer = setTimeout(() => setCanProceed(true), 2000);
     return () => clearTimeout(timer);
   }, [currentSlide, slide.type]);
 
@@ -289,7 +297,11 @@ const Tutorial = ({ onExit, gameVersion }) => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [currentSlide, canProceed, slide.type]);
 
-  // Disqualification screen
+  // Log the initial slide (slide 0) when the tutorial first mounts
+  React.useEffect(() => {
+    logSlideChange(0, "initial");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isDisqualified) {
     return (
       <div className="tutorial-overlay">
@@ -327,7 +339,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   return (
     <div className="tutorial-overlay">
-      {/* Result overlay — shown temporarily after quiz group completion */}
       {showResultOverlay && (
         <div
           style={{
@@ -359,15 +370,15 @@ const Tutorial = ({ onExit, gameVersion }) => {
       )}
 
       <div className="tutorial-container">
-        <button
-          className="tutorial-exit"
-          onClick={() => {
-            if (typeof onExit === "function") onExit();
-          }}
-          title="Exit Tutorial (ESC)"
-        >
-          <X size={24} />
-        </button>
+        {DEBUG_MODE && (
+          <button
+            className="tutorial-exit"
+            onClick={() => onExit?.()}
+            title="Exit Tutorial (ESC)"
+          >
+            <X size={24} />
+          </button>
+        )}
 
         <div className="tutorial-progress">
           <div className="progress-dots">
@@ -442,7 +453,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
             </div>
           )}
 
-          {/* Quiz section */}
           {slide.type === "quiz" && slide.quiz && (
             <div className="quiz-section">
               {quizAttempts[slide.id] === 2 &&
@@ -467,7 +477,6 @@ const Tutorial = ({ onExit, gameVersion }) => {
                   </div>
                 )}
 
-              {/* Group progress indicator */}
               {slide._group && (
                 <div
                   style={{
