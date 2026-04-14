@@ -10,7 +10,7 @@ export const GAME_PARAMS = {
   DANGER_LOWER: 10,
   GAME_SPEED: 100,
   ROUND_DURATION: 15,
-  MAX_ROUNDS: 1,
+  MAX_ROUNDS: 36,
   INITIAL_VIAL_LEVEL: 50,
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
@@ -493,7 +493,7 @@ export const TRAINING_PARAMS = {
 // Update the placeholder URLs below before deploying.
 // Keyed by the same internal version strings used throughout the app.
 // ============================================================================
-export const VERSION_REDIRECT_URLS = {
+export const GAME_COMPLETE_REDIRECT_URL = {
   [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
     "https://brown.co1.qualtrics.com/jfe/form/SV_cLObwj6KBpKvEF0",
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
@@ -506,4 +506,52 @@ export const VERSION_REDIRECT_URLS = {
     "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
   [GAME_VERSIONS.TWO_VIALS_PHASES]:
     "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
+};
+
+export const FAIL_INSTRUCTIONS_REDIRECT_URL = {
+  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
+    "https://app.prolific.com/submissions/complete?cc=C1FVK0JA",
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
+    "https://app.prolific.com/submissions/complete?cc=C11L3B0C",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
+  //   "https://your-survey.com/redirect/0.3",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
+  //   "https://your-survey.com/redirect/0.4",
+  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
+    "https://app.prolific.com/submissions/complete?cc=C1DTFOCP",
+  [GAME_VERSIONS.TWO_VIALS_PHASES]:
+    "https://app.prolific.com/submissions/complete?cc=CPU6RVTR",
+};
+
+export const FAIL_TRAINING_REDIRECT_URL = {
+  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
+    "https://app.prolific.com/submissions/complete?cc=CQVYF7F2",
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
+    "https://app.prolific.com/submissions/complete?cc=C1AWOSIL",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
+  //   "https://your-survey.com/redirect/0.3",
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
+  //   "https://your-survey.com/redirect/0.4",
+  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
+    "https://app.prolific.com/submissions/complete?cc=C1G6HUCS",
+  [GAME_VERSIONS.TWO_VIALS_PHASES]:
+    "https://app.prolific.com/submissions/complete?cc=C1G7YBS3",
+};
+
+// ============================================================================
+// VERSION REDIRECT URLS
+// Shown on the termination screen when a participant reloads during the
+// experiment. Set a version-specific URL so they land on the right
+// follow-up page for their condition. Update the placeholder URLs below.
+// ============================================================================
+export const RELOAD_REDIRECT_URLS = {
+  one_vial_alternating:
+    "https://app.prolific.com/submissions/complete?cc=CDUWLNWZ",
+  one_vial_always_bucket:
+    "https://app.prolific.com/submissions/complete?cc=C1M6NFW7",
+  // one_vial_always_bucket_simple: "https://your-survey.com/redirect/0.3",
+  // one_vial_always_bucket_simple_fast: "https://your-survey.com/redirect/0.4",
+  two_vials_single_bucket:
+    "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
+  two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
 };

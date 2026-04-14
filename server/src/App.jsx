@@ -14,7 +14,6 @@ import "./styles/App.css";
 import {
   PRODUCTION_MODE,
   validateUrlParams,
-  VERSION_REDIRECT_URLS,
   getVersionCode,
 } from "./participantConfig";
 
@@ -25,7 +24,12 @@ import {
   checkReloadAttempt,
 } from "./accessControl";
 
-import { VERSION_CONFIG } from "./params";
+import {
+  VERSION_CONFIG,
+  GAME_COMPLETE_REDIRECT_URL,
+  RELOAD_REDIRECT_URLS,
+  FAIL_TRAINING_REDIRECT_URL,
+} from "./params";
 
 const App = () => {
   const [userId, setUserId] = useState(null);
@@ -109,13 +113,13 @@ const App = () => {
     }
 
     const { participantId, version } = validateUrlParams();
-    const redirectUrl = version ? VERSION_REDIRECT_URLS[version] : null;
+    const redirectUrl = version ? RELOAD_REDIRECT_URLS[version] : null;
     if (!redirectUrl) return;
 
     const versionCode = getVersionCode(version);
     const url = new URL(redirectUrl);
-    if (participantId) url.searchParams.set("pid", participantId);
-    if (versionCode) url.searchParams.set("v", versionCode);
+    if (participantId) url.searchParams.set("PROLIFIC_ID", participantId);
+    if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
     const finalUrl = url.toString();
 
     const interval = setInterval(() => {
@@ -158,9 +162,9 @@ const App = () => {
 
     setGameComplete(true);
     console.log("cumulative", cumulativeProgress);
-
+    var reachedBonusGoal = false;
     if (userId) {
-      await logGameCompletion({
+      reachedBonusGoal = await logGameCompletion({
         finalScore: finalScore ?? 0,
         totalRounds: totalRounds ?? 0,
         cumulativeProgress: cumulativeProgress ?? 0,
@@ -170,17 +174,29 @@ const App = () => {
       await endSession();
     }
 
-    const redirectUrl = VERSION_REDIRECT_URLS[gameVersion];
+    const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
     if (redirectUrl) {
       const versionCode = getVersionCode(gameVersion);
       const url = new URL(redirectUrl);
       if (userId) url.searchParams.set("PROLIFIC_PID", userId);
       if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+      url.searchParams.set("B", reachedBonusGoal ? "true" : "false");
 
       setTimeout(() => {
         window.location.replace(url.toString());
       }, 5000);
     }
+  };
+
+  const handleTrainingDisqualified = () => {
+    const redirectUrl = FAIL_TRAINING_REDIRECT_URL[gameVersion];
+    if (!redirectUrl) return;
+
+    const versionCode = getVersionCode(gameVersion);
+    const url = new URL(redirectUrl);
+    if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+    if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+    window.location.replace(url.toString());
   };
 
   const handleModalOpen = () => setIsGamePaused(true);
@@ -210,7 +226,7 @@ const App = () => {
   // ─── Reload Block Screen ─────────────────────────────────────────────────────
   if (showReloadModal) {
     const { version } = validateUrlParams();
-    const redirectUrl = version ? VERSION_REDIRECT_URLS[version] : null;
+    const redirectUrl = version ? RELOAD_REDIRECT_URLS[version] : null;
 
     return (
       <div className="reload-overlay">
@@ -268,6 +284,7 @@ const App = () => {
           gameVersion={gameVersion}
           onComplete={handleTrainingComplete}
           versionConfig={VERSION_CONFIG[gameVersion]}
+          onDisqualified={handleTrainingDisqualified}
         />
       </>
     );

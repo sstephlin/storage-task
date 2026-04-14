@@ -70,29 +70,29 @@ const SHARED_COMMANDS_SLIDES = [
     showButtons: false,
   },
   {
-    id: "commands-6.1",
+    id: "commands-7",
     image: "gifs/upclicklimited.gif",
     title:
-      "Note that adding stored gloop cannot not bring Bleeblop’s gloop levels any higher than the ideal.",
+      "Note that adding stored gloop cannot not bring Bleeblop's gloop levels any higher than the ideal.",
     showButtons: false,
   },
   {
-    id: "commands-6.2",
+    id: "commands-8",
     image: "gifs/upclicklimited.gif",
     title:
       "*If you choose to add stored gloop and doing so would cause Bleeblop's gloop levels to go over the ideal, only the amount that would bring Bleeblop's gloop levels to the ideal will be added",
     showButtons: false,
   },
   {
-    id: "commands-7",
+    id: "commands-9",
     image: "gifs/map.gif",
     title:
       "At the end of each day, you will get to see how far you helped Bleeblop travel.",
     showButtons: false,
   },
-  { id: "commands-8", image: "Commands-8.png", showButtons: false },
-  { id: "commands-9", image: "Commands-9.png", showButtons: false },
-  { id: "commands-10", image: "Commands-10.png", showButtons: false },
+  { id: "commands-10", image: "Commands-8.png", showButtons: false },
+  { id: "commands-11", image: "Commands-9.png", showButtons: false },
+  { id: "commands-12", image: "Commands-10.png", showButtons: false },
 ];
 const SHARED_INTRO_QUIZ_GROUP = {
   id: "group-intro-quiz",
@@ -265,7 +265,7 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
           },
           {
             id: "d",
-            text: "Bleeblop goes back for help and loses progress ",
+            text: "Bleeblop goes back for help and loses progress",
             correct: true,
           },
         ],
@@ -275,7 +275,8 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
     },
     {
       id: "quiz-8",
-      title: "What key can you use to add to Bleeblop's main gloop container?",
+      title:
+        "What key allows you use to add to Bleeblop's main gloop container without using stored gloop?",
       content: "",
       type: "quiz",
       quiz: {
@@ -329,7 +330,7 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
           {
             id: "d",
             text: "The storage container has empty space",
-            correct: false,
+            correct: true,
           },
           {
             id: "e",
@@ -344,7 +345,7 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
     {
       id: "quiz-13",
       title:
-        "Can Bleeblop's stored gloop be used to bring their gloop levels above the ideal?",
+        "When can Bleeblop's stored gloop be used to bring their gloop levels above the ideal?",
       content: "",
       type: "quiz",
       quiz: {
@@ -440,7 +441,7 @@ const SHARED_ENDING_QUIZ_GROUP = {
   quizzes: [
     {
       id: "quiz-end",
-      title: "What must happen for you to receive the $5 bonus?",
+      title: "What must happen for you to receive the $4 bonus?",
       content: "",
       type: "quiz",
       quiz: {
@@ -622,7 +623,7 @@ const ABUND_DEPR_QUIZ_GROUP = {
 const SHARED_ENDING_SLIDES = [
   { id: "end-1", image: "Ending1.png", showButtons: false },
   { id: "end-2", image: "Ending2.png", showButtons: false },
-  { id: "end-3", image: "Ending3.png", showButtons: false },
+  { id: "end-3", image: "Ending3.1.png", showButtons: false },
   // { id: "end-4", image: "Ending4.png", showButtons: false },
   // { id: "end-5", image: "Ending5.png", showButtons: false },
 ];

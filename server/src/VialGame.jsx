@@ -21,7 +21,7 @@ import {
   VERSION_BUTTON_DELAYS,
   VERSION_DEPRIVATION_CONFIG,
   VERSION_VELOCITIES,
-  VERSION_REDIRECT_URLS,
+  //GAME_COMPLETE_REDIRECT_URL,
 } from "./params";
 import "./styles/VialGame.css";
 
@@ -756,18 +756,18 @@ const VialGame = ({
             cumulativeProgress: finalProgressRef.current,
           });
 
-          if (!isTrainingMode) {
-            const redirectUrl = VERSION_REDIRECT_URLS[gameVersion];
-            if (redirectUrl) {
-              setTimeout(() => {
-                const url = new URL(redirectUrl);
-                const versionCode = getVersionCode(gameVersion);
-                if (userId) url.searchParams.set("PROLIFIC_PID", userId);
-                if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-                window.location.href = url.toString();
-              }, 5000);
-            }
-          }
+          // if (!isTrainingMode) {
+          //   const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
+          //   if (redirectUrl) {
+          //     setTimeout(() => {
+          //       const url = new URL(redirectUrl);
+          //       const versionCode = getVersionCode(gameVersion);
+          //       if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+          //       if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+          //       window.location.href = url.toString();
+          //     }, 5000);
+          //   }
+          // }
         } catch (e) {
           console.error("Error calling onComplete:", e);
         }
@@ -957,7 +957,13 @@ const VialGame = ({
   };
 
   if (showTutorial) {
-    return <Tutorial onExit={handleTutorialExit} gameVersion={gameVersion} />;
+    return (
+      <Tutorial
+        onExit={handleTutorialExit}
+        gameVersion={gameVersion}
+        userId={userId}
+      />
+    );
   }
   if (gameComplete && isTrainingMode) {
     return null;

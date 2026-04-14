@@ -4,7 +4,7 @@ import Tutorial from "./instructions";
 import "./styles/TrainingPhase.css";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 1,
+  MAX_ROUNDS: 10,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -288,6 +288,8 @@ const TrainingPhase = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showDisqualified, setShowDisqualified] = useState(false);
+  const [disqualifyCountdown, setDisqualifyCountdown] = useState(5);
+
   const [trainingSequences] = useState(() =>
     buildTrainingSequences(gameVersion),
   );
@@ -404,9 +406,28 @@ const TrainingPhase = ({
     onComplete();
   };
 
+  useEffect(() => {
+    if (!showDisqualified) return;
+
+    const interval = setInterval(() => {
+      setDisqualifyCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showDisqualified]);
   if (showTutorial) {
     return (
-      <Tutorial onExit={handleTutorialComplete} gameVersion={gameVersion} />
+      <Tutorial
+        onExit={handleTutorialComplete}
+        gameVersion={gameVersion}
+        userId={userId}
+      />
     );
   }
 
@@ -454,6 +475,12 @@ const TrainingPhase = ({
               Unfortunately, you will not be able to continue with this study.
               Thank you for your time.
             </p>
+            {onDisqualified && (
+              <p style={{ marginTop: "16px", color: "#666", fontSize: "16px" }}>
+                Redirecting in <strong>{disqualifyCountdown}</strong> second
+                {disqualifyCountdown !== 1 ? "s" : ""}…
+              </p>
+            )}
           </div>
         </div>
       </div>

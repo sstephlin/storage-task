@@ -4,11 +4,13 @@ import "./instructions.css";
 import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
 import { PRODUCTION_MODE } from "./participantConfig";
 import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
+import { FAIL_INSTRUCTIONS_REDIRECT_URL } from "./params";
+import { getVersionCode } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
-const Tutorial = ({ onExit, gameVersion }) => {
+const Tutorial = ({ onExit, gameVersion, userId }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
     return getTutorialSlides(gameVersion);
   }, [gameVersion]);
@@ -24,6 +26,7 @@ const Tutorial = ({ onExit, gameVersion }) => {
 
   const [groupQuizIndex, setGroupQuizIndex] = useState(0);
   const [groupHadError, setGroupHadError] = useState(false);
+  const [disqualifyCountdown, setDisqualifyCountdown] = useState(5);
 
   const totalSlides = TUTORIAL_SLIDES.length;
 
@@ -297,12 +300,38 @@ const Tutorial = ({ onExit, gameVersion }) => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [currentSlide, canProceed, slide.type]);
 
+  React.useEffect(() => {
+    if (!isDisqualified) return;
+
+    const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
+    if (!redirectUrl) return;
+
+    const interval = setInterval(() => {
+      setDisqualifyCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          const url = new URL(redirectUrl);
+          if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+          const versionCode = getVersionCode(gameVersion);
+          if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+          window.location.replace(url.toString());
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isDisqualified, gameVersion, userId]);
+
   // Log the initial slide (slide 0) when the tutorial first mounts
   React.useEffect(() => {
     logSlideChange(0, "initial");
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // 5. Replace the entire isDisqualified return block
   if (isDisqualified) {
+    const hasRedirect = !!FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
+
     return (
       <div className="tutorial-overlay">
         <div className="tutorial-container">
@@ -326,16 +355,57 @@ const Tutorial = ({ onExit, gameVersion }) => {
                 for the comprehension questions.
               </p>
               <p>You will not be able to continue with this study.</p>
-              <p style={{ marginTop: "30px", color: "#666" }}>
-                Please close this window and contact the researcher if you have
-                any questions.
-              </p>
+              {hasRedirect ? (
+                <p style={{ marginTop: "30px", color: "#666" }}>
+                  Redirecting in <strong>{disqualifyCountdown}</strong> second
+                  {disqualifyCountdown !== 1 ? "s" : ""}…
+                </p>
+              ) : (
+                <p style={{ marginTop: "30px", color: "#666" }}>
+                  Please close this window and contact the researcher if you
+                  have any questions.
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
     );
   }
+  // if (isDisqualified) {
+  //   return (
+  //     <div className="tutorial-overlay">
+  //       <div className="tutorial-container">
+  //         <div
+  //           className="tutorial-content"
+  //           style={{ textAlign: "center", padding: "40px" }}
+  //         >
+  //           <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
+  //           <h1
+  //             className="tutorial-title"
+  //             style={{ color: "#e74c3c", marginBottom: "20px" }}
+  //           >
+  //             Study Participation Ended
+  //           </h1>
+  //           <div
+  //             className="tutorial-text"
+  //             style={{ fontSize: "18px", lineHeight: "1.6" }}
+  //           >
+  //             <p>
+  //               Unfortunately, you have reached the maximum number of attempts
+  //               for the comprehension questions.
+  //             </p>
+  //             <p>You will not be able to continue with this study.</p>
+  //             <p style={{ marginTop: "30px", color: "#666" }}>
+  //               Please close this window and contact the researcher if you have
+  //               any questions.
+  //             </p>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="tutorial-overlay">

@@ -122,7 +122,7 @@ export const initializeSession = async (
         hour12: true,
       }),
 
-      // Participant identity — comes from external platform URL (?pid=)
+      // Participant identity — comes from external platform URL (?PROFLIC_ID=)
       participantId: userId,
 
       // Version assignment
@@ -532,8 +532,10 @@ export const logGameCompletion = async ({
     console.log(
       `Game complete — progress: ${cumulativeProgress}% — bonus goal ${reachedBonusGoal ? "REACHED" : "NOT reached"}`,
     );
+    return { reachedBonusGoal };
   } catch (error) {
     console.error("Error logging game completion:", error);
+    return { reachedBonusGoal };
   }
 };
 

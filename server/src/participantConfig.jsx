@@ -27,37 +27,19 @@ export const VERSION_CODE_MAP = {
 };
 
 // ============================================================================
-// VERSION REDIRECT URLS
-// Shown on the termination screen when a participant reloads during the
-// experiment. Set a version-specific URL so they land on the right
-// follow-up page for their condition. Update the placeholder URLs below.
-// ============================================================================
-export const VERSION_REDIRECT_URLS = {
-  one_vial_alternating:
-    "https://app.prolific.com/submissions/complete?cc=CDUWLNWZ",
-  one_vial_always_bucket:
-    "https://app.prolific.com/submissions/complete?cc=C1M6NFW7",
-  // one_vial_always_bucket_simple: "https://your-survey.com/redirect/0.3",
-  // one_vial_always_bucket_simple_fast: "https://your-survey.com/redirect/0.4",
-  two_vials_single_bucket:
-    "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
-  two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
-};
-
-// ============================================================================
 // URL PARAMETER PARSING
 // ============================================================================
 
 /**
  * Extract participant ID and resolve game version from URL parameters.
- * Expected URL format: https://yourdomain.com/?pid=P001&v=0.3
+ * Expected URL format: https://yourdomain.com/?PROLIFIC_ID=P001&STUDY_ID=0.3
  *
  * @returns {{ participantId: string|null, versionCode: string|null, version: string|null }}
  */
 export const getParamsFromUrl = () => {
   const params = new URLSearchParams(window.location.search);
-  const participantId = params.get("pid") || null;
-  const versionCode = params.get("v") || null;
+  const participantId = params.get("PROLIFIC_ID") || null;
+  const versionCode = params.get("STUDY_ID") || null;
   const version = versionCode ? (VERSION_CODE_MAP[versionCode] ?? null) : null;
   return { participantId, versionCode, version };
 };
@@ -143,7 +125,7 @@ export const generateLinksCSV = (
   const rows = participantIds
     .map((id, i) => {
       const code = versionCodes[i % versionCodes.length];
-      const link = `${baseUrl}/?pid=${encodeURIComponent(id)}&v=${encodeURIComponent(code)}`;
+      const link = `${baseUrl}/?PROLIFIC_ID=${encodeURIComponent(id)}&STUDY_ID=${encodeURIComponent(code)}`;
       return `${id},${code},${link}`;
     })
     .join("\n");
