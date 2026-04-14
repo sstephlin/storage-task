@@ -4,7 +4,7 @@ import Tutorial from "./instructions";
 import "./styles/TrainingPhase.css";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 10,
+  MAX_ROUNDS: 3,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -380,27 +380,51 @@ const TrainingPhase = ({
 
   const handleTrainingEnd = () => {
     setIsTraining(false);
-    console.log(
-      "handleTrainingEnd | ref:",
-      roundResultsRef.current,
-      "| state:",
-      roundResults,
-    );
 
-    const successCount = roundResultsRef.current.filter((r) => r).length;
-    const successRate = successCount / TRAINING_PARAMS.MAX_ROUNDS;
+    const results = roundResultsRef.current;
+    const successCount = results.filter((r) => r).length;
+    const totalRecorded = results.length;
+
+    // Guard against no data
+    if (totalRecorded === 0) {
+      setShowDisqualified(true);
+      return;
+    }
+
+    const successRate = successCount / totalRecorded; // ← use actual length
 
     if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
       setTrainingComplete(true);
     } else {
       setShowDisqualified(true);
       setTimeout(() => {
-        if (onDisqualified) {
-          onDisqualified();
-        }
+        if (onDisqualified) onDisqualified();
       }, 5000);
     }
   };
+  // const handleTrainingEnd = () => {
+  //   setIsTraining(false);
+  //   console.log(
+  //     "handleTrainingEnd | ref:",
+  //     roundResultsRef.current,
+  //     "| state:",
+  //     roundResults,
+  //   );
+
+  //   const successCount = roundResultsRef.current.filter((r) => r).length;
+  //   const successRate = successCount / TRAINING_PARAMS.MAX_ROUNDS;
+
+  //   if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
+  //     setTrainingComplete(true);
+  //   } else {
+  //     setShowDisqualified(true);
+  //     setTimeout(() => {
+  //       if (onDisqualified) {
+  //         onDisqualified();
+  //       }
+  //     }, 5000);
+  //   }
+  // };
 
   const handleStartMainGame = () => {
     onComplete();

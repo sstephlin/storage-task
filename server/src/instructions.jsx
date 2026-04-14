@@ -621,11 +621,6 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
             {currentSlide < totalSlides - 1 && <ChevronRight size={20} />}
           </button>
         </div>
-
-        <div className="keyboard-hints">
-          <span>← → to navigate</span>
-          <span>ESC to exit</span>
-        </div>
       </div>
     </div>
   );

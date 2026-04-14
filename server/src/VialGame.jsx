@@ -905,9 +905,10 @@ const VialGame = ({
     setIsRoundTransition(true);
     setGameRunning(false);
 
+    // !!
     if (currentRound + 1 >= maxRounds) {
       if (isTrainingMode && onRoundComplete) {
-        onRoundComplete(true);
+        onRoundComplete(false);
       }
       setTimeout(() => {
         setShowingAnimation(false);
