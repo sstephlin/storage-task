@@ -353,9 +353,9 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
           {
             id: "a",
             text: "Always",
-            correct: true,
+            correct: false,
           },
-          { id: "b", text: "Never", correct: false },
+          { id: "b", text: "Never", correct: true },
           {
             id: "c",
             text: "Only if it is a round where storage is available",
