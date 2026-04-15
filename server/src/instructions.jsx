@@ -8,7 +8,7 @@ import { FAIL_INSTRUCTIONS_REDIRECT_URL } from "./params";
 import { getVersionCode } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 const Tutorial = ({ onExit, gameVersion, userId }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
@@ -323,6 +323,25 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
 
     return () => clearInterval(interval);
   }, [isDisqualified, gameVersion, userId]);
+
+  // Preload the next (and optionally next+1) slide's image
+  React.useEffect(() => {
+    const nextSlide = TUTORIAL_SLIDES[currentSlide + 1];
+    const toPreload = [];
+
+    if (nextSlide?.image) toPreload.push(nextSlide.image);
+
+    // Optional: preload two ahead
+    const nextNextSlide = TUTORIAL_SLIDES[currentSlide + 2];
+    if (nextNextSlide?.image) toPreload.push(nextNextSlide.image);
+
+    const nextNextSlide3 = TUTORIAL_SLIDES[currentSlide + 3];
+    if (nextNextSlide3?.image) toPreload.push(nextNextSlide3.image);
+    toPreload.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [currentSlide, TUTORIAL_SLIDES]);
 
   // Log the initial slide (slide 0) when the tutorial first mounts
   React.useEffect(() => {
