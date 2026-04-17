@@ -119,8 +119,13 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  transition: opacity 0.5s ease;
+
   /* font-family: "Segoe Print", cursive, sans-serif;
   font-weight: 300; */
+}
+.tutorial-content.fading {
+  opacity: 0;
 }
 
 .tutorial-title {

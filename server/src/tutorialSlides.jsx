@@ -64,21 +64,21 @@ const SHARED_COMMANDS_SLIDES = [
   },
   {
     id: "commands-6",
-    image: "gifs/upclicklimited.gif",
+    image: "gifs/upclick.gif",
     title:
       "By clicking the up arrow, you can dump some stored gloop back into the main gloop container.",
     showButtons: false,
   },
   {
     id: "commands-7",
-    image: "gifs/upclicklimited.gif",
+    image: "gifs/upclick.gif",
     title:
       "Note that adding stored gloop cannot not bring Bleeblop's gloop levels any higher than the ideal.",
     showButtons: false,
   },
   {
     id: "commands-8",
-    image: "gifs/upclicklimited.gif",
+    image: "gifs/upclick.gif",
     title:
       "*If you choose to add stored gloop and doing so would cause Bleeblop's gloop levels to go over the ideal, only the amount that would bring Bleeblop's gloop levels to the ideal will be added",
     showButtons: false,

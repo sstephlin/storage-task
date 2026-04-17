@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./instructions.css";
 import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
@@ -30,6 +30,22 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
 
   const totalSlides = TUTORIAL_SLIDES.length;
 
+  const imageCache = useRef({});
+
+  const [isFading, setIsFading] = useState(false);
+
+  const changeSlideTo = (newIndex) => {
+    setIsFading(true); // 1. fade out
+    setTimeout(() => {
+      setCurrentSlide(newIndex); // 2. swap content while invisible
+      setGroupQuizIndex(0);
+      setGroupHadError(false);
+      setCanProceed(DEBUG_MODE);
+      setSelectedAnswers({});
+      setQuizFeedback(null);
+      setTimeout(() => setIsFading(false), 50); // 3. then fade back in
+    }, 500);
+  };
   const slide = React.useMemo(() => {
     const s = TUTORIAL_SLIDES[currentSlide];
     if (s?.type === "quizGroup") {
@@ -66,24 +82,15 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
       redirectFn();
     }, delay);
   };
-
   const goNext = () => {
     if (!canProceed) return;
-
     if (slide.type === "quiz" && !DEBUG_MODE) {
       const isCorrect = validateQuizAnswers();
       if (!isCorrect) return;
     }
-
     if (currentSlide < totalSlides - 1) {
-      const nextIndex = currentSlide + 1;
-      logSlideChange(nextIndex, "next");
-      setCurrentSlide(nextIndex);
-      setGroupQuizIndex(0);
-      setGroupHadError(false);
-      setCanProceed(DEBUG_MODE);
-      setSelectedAnswers({});
-      setQuizFeedback(null);
+      logSlideChange(currentSlide + 1, "next");
+      changeSlideTo(currentSlide + 1);
     } else {
       onExit();
     }
@@ -91,15 +98,44 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
 
   const goPrevious = () => {
     if (currentSlide > 0) {
-      const prevIndex = currentSlide - 1;
-      logSlideChange(prevIndex, "prev");
-      setCurrentSlide(prevIndex);
-      setGroupQuizIndex(0);
-      setGroupHadError(false);
-      setSelectedAnswers({});
-      setQuizFeedback(null);
+      logSlideChange(currentSlide - 1, "prev");
+      changeSlideTo(currentSlide - 1);
     }
   };
+
+  // const goNext = () => {
+  //   if (!canProceed) return;
+
+  //   if (slide.type === "quiz" && !DEBUG_MODE) {
+  //     const isCorrect = validateQuizAnswers();
+  //     if (!isCorrect) return;
+  //   }
+
+  //   if (currentSlide < totalSlides - 1) {
+  //     const nextIndex = currentSlide + 1;
+  //     logSlideChange(nextIndex, "next");
+  //     setCurrentSlide(nextIndex);
+  //     setGroupQuizIndex(0);
+  //     setGroupHadError(false);
+  //     setCanProceed(DEBUG_MODE);
+  //     setSelectedAnswers({});
+  //     setQuizFeedback(null);
+  //   } else {
+  //     onExit();
+  //   }
+  // };
+
+  // const goPrevious = () => {
+  //   if (currentSlide > 0) {
+  //     const prevIndex = currentSlide - 1;
+  //     logSlideChange(prevIndex, "prev");
+  //     setCurrentSlide(prevIndex);
+  //     setGroupQuizIndex(0);
+  //     setGroupHadError(false);
+  //     setSelectedAnswers({});
+  //     setQuizFeedback(null);
+  //   }
+  // };
 
   const validateQuizAnswers = () => {
     const quiz = slide.quiz;
@@ -325,23 +361,36 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
   }, [isDisqualified, gameVersion, userId]);
 
   // Preload the next (and optionally next+1) slide's image
+  // React.useEffect(() => {
+  //   const nextSlide = TUTORIAL_SLIDES[currentSlide + 1];
+  //   const toPreload = [];
+
+  //   if (nextSlide?.image) toPreload.push(nextSlide.image);
+
+  //   // Optional: preload two ahead
+  //   const nextNextSlide = TUTORIAL_SLIDES[currentSlide + 2];
+  //   if (nextNextSlide?.image) toPreload.push(nextNextSlide.image);
+
+  //   const nextNextSlide3 = TUTORIAL_SLIDES[currentSlide + 3];
+  //   if (nextNextSlide3?.image) toPreload.push(nextNextSlide3.image);
+  //   toPreload.forEach((src) => {
+  //     const img = new Image();
+  //     img.src = src;
+  //   });
+  // }, [currentSlide, TUTORIAL_SLIDES]);
   React.useEffect(() => {
-    const nextSlide = TUTORIAL_SLIDES[currentSlide + 1];
-    const toPreload = [];
+    const allGifs = TUTORIAL_SLIDES.filter((slide) =>
+      slide.image?.endsWith(".gif"),
+    ).map((slide) => slide.image);
 
-    if (nextSlide?.image) toPreload.push(nextSlide.image);
-
-    // Optional: preload two ahead
-    const nextNextSlide = TUTORIAL_SLIDES[currentSlide + 2];
-    if (nextNextSlide?.image) toPreload.push(nextNextSlide.image);
-
-    const nextNextSlide3 = TUTORIAL_SLIDES[currentSlide + 3];
-    if (nextNextSlide3?.image) toPreload.push(nextNextSlide3.image);
-    toPreload.forEach((src) => {
-      const img = new Image();
-      img.src = src;
+    allGifs.forEach((src) => {
+      if (!imageCache.current[src]) {
+        const img = new Image();
+        img.src = src;
+        imageCache.current[src] = img;
+      }
     });
-  }, [currentSlide, TUTORIAL_SLIDES]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Log the initial slide (slide 0) when the tutorial first mounts
   React.useEffect(() => {
@@ -355,7 +404,8 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
       <div className="tutorial-overlay">
         <div className="tutorial-container">
           <div
-            className="tutorial-content"
+            className={`tutorial-content ${isFading ? "fading" : ""}`}
+            // className="tutorial-content"
             style={{ textAlign: "center", padding: "40px" }}
           >
             <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
@@ -485,7 +535,8 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
           </div>
         </div>
 
-        <div className="tutorial-content">
+        <div className={`tutorial-content ${isFading ? "fading" : ""}`}>
+          {/* className="tutorial-content"> */}
           {slide.title && <h1 className="tutorial-title">{slide.title}</h1>}
 
           {slide.image && (
