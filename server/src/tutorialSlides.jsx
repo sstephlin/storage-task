@@ -546,9 +546,9 @@ const ABUND_DEPR_QUIZ_GROUP = {
           {
             id: "d",
             text: "Bleeblop's gloop access is never limited",
-            correct: true,
+            correct: false,
           },
-          { id: "e", text: "When the gloop pump is grey", correct: false },
+          { id: "e", text: "When the gloop pump is grey", correct: true },
         ],
         explanation: "Correct!",
       },

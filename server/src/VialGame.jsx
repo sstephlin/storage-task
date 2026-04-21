@@ -990,7 +990,7 @@ const VialGame = ({
           )}
           <h1>
             {isTrainingMode && "PRACTICE: "}
-            {versionConfig.name}
+            {"Keep BleeBlop Alive!"}
           </h1>
 
           <div className="game-info">
@@ -1021,7 +1021,7 @@ const VialGame = ({
                   color: isAbundancePhase ? "#166534" : "#991b1b",
                 }}
               >
-                Phase: {isAbundancePhase ? "🌟 Abundance" : "⚠️ Deprivation"}
+                {/* Phase: {isAbundancePhase ? "🌟 Abundance" : "⚠️ Deprivation"} */}
               </div>
             )}
           </div>

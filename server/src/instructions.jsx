@@ -2,10 +2,10 @@ import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./instructions.css";
 import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
-import { PRODUCTION_MODE } from "./participantConfig";
+// import { PRODUCTION_MODE } from "./participantConfig";
 import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
-import { FAIL_INSTRUCTIONS_REDIRECT_URL } from "./params";
-import { getVersionCode } from "./participantConfig";
+// import { FAIL_INSTRUCTIONS_REDIRECT_URL } from "./params";
+// import { getVersionCode } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
 const DEBUG_MODE = true;
@@ -45,7 +45,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       setSelectedAnswers({});
       setQuizFeedback(null);
       setTimeout(() => setIsFading(false), 50);
-    }, 250);
+    }, 500);
   };
   const slide = React.useMemo(() => {
     const s = TUTORIAL_SLIDES[currentSlide];
