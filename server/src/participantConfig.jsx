@@ -113,7 +113,7 @@ export const validateUrlParams = () => {
  *
  * @param {string[]} participantIds
  * @param {string[]} versionCodes  - e.g. ["0.1","0.2"] — cycled across participants
- * @param {string}   baseUrl       - e.g. "https://yourdomain.com"
+ * @param {string}   baseUrl
  * @returns {string} CSV
  */
 export const generateLinksCSV = (

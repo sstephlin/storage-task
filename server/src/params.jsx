@@ -544,7 +544,7 @@ export const FAIL_TRAINING_REDIRECT_URL = {
 // experiment. Set a version-specific URL so they land on the right
 // follow-up page for their condition. Update the placeholder URLs below.
 // ============================================================================
-export const RELOAD_REDIRECT_URLS = {
+export const RELOAD_REDIRECT_URLS_GENERAL = {
   one_vial_alternating:
     "https://app.prolific.com/submissions/complete?cc=CDUWLNWZ",
   one_vial_always_bucket:
@@ -554,4 +554,23 @@ export const RELOAD_REDIRECT_URLS = {
   two_vials_single_bucket:
     "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
   two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
+};
+export const RELOAD_REDIRECT_URLS_MAIN_GAME = {
+  one_vial_alternating:
+    "https://app.prolific.com/submissions/complete?cc=C1D2NK2X",
+  one_vial_always_bucket:
+    "https://app.prolific.com/submissions/complete?cc=C12Y7MTD",
+  // one_vial_always_bucket_simple: "https://your-survey.com/redirect/0.3",
+  // one_vial_always_bucket_simple_fast: "https://your-survey.com/redirect/0.4",
+  two_vials_single_bucket:
+    "https://app.prolific.com/submissions/complete?cc=CC2HW32K",
+  two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C14R4MD0",
+};
+export const PARTIAL_COMPLETION_CODES = {
+  one_vial_alternating: "C1D2NK2X",
+  one_vial_always_bucket: "C12Y7MTD",
+  // one_vial_always_bucket_simple: "https://your-survey.com/redirect/0.3",
+  // one_vial_always_bucket_simple_fast: "https://your-survey.com/redirect/0.4",
+  two_vials_single_bucket: "CC2HW32K",
+  two_vials_phases: "C14R4MD0",
 };

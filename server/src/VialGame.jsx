@@ -21,7 +21,6 @@ import {
   VERSION_BUTTON_DELAYS,
   VERSION_DEPRIVATION_CONFIG,
   VERSION_VELOCITIES,
-  //GAME_COMPLETE_REDIRECT_URL,
 } from "./params";
 import "./styles/VialGame.css";
 
@@ -138,7 +137,6 @@ const VialGame = ({
   // Replace the existing pause useEffect with this:
   useEffect(() => {
     if (isPaused) {
-      // ✅ Capture synchronously before anything else changes gameRunning
       wasRunningBeforePauseRef.current = gameRunning;
       if (gameRunning) {
         setGameRunning(false);
@@ -153,7 +151,7 @@ const VialGame = ({
         wasRunningBeforePauseRef.current = false;
       }
     }
-  }, [isPaused]); // ✅ ONLY depend on isPaused — removing gameRunning prevents the race
+  }, [isPaused]);
 
   const isAbundancePhase = currentPhase === "abundance";
 
@@ -755,19 +753,6 @@ const VialGame = ({
             totalRounds: maxRounds,
             cumulativeProgress: finalProgressRef.current,
           });
-
-          // if (!isTrainingMode) {
-          //   const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
-          //   if (redirectUrl) {
-          //     setTimeout(() => {
-          //       const url = new URL(redirectUrl);
-          //       const versionCode = getVersionCode(gameVersion);
-          //       if (userId) url.searchParams.set("PROLIFIC_PID", userId);
-          //       if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-          //       window.location.href = url.toString();
-          //     }, 5000);
-          //   }
-          // }
         } catch (e) {
           console.error("Error calling onComplete:", e);
         }

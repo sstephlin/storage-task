@@ -58,8 +58,6 @@ const PrelimQuestion = ({ onComplete }) => {
         {/* Step indicator */}
         <div className="pq-steps">
           <span className="pq-step pq-step--active" />
-          {/* <span className="pq-step" />
-          <span className="pq-step" /> */}
         </div>
 
         {/* Icon */}

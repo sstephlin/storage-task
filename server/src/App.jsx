@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"; // ✅ add useRef
+import React, { useState, useEffect, useRef } from "react";
 import VialGame from "./VialGame";
 import TrainingPhase from "./TrainingPhase";
 import PrelimQuestion from "./components/PrelimQuestions";
@@ -27,8 +27,10 @@ import {
 import {
   VERSION_CONFIG,
   GAME_COMPLETE_REDIRECT_URL,
-  RELOAD_REDIRECT_URLS,
+  RELOAD_REDIRECT_URLS_GENERAL,
+  RELOAD_REDIRECT_URLS_MAIN_GAME,
   FAIL_TRAINING_REDIRECT_URL,
+  FAIL_INSTRUCTIONS_REDIRECT_URL,
 } from "./params";
 
 const App = () => {
@@ -43,11 +45,11 @@ const App = () => {
   const [trainingComplete, setTrainingComplete] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(5);
   const [gameComplete, setGameComplete] = useState(false);
+  const [isDisqualified, setIsDisqualified] = useState(false);
 
-  // ✅ Declare the ref so handleGameComplete can actually use it
   const reloadWarningCleanupRef = useRef(null);
 
-  // ─── Bootstrap ──────────────────────────────────────────────────────────────
+  // Bootstrap
   useEffect(() => {
     const bootstrap = async () => {
       const {
@@ -68,7 +70,10 @@ const App = () => {
 
       const { shouldBlock } = checkReloadAttempt();
       if (shouldBlock && PRODUCTION_MODE) {
+        const mainGameStarted =
+          sessionStorage.getItem("mainGameStarted") === "true";
         setShowReloadModal(true);
+        setTrainingComplete(mainGameStarted);
         setError("Page was reloaded. Cannot continue experiment.");
         setIsLoading(false);
         return;
@@ -88,8 +93,7 @@ const App = () => {
     bootstrap();
   }, []);
 
-  // ─── Reload warning ─────────────────────────────────────────────────────────
-  // ✅ Store cleanup in ref instead of local variable so handleGameComplete can reach it
+  // Reload warning
   useEffect(() => {
     if (userId && PRODUCTION_MODE) {
       reloadWarningCleanupRef.current = setupReloadWarning();
@@ -102,7 +106,7 @@ const App = () => {
     };
   }, [userId]);
 
-  // ─── Redirect logic ──────────────────────────────────────────────────────────
+  // Redirect logic
   useEffect(() => {
     if (!showReloadModal) return;
 
@@ -113,7 +117,10 @@ const App = () => {
     }
 
     const { participantId, version } = validateUrlParams();
-    const redirectUrl = version ? RELOAD_REDIRECT_URLS[version] : null;
+    const redirectUrl = trainingComplete
+      ? RELOAD_REDIRECT_URLS_MAIN_GAME[version]
+      : RELOAD_REDIRECT_URLS_GENERAL[version];
+    console.log("Redirecting to:", redirectUrl);
     if (!redirectUrl) return;
 
     const versionCode = getVersionCode(version);
@@ -136,7 +143,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, [showReloadModal]);
 
-  // ─── Cleanup on unmount ──────────────────────────────────────────────────────
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (userId) {
@@ -146,15 +153,16 @@ const App = () => {
     };
   }, [userId]);
 
-  // ─── Handlers ───────────────────────────────────────────────────────────────
-  const handleTrainingComplete = () => setTrainingComplete(true);
-
+  // Handlers
+  const handleTrainingComplete = () => {
+    sessionStorage.setItem("mainGameStarted", "true");
+    setTrainingComplete(true);
+  };
   const handleGameComplete = async ({
     finalScore,
     totalRounds,
     cumulativeProgress,
   } = {}) => {
-    // ✅ Remove beforeunload listener BEFORE any async work or redirect
     if (reloadWarningCleanupRef.current) {
       reloadWarningCleanupRef.current();
       reloadWarningCleanupRef.current = null;
@@ -170,7 +178,7 @@ const App = () => {
         cumulativeProgress: cumulativeProgress ?? 0,
         isTrainingMode: false,
       });
-      await completeSession(userId); // also calls clearSession() internally
+      await completeSession(userId);
       await endSession();
     }
 
@@ -187,11 +195,31 @@ const App = () => {
       }, 5000);
     }
   };
+  const handleInstructionsDisqualified = () => {
+    if (reloadWarningCleanupRef.current) {
+      reloadWarningCleanupRef.current();
+      reloadWarningCleanupRef.current = null;
+    }
+    setIsDisqualified(true);
+
+    const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
+    if (!redirectUrl) return;
+    const versionCode = getVersionCode(gameVersion);
+    const url = new URL(redirectUrl);
+    if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+    if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+    window.location.replace(url.toString());
+  };
 
   const handleTrainingDisqualified = () => {
+    if (reloadWarningCleanupRef.current) {
+      reloadWarningCleanupRef.current();
+      reloadWarningCleanupRef.current = null;
+    }
+    setIsDisqualified(true);
+
     const redirectUrl = FAIL_TRAINING_REDIRECT_URL[gameVersion];
     if (!redirectUrl) return;
-
     const versionCode = getVersionCode(gameVersion);
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
@@ -223,10 +251,12 @@ const App = () => {
       </div>
     );
 
-  // ─── Reload Block Screen ─────────────────────────────────────────────────────
+  // Reload Block Screen
   if (showReloadModal) {
     const { version } = validateUrlParams();
-    const redirectUrl = version ? RELOAD_REDIRECT_URLS[version] : null;
+    const redirectUrl = trainingComplete
+      ? RELOAD_REDIRECT_URLS_MAIN_GAME
+      : RELOAD_REDIRECT_URLS_GENERAL;
 
     return (
       <div className="reload-overlay">
@@ -269,8 +299,7 @@ const App = () => {
   if (!trainingComplete) {
     return (
       <>
-        {/* ✅ ReloadWarningModal also gated on !gameComplete here */}
-        {!gameComplete && (
+        {!gameComplete && !isDisqualified && (
           <ReloadWarningModal
             isActive={!!userId}
             userId={userId}
@@ -285,6 +314,7 @@ const App = () => {
           onComplete={handleTrainingComplete}
           versionConfig={VERSION_CONFIG[gameVersion]}
           onDisqualified={handleTrainingDisqualified}
+          onInstructionsDisqualified={handleInstructionsDisqualified}
         />
       </>
     );
@@ -292,8 +322,7 @@ const App = () => {
 
   return (
     <div>
-      {/* ✅ isActive already false when gameComplete, but gating render too avoids any modal re-mount */}
-      {!gameComplete && (
+      {!gameComplete && !isDisqualified && (
         <ReloadWarningModal
           isActive={!!userId}
           userId={userId}

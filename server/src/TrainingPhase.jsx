@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import VialGame from "./VialGame";
 import Tutorial from "./instructions";
 import "./styles/TrainingPhase.css";
+import { PARTIAL_COMPLETION_CODES } from "./params";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 3,
+  MAX_ROUNDS: 1,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -277,6 +278,7 @@ const TrainingPhase = ({
   onComplete,
   versionConfig,
   onDisqualified,
+  onInstructionsDisqualified,
 }) => {
   const [showTutorial, setShowTutorial] = useState(true);
   // const [trainingAttempt, setTrainingAttempt] = useState(1);
@@ -289,6 +291,7 @@ const TrainingPhase = ({
   const [currentFeedback, setCurrentFeedback] = useState("");
   const [showDisqualified, setShowDisqualified] = useState(false);
   const [disqualifyCountdown, setDisqualifyCountdown] = useState(5);
+  const [codeConfirmed, setCodeConfirmed] = useState(false);
 
   const [trainingSequences] = useState(() =>
     buildTrainingSequences(gameVersion),
@@ -402,29 +405,6 @@ const TrainingPhase = ({
       }, 5000);
     }
   };
-  // const handleTrainingEnd = () => {
-  //   setIsTraining(false);
-  //   console.log(
-  //     "handleTrainingEnd | ref:",
-  //     roundResultsRef.current,
-  //     "| state:",
-  //     roundResults,
-  //   );
-
-  //   const successCount = roundResultsRef.current.filter((r) => r).length;
-  //   const successRate = successCount / TRAINING_PARAMS.MAX_ROUNDS;
-
-  //   if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
-  //     setTrainingComplete(true);
-  //   } else {
-  //     setShowDisqualified(true);
-  //     setTimeout(() => {
-  //       if (onDisqualified) {
-  //         onDisqualified();
-  //       }
-  //     }, 5000);
-  //   }
-  // };
 
   const handleStartMainGame = () => {
     onComplete();
@@ -451,6 +431,7 @@ const TrainingPhase = ({
         onExit={handleTutorialComplete}
         gameVersion={gameVersion}
         userId={userId}
+        onDisqualified={onInstructionsDisqualified}
       />
     );
   }
@@ -512,16 +493,46 @@ const TrainingPhase = ({
   }
 
   if (trainingComplete) {
+    const partialCode = PARTIAL_COMPLETION_CODES[gameVersion];
+
     return (
       <div className="training-complete">
         <div className="training-complete-content">
           <h2>Great Job!</h2>
           <div className="results-summary">
             <p className="ready-message">Now we can move to the main game!</p>
-            <button className="start-main-btn" onClick={handleStartMainGame}>
-              Click here to start the main game
-            </button>
           </div>
+
+          {partialCode && (
+            <div className="partial-code-box">
+              <p className="partial-code-warning">
+                ⚠️ If you must exit the task before completion, you{" "}
+                <strong>MUST</strong> use the code below to be compensated for
+                your time. Please save this code in case this occurs.
+              </p>
+              <div className="partial-code-display">{partialCode}</div>
+              <div className="partial-code-confirm">
+                <input
+                  type="checkbox"
+                  id="code-confirm"
+                  checked={codeConfirmed}
+                  onChange={(e) => setCodeConfirmed(e.target.checked)}
+                />
+                <label htmlFor="code-confirm">
+                  I understand that I need this code if I exit early, and I have
+                  saved it.
+                </label>
+              </div>
+            </div>
+          )}
+
+          <button
+            className="start-main-btn"
+            onClick={handleStartMainGame}
+            disabled={partialCode && !codeConfirmed}
+          >
+            Click here to start the main game
+          </button>
         </div>
       </div>
     );

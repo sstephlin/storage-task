@@ -10,12 +10,13 @@ import { getVersionCode } from "./participantConfig";
 // Set to false for production, true for debugging (disables timer and quiz validation)
 const DEBUG_MODE = true;
 
-const Tutorial = ({ onExit, gameVersion, userId }) => {
+const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
     return getTutorialSlides(gameVersion);
   }, [gameVersion]);
 
   const [currentSlide, setCurrentSlide] = useState(0);
+
   const [canProceed, setCanProceed] = useState(DEBUG_MODE);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [quizFeedback, setQuizFeedback] = useState(null);
@@ -35,16 +36,16 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
   const [isFading, setIsFading] = useState(false);
 
   const changeSlideTo = (newIndex) => {
-    setIsFading(true); // 1. fade out
+    setIsFading(true);
     setTimeout(() => {
-      setCurrentSlide(newIndex); // 2. swap content while invisible
+      setCurrentSlide(newIndex);
       setGroupQuizIndex(0);
       setGroupHadError(false);
       setCanProceed(DEBUG_MODE);
       setSelectedAnswers({});
       setQuizFeedback(null);
-      setTimeout(() => setIsFading(false), 50); // 3. then fade back in
-    }, 500);
+      setTimeout(() => setIsFading(false), 50);
+    }, 250);
   };
   const slide = React.useMemo(() => {
     const s = TUTORIAL_SLIDES[currentSlide];
@@ -54,10 +55,9 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
     return s;
   }, [TUTORIAL_SLIDES, currentSlide, groupQuizIndex]);
 
-  // ─── Helper: log slide navigation ──────────────────────────────────────────
+  // log slide navigation
   const logSlideChange = (newSlideIndex, direction) => {
     const targetSlide = TUTORIAL_SLIDES[newSlideIndex];
-    // A slide is a quiz slide if it's type "quiz" or a "quizGroup"
     const isQuizSlide =
       targetSlide?.type === "quiz" || targetSlide?.type === "quizGroup";
 
@@ -103,40 +103,6 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
     }
   };
 
-  // const goNext = () => {
-  //   if (!canProceed) return;
-
-  //   if (slide.type === "quiz" && !DEBUG_MODE) {
-  //     const isCorrect = validateQuizAnswers();
-  //     if (!isCorrect) return;
-  //   }
-
-  //   if (currentSlide < totalSlides - 1) {
-  //     const nextIndex = currentSlide + 1;
-  //     logSlideChange(nextIndex, "next");
-  //     setCurrentSlide(nextIndex);
-  //     setGroupQuizIndex(0);
-  //     setGroupHadError(false);
-  //     setCanProceed(DEBUG_MODE);
-  //     setSelectedAnswers({});
-  //     setQuizFeedback(null);
-  //   } else {
-  //     onExit();
-  //   }
-  // };
-
-  // const goPrevious = () => {
-  //   if (currentSlide > 0) {
-  //     const prevIndex = currentSlide - 1;
-  //     logSlideChange(prevIndex, "prev");
-  //     setCurrentSlide(prevIndex);
-  //     setGroupQuizIndex(0);
-  //     setGroupHadError(false);
-  //     setSelectedAnswers({});
-  //     setQuizFeedback(null);
-  //   }
-  // };
-
   const validateQuizAnswers = () => {
     const quiz = slide.quiz;
     const correctAnswers = quiz.options
@@ -156,11 +122,11 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
       ? groupQuizIndex === group.quizzes.length - 1
       : false;
 
-    // ── Determine attempt number for this quiz ────────────────────────────────
+    // Determine attempt number for this quiz
     const attemptKey = group ? group.id : slide.id;
     const attemptNumber = (quizAttempts[attemptKey] || 0) + 1;
 
-    // ── Log the answer ────────────────────────────────────────────────────────
+    // Log the answer
     logTutorialQuizAnswer({
       quizId: slide.id,
       slideId: group ? group.id : slide.id,
@@ -339,18 +305,11 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
   React.useEffect(() => {
     if (!isDisqualified) return;
 
-    const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
-    if (!redirectUrl) return;
-
     const interval = setInterval(() => {
       setDisqualifyCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          const url = new URL(redirectUrl);
-          if (userId) url.searchParams.set("PROLIFIC_PID", userId);
-          const versionCode = getVersionCode(gameVersion);
-          if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-          window.location.replace(url.toString());
+          if (onDisqualified) onDisqualified();
           return 0;
         }
         return prev - 1;
@@ -358,26 +317,8 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isDisqualified, gameVersion, userId]);
+  }, [isDisqualified, onDisqualified]);
 
-  // Preload the next (and optionally next+1) slide's image
-  // React.useEffect(() => {
-  //   const nextSlide = TUTORIAL_SLIDES[currentSlide + 1];
-  //   const toPreload = [];
-
-  //   if (nextSlide?.image) toPreload.push(nextSlide.image);
-
-  //   // Optional: preload two ahead
-  //   const nextNextSlide = TUTORIAL_SLIDES[currentSlide + 2];
-  //   if (nextNextSlide?.image) toPreload.push(nextNextSlide.image);
-
-  //   const nextNextSlide3 = TUTORIAL_SLIDES[currentSlide + 3];
-  //   if (nextNextSlide3?.image) toPreload.push(nextNextSlide3.image);
-  //   toPreload.forEach((src) => {
-  //     const img = new Image();
-  //     img.src = src;
-  //   });
-  // }, [currentSlide, TUTORIAL_SLIDES]);
   React.useEffect(() => {
     const allGifs = TUTORIAL_SLIDES.filter((slide) =>
       slide.image?.endsWith(".gif"),
@@ -392,20 +333,17 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Log the initial slide (slide 0) when the tutorial first mounts
   React.useEffect(() => {
     logSlideChange(0, "initial");
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // 5. Replace the entire isDisqualified return block
   if (isDisqualified) {
-    const hasRedirect = !!FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
+    const hasRedirect = !!onDisqualified;
 
     return (
       <div className="tutorial-overlay">
         <div className="tutorial-container">
           <div
             className={`tutorial-content ${isFading ? "fading" : ""}`}
-            // className="tutorial-content"
             style={{ textAlign: "center", padding: "40px" }}
           >
             <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
@@ -441,41 +379,6 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
       </div>
     );
   }
-  // if (isDisqualified) {
-  //   return (
-  //     <div className="tutorial-overlay">
-  //       <div className="tutorial-container">
-  //         <div
-  //           className="tutorial-content"
-  //           style={{ textAlign: "center", padding: "40px" }}
-  //         >
-  //           <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
-  //           <h1
-  //             className="tutorial-title"
-  //             style={{ color: "#e74c3c", marginBottom: "20px" }}
-  //           >
-  //             Study Participation Ended
-  //           </h1>
-  //           <div
-  //             className="tutorial-text"
-  //             style={{ fontSize: "18px", lineHeight: "1.6" }}
-  //           >
-  //             <p>
-  //               Unfortunately, you have reached the maximum number of attempts
-  //               for the comprehension questions.
-  //             </p>
-  //             <p>You will not be able to continue with this study.</p>
-  //             <p style={{ marginTop: "30px", color: "#666" }}>
-  //               Please close this window and contact the researcher if you have
-  //               any questions.
-  //             </p>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   return (
     <div className="tutorial-overlay">
       {showResultOverlay && (
@@ -536,7 +439,6 @@ const Tutorial = ({ onExit, gameVersion, userId }) => {
         </div>
 
         <div className={`tutorial-content ${isFading ? "fading" : ""}`}>
-          {/* className="tutorial-content"> */}
           {slide.title && <h1 className="tutorial-title">{slide.title}</h1>}
 
           {slide.image && (

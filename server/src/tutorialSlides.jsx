@@ -623,7 +623,7 @@ const ABUND_DEPR_QUIZ_GROUP = {
 const SHARED_ENDING_SLIDES = [
   { id: "end-1", image: "Ending1.png", showButtons: false },
   { id: "end-2", image: "Ending2.png", showButtons: false },
-  { id: "end-3", image: "Ending3.1.png", showButtons: false },
+  { id: "end-3", image: "Ending3.png", showButtons: false },
   // { id: "end-4", image: "Ending4.png", showButtons: false },
   // { id: "end-5", image: "Ending5.png", showButtons: false },
 ];
