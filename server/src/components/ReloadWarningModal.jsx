@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PRODUCTION_MODE } from "../participantConfig";
+import { markIntentionalRedirect } from "../accessControl";
+import { isIntentionalRedirect } from "../accessControl";
 
 const ReloadWarningModal = ({
   isActive,
@@ -15,8 +17,9 @@ const ReloadWarningModal = ({
     if (!isActive || !PRODUCTION_MODE) return;
 
     let isNavigatingAway = false;
-
     const handleBeforeUnload = (e) => {
+      if (isIntentionalRedirect()) return; // let programmatic redirects through silently
+
       if (!isNavigatingAway) {
         setAttemptedAction("reload");
         setShowModal(true);
@@ -26,6 +29,17 @@ const ReloadWarningModal = ({
       e.returnValue = "";
       return "";
     };
+
+    // const handleBeforeUnload = (e) => {
+    //   if (!isNavigatingAway) {
+    //     setAttemptedAction("reload");
+    //     setShowModal(true);
+    //     if (onModalOpen) onModalOpen();
+    //   }
+    //   e.preventDefault();
+    //   e.returnValue = "";
+    //   return "";
+    // };
 
     const handlePopState = () => {
       if (!isNavigatingAway) {

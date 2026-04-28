@@ -22,6 +22,7 @@ import {
   completeSession,
   setupReloadWarning,
   checkReloadAttempt,
+  markIntentionalRedirect,
 } from "./accessControl";
 
 import {
@@ -48,6 +49,9 @@ const App = () => {
   const [isDisqualified, setIsDisqualified] = useState(false);
 
   const reloadWarningCleanupRef = useRef(null);
+
+  const tabHiddenTimerRef = useRef(null);
+  const tabHiddenAtRef = useRef(null);
 
   // Bootstrap
   useEffect(() => {
@@ -133,7 +137,7 @@ const App = () => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          window.location.href = finalUrl;
+          redirectTo(finalUrl);
           return 0;
         }
         return prev - 1;
@@ -153,7 +157,66 @@ const App = () => {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId || !gameVersion) return;
+
+    const AWAY_LIMIT_MS = 15000;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        tabHiddenTimerRef.current = setTimeout(() => {
+          if (gameComplete || isDisqualified) return;
+
+          const versionCode = getVersionCode(gameVersion);
+          const redirectUrl = trainingComplete
+            ? RELOAD_REDIRECT_URLS_MAIN_GAME[gameVersion]
+            : RELOAD_REDIRECT_URLS_GENERAL[gameVersion];
+
+          if (!redirectUrl) return;
+
+          const url = new URL(redirectUrl);
+          if (userId) url.searchParams.set("PROLIFIC_PID", userId);
+          if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
+          url.searchParams.set("reason", "tab_switch");
+
+          redirectTo(url.toString());
+        }, AWAY_LIMIT_MS);
+      } else {
+        if (tabHiddenTimerRef.current) {
+          clearTimeout(tabHiddenTimerRef.current);
+          tabHiddenTimerRef.current = null;
+        }
+        tabHiddenAtRef.current = null;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (tabHiddenTimerRef.current) {
+        clearTimeout(tabHiddenTimerRef.current);
+      }
+    };
+  }, [userId, gameVersion, trainingComplete, gameComplete, isDisqualified]);
+
   // Handlers
+  const redirectTo = (url) => {
+    // Mark as intentional FIRST so beforeunload handler stands down
+    markIntentionalRedirect();
+
+    // Then clean up the listener too (belt and suspenders)
+    if (reloadWarningCleanupRef.current) {
+      reloadWarningCleanupRef.current();
+      reloadWarningCleanupRef.current = null;
+    }
+
+    if (PRODUCTION_MODE) {
+      window.location.replace(url);
+    } else {
+      console.warn("[DEV] Would redirect to:", url);
+    }
+  };
+
   const handleTrainingComplete = () => {
     sessionStorage.setItem("mainGameStarted", "true");
     setTrainingComplete(true);
@@ -191,15 +254,16 @@ const App = () => {
       url.searchParams.set("B", reachedBonusGoal ? "true" : "false");
 
       setTimeout(() => {
-        window.location.replace(url.toString());
+        redirectTo(url.toString());
       }, 5000);
     }
   };
   const handleInstructionsDisqualified = () => {
-    if (reloadWarningCleanupRef.current) {
-      reloadWarningCleanupRef.current();
-      reloadWarningCleanupRef.current = null;
-    }
+    // if (reloadWarningCleanupRef.current) {
+    //   reloadWarningCleanupRef.current();
+    //   reloadWarningCleanupRef.current = null;
+    // }
+    // redirectTo(url.toString());
     setIsDisqualified(true);
 
     const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
@@ -208,14 +272,14 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    window.location.replace(url.toString());
+    redirectTo(url.toString());
   };
 
   const handleTrainingDisqualified = () => {
-    if (reloadWarningCleanupRef.current) {
-      reloadWarningCleanupRef.current();
-      reloadWarningCleanupRef.current = null;
-    }
+    // if (reloadWarningCleanupRef.current) {
+    //   reloadWarningCleanupRef.current();
+    //   reloadWarningCleanupRef.current = null;
+    // }
     setIsDisqualified(true);
 
     const redirectUrl = FAIL_TRAINING_REDIRECT_URL[gameVersion];
@@ -224,11 +288,12 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    window.location.replace(url.toString());
+    redirectTo(url.toString());
   };
 
-  const handleModalOpen = () => setIsGamePaused(true);
-  const handleModalClose = () => setIsGamePaused(false);
+  // can get rid of this later 4/28
+  const handleModalOpen = () => {};
+  const handleModalClose = () => {};
 
   const handleDevReset = () => {
     if (PRODUCTION_MODE) return;
@@ -319,6 +384,20 @@ const App = () => {
       </>
     );
   }
+
+  // const redirectTo = (url) => {
+  //   // Always kill the beforeunload listener before any redirect
+  //   // so the browser never shows the "are you sure?" popup
+  //   if (reloadWarningCleanupRef.current) {
+  //     reloadWarningCleanupRef.current();
+  //     reloadWarningCleanupRef.current = null;
+  //   }
+  //   if (PRODUCTION_MODE) {
+  //     window.location.replace(url);
+  //   } else {
+  //     console.warn("[DEV] Would redirect to:", url);
+  //   }
+  // };
 
   return (
     <div>

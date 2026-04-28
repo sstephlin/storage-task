@@ -1,5 +1,3 @@
-import { PRODUCTION_MODE } from "./participantConfig";
-
 export const GAME_PARAMS = {
   DRAIN_RATE: 0.5,
   ADD_AMOUNT: 10,

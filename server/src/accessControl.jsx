@@ -154,25 +154,51 @@ export const getSessionDuration = () => {
   }
 };
 
-/**
- * Setup beforeunload warning to prevent accidental page closure
- */
+// Module-level flag — set this to true before any intentional redirect
+let _intentionalRedirect = false;
+
+export const markIntentionalRedirect = () => {
+  _intentionalRedirect = true;
+};
+
+export const isIntentionalRedirect = () => _intentionalRedirect;
+
 export const setupReloadWarning = () => {
   if (!PRODUCTION_MODE) return () => {};
 
   const handleBeforeUnload = (e) => {
+    if (_intentionalRedirect) return; // Let it through silently
     e.preventDefault();
-    e.returnValue = ""; // Chrome requires returnValue to be set
-    return ""; // Some browsers use the return value
+    e.returnValue = "";
+    return "";
   };
 
   window.addEventListener("beforeunload", handleBeforeUnload);
 
-  // Return cleanup function
   return () => {
     window.removeEventListener("beforeunload", handleBeforeUnload);
   };
 };
+
+// /**
+//  * Setup beforeunload warning to prevent accidental page closure
+//  */
+// export const setupReloadWarning = () => {
+//   if (!PRODUCTION_MODE) return () => {};
+
+//   const handleBeforeUnload = (e) => {
+//     e.preventDefault();
+//     e.returnValue = ""; // Chrome requires returnValue to be set
+//     return ""; // Some browsers use the return value
+//   };
+
+//   window.addEventListener("beforeunload", handleBeforeUnload);
+
+//   // Return cleanup function
+//   return () => {
+//     window.removeEventListener("beforeunload", handleBeforeUnload);
+//   };
+// };
 
 /**
  * Check if user is attempting to reload and handle accordingly

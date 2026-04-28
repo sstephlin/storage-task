@@ -506,9 +506,11 @@ const TrainingPhase = ({
           {partialCode && (
             <div className="partial-code-box">
               <p className="partial-code-warning">
-                ⚠️ If you must exit the task before completion, you{" "}
-                <strong>MUST</strong> use the code below to be compensated for
-                your time. Please save this code in case this occurs.
+                The game will begin now. We ask that you complete the full task
+                and the completion survey. If you must exit the task before
+                completion, you <strong>MUST</strong> use the code below to
+                avoid being penalized and to be compensated for your time.
+                Please save this code in case this occurs.
               </p>
               <div className="partial-code-display">{partialCode}</div>
               <div className="partial-code-confirm">

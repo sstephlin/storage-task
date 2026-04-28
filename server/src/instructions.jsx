@@ -182,10 +182,13 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
           }
         });
       } else {
-        setGroupHadError(true);
+        const penalizeError = !slide.multiSelect;
+        if (penalizeError) setGroupHadError(true);
         setQuizFeedback({
           type: "error",
-          message: "Not quite right. Let's keep going.",
+          message: penalizeError
+            ? "Not quite right. Let's keep going."
+            : "Not quite — but this question won't affect your progress. Let's keep going.",
         });
         setTimeout(() => {
           setQuizFeedback(null);
@@ -528,6 +531,19 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                   }}
                 >
                   Question {groupQuizIndex + 1} of {slide._group.quizzes.length}
+                </div>
+              )}
+
+              {slide.multiSelect && (
+                <div
+                  style={{
+                    color: "#c0392b",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  ★ Select all that apply
                 </div>
               )}
 

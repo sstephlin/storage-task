@@ -990,7 +990,7 @@ const VialGame = ({
           )}
           <h1>
             {isTrainingMode && "PRACTICE: "}
-            {"Keep BleeBlop Alive!"}
+            {"Keep BleeBlop's Gloop at the Ideal Level!"}
           </h1>
 
           <div className="game-info">
@@ -1008,21 +1008,6 @@ const VialGame = ({
                   Progress: {Math.round(cumulativeProgress)}%
                 </div>
               </>
-            )}
-
-            {versionConfig.hasPhases && (
-              <div
-                className="phase-display"
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  fontWeight: "bold",
-                  backgroundColor: isAbundancePhase ? "#86efac" : "#fca5a5",
-                  color: isAbundancePhase ? "#166534" : "#991b1b",
-                }}
-              >
-                {/* Phase: {isAbundancePhase ? "🌟 Abundance" : "⚠️ Deprivation"} */}
-              </div>
             )}
           </div>
 
