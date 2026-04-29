@@ -6,7 +6,7 @@ import { PARTIAL_COMPLETION_CODES } from "./params";
 import { logTrainingResult } from "./logging";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 1,
+  MAX_ROUNDS: 10,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -421,7 +421,7 @@ const TrainingPhase = ({
 
     const successRate = successCount / totalRecorded;
     const passed = successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE;
-    logTrainingResult(passed, successCount, totalRecorded);
+    logTrainingResult(passed, successCount, TRAINING_PARAMS.MAX_ROUNDS);
 
     if (passed) {
       setTrainingComplete(true);

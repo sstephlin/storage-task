@@ -8,7 +8,7 @@ import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
 // import { getVersionCode } from "./participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
