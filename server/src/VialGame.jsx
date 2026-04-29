@@ -9,6 +9,7 @@ import {
   logRoundStart,
   logRoundEnd,
   logGameCompletion,
+  logGasStationToggle,
 } from "./logging";
 import { PRODUCTION_MODE } from "./participantConfig";
 import { getVersionCode } from "./participantConfig";
@@ -362,6 +363,7 @@ const VialGame = ({
               bucket2Level: bucket2Level,
               velocity: currentDrainRate,
               setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+              gasStationActive: !isAddingDisabled,
             },
             isTrainingMode,
           );
@@ -390,6 +392,7 @@ const VialGame = ({
               bucket2Level: bucket2Level,
               velocity: currentDrainRate,
               setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+              gasStationActive: !isAddingDisabled,
             },
             isTrainingMode,
           );
@@ -427,6 +430,7 @@ const VialGame = ({
                   bucket2Level: bucket2Level,
                   velocity: currentDrainRate,
                   setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                  gasStationActive: !isAddingDisabled,
                 },
                 isTrainingMode,
               );
@@ -458,6 +462,7 @@ const VialGame = ({
                   bucket2Level: bucket2Level,
                   velocity: currentDrainRate,
                   setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                  gasStationActive: !isAddingDisabled,
                 },
                 isTrainingMode,
               );
@@ -699,6 +704,11 @@ const VialGame = ({
     versionConfig.hasPhases,
     deprivationConfig,
   ]);
+  //logging gas station
+  useEffect(() => {
+    if (!gameRunning || isRoundTransition || showingAnimation) return;
+    logGasStationToggle(!isAddingDisabled, isTrainingMode);
+  }, [isAddingDisabled]);
 
   // Check for round failure
   useEffect(() => {

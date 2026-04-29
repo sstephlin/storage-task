@@ -539,7 +539,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                   style={{
                     color: "#c0392b",
                     fontWeight: "700",
-                    fontSize: "14px",
+                    fontSize: "18px",
                     marginBottom: "10px",
                   }}
                 >

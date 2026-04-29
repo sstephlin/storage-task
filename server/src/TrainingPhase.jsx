@@ -3,6 +3,7 @@ import VialGame from "./VialGame";
 import Tutorial from "./instructions";
 import "./styles/TrainingPhase.css";
 import { PARTIAL_COMPLETION_CODES } from "./params";
+import { logTrainingResult } from "./logging";
 
 export const TRAINING_PARAMS = {
   MAX_ROUNDS: 1,
@@ -381,22 +382,48 @@ const TrainingPhase = ({
     }, 3000);
   };
 
+  // const handleTrainingEnd = () => {
+  //   setIsTraining(false);
+
+  //   const results = roundResultsRef.current;
+  //   const successCount = results.filter((r) => r).length;
+  //   const totalRecorded = results.length;
+
+  //   // Guard against no data
+  //   if (totalRecorded === 0) {
+  //     logTrainingResult(false, 0, 0);
+  //     setShowDisqualified(true);
+  //     return;
+  //   }
+
+  //   const successRate = successCount / totalRecorded; // ← use actual length
+
+  //   if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
+  //     setTrainingComplete(true);
+  //   } else {
+  //     setShowDisqualified(true);
+  //     setTimeout(() => {
+  //       if (onDisqualified) onDisqualified();
+  //     }, 5000);
+  //   }
+  // };
   const handleTrainingEnd = () => {
     setIsTraining(false);
-
     const results = roundResultsRef.current;
     const successCount = results.filter((r) => r).length;
     const totalRecorded = results.length;
 
-    // Guard against no data
     if (totalRecorded === 0) {
+      logTrainingResult(false, 0, 0);
       setShowDisqualified(true);
       return;
     }
 
-    const successRate = successCount / totalRecorded; // ← use actual length
+    const successRate = successCount / totalRecorded;
+    const passed = successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE;
+    logTrainingResult(passed, successCount, totalRecorded);
 
-    if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
+    if (passed) {
       setTrainingComplete(true);
     } else {
       setShowDisqualified(true);

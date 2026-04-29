@@ -8,6 +8,10 @@ import {
   endSession,
   logGameCompletion,
   logPrelimAnswer,
+  logInstructionsResult,
+  logTrainingResult,
+  logTermination,
+  logTabVisibilityChange,
 } from "./logging";
 import "./styles/App.css";
 
@@ -137,7 +141,12 @@ const App = () => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          redirectTo(finalUrl);
+          redirectTo(
+            finalUrl,
+            "reload",
+            trainingComplete ? "main_game" : "training",
+          );
+          // redirectTo(finalUrl);
           return 0;
         }
         return prev - 1;
@@ -164,6 +173,7 @@ const App = () => {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        logTabVisibilityChange("hidden", stage);
         tabHiddenTimerRef.current = setTimeout(() => {
           if (gameComplete || isDisqualified) return;
 
@@ -177,11 +187,17 @@ const App = () => {
           const url = new URL(redirectUrl);
           if (userId) url.searchParams.set("PROLIFIC_PID", userId);
           if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-          url.searchParams.set("reason", "tab_switch");
+          // url.searchParams.set("reason", "tab_switch");
 
-          redirectTo(url.toString());
+          // redirectTo(url.toString());
+          redirectTo(
+            url.toString(),
+            "tab_switch",
+            trainingComplete ? "main_game" : "training",
+          );
         }, AWAY_LIMIT_MS);
       } else {
+        logTabVisibilityChange("visible", stage);
         if (tabHiddenTimerRef.current) {
           clearTimeout(tabHiddenTimerRef.current);
           tabHiddenTimerRef.current = null;
@@ -200,25 +216,40 @@ const App = () => {
   }, [userId, gameVersion, trainingComplete, gameComplete, isDisqualified]);
 
   // Handlers
-  const redirectTo = (url) => {
-    // Mark as intentional FIRST so beforeunload handler stands down
+  const redirectTo = (url, reason = "unknown", stage = "unknown") => {
     markIntentionalRedirect();
+    logTermination(reason, stage); // fire-and-forget is fine here
 
-    // Then clean up the listener too (belt and suspenders)
     if (reloadWarningCleanupRef.current) {
       reloadWarningCleanupRef.current();
       reloadWarningCleanupRef.current = null;
     }
-
     if (PRODUCTION_MODE) {
       window.location.replace(url);
     } else {
       console.warn("[DEV] Would redirect to:", url);
     }
   };
+  // const redirectTo = (url) => {
+  //   // Mark as intentional FIRST so beforeunload handler stands down
+  //   markIntentionalRedirect();
+
+  //   // Then clean up the listener too (belt and suspenders)
+  //   if (reloadWarningCleanupRef.current) {
+  //     reloadWarningCleanupRef.current();
+  //     reloadWarningCleanupRef.current = null;
+  //   }
+
+  //   if (PRODUCTION_MODE) {
+  //     window.location.replace(url);
+  //   } else {
+  //     console.warn("[DEV] Would redirect to:", url);
+  //   }
+  // };
 
   const handleTrainingComplete = () => {
     sessionStorage.setItem("mainGameStarted", "true");
+    logInstructionsResult(true);
     setTrainingComplete(true);
   };
   const handleGameComplete = async ({
@@ -254,7 +285,7 @@ const App = () => {
       url.searchParams.set("B", reachedBonusGoal ? "true" : "false");
 
       setTimeout(() => {
-        redirectTo(url.toString());
+        redirectTo(url.toString(), "game complete", "experiment complete");
       }, 5000);
     }
   };
@@ -265,6 +296,7 @@ const App = () => {
     // }
     // redirectTo(url.toString());
     setIsDisqualified(true);
+    logInstructionsResult(false);
 
     const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
     if (!redirectUrl) return;
@@ -272,7 +304,8 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    redirectTo(url.toString());
+    // redirectTo(url.toString());
+    redirectTo(url.toString(), "instructions_failed", "instructions");
   };
 
   const handleTrainingDisqualified = () => {
@@ -288,7 +321,8 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    redirectTo(url.toString());
+    // redirectTo(url.toString());
+    redirectTo(url.toString(), "training_failed", "training");
   };
 
   // can get rid of this later 4/28
