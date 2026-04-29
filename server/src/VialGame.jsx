@@ -210,6 +210,7 @@ const VialGame = ({
         },
         isTrainingMode,
       );
+      logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
     }, 100);
   };
 
@@ -247,6 +248,7 @@ const VialGame = ({
           },
           isTrainingMode,
         );
+        logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
       }, 100);
     }
   }, [showTutorial]); // Only run once when component mounts
@@ -878,6 +880,7 @@ const VialGame = ({
           },
           isTrainingMode,
         );
+        logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
       }, GAME_PARAMS.TRANSITION_TIME);
     }, 2000);
   };
@@ -949,6 +952,7 @@ const VialGame = ({
         },
         isTrainingMode,
       );
+      logGasStationToggle(!isAddingDisabled, isTrainingMode.value, true);
     }, GAME_PARAMS.TRANSITION_TIME);
   };
 
