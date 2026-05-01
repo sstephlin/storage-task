@@ -228,7 +228,7 @@ const SHARED_INTRO_QUIZ_GROUP = {
 const SHARED_COMMANDS_QUIZ_GROUP = {
   id: "group-commands-quiz",
   type: "quizGroup",
-  returnToSlide: "commands-2",
+  returnToSlide: "commands-10",
   correctSlide: "quiz-correct",
   incorrectSlide: "quiz-wrong",
   exitSlide: "exit-slide",
@@ -483,7 +483,7 @@ const SHARED_ENDING_QUIZ_GROUP = {
 const ABUND_DEPR_QUIZ_GROUP = {
   id: "group-ad-quiz",
   type: "quizGroup",
-  returnToSlide: "ad-1",
+  returnToSlide: "ad-8",
   showButtons: false,
   quizzes: [
     {
