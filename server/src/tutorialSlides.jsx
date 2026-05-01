@@ -38,6 +38,7 @@ const SHARED_INTRO_SLIDES = [
   { id: "intro-14", image: "Intro-14.png", showButtons: false },
   { id: "intro-15", image: "Intro-15.png", showButtons: false },
   { id: "intro-16", image: "Intro-16.png", showButtons: false },
+  { id: "intro-17", image: "Intro-17.png", showButtons: false },
 ];
 const SHARED_COMMANDS_SLIDES = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
@@ -97,7 +98,7 @@ const SHARED_COMMANDS_SLIDES = [
 const SHARED_INTRO_QUIZ_GROUP = {
   id: "group-intro-quiz",
   type: "quizGroup",
-  returnToSlide: "intro-4",
+  returnToSlide: "intro-17",
   correctSlide: "quiz-correct",
   incorrectSlide: "quiz-wrong",
   exitSlide: "exit-slide",
@@ -150,7 +151,11 @@ const SHARED_INTRO_QUIZ_GROUP = {
             text: "Bleeblop moves as fast as possible",
             correct: false,
           },
-          { id: "b", text: "Bleepblop overheats", correct: true },
+          {
+            id: "b",
+            text: "Bleepblop overheats and must go back for help",
+            correct: true,
+          },
           { id: "c", text: "Bleeblop slows moving completely", correct: false },
           { id: "d", text: "Nothing", correct: false },
         ],
@@ -175,7 +180,11 @@ const SHARED_INTRO_QUIZ_GROUP = {
             text: "Bleeblop moves as fast as possible",
             correct: false,
           },
-          { id: "c", text: "Bleeblop shuts down", correct: true },
+          {
+            id: "c",
+            text: "Bleeblop shuts down and must go back for help",
+            correct: true,
+          },
           { id: "d", text: "Nothing", correct: false },
         ],
         explanation: "Correct!",
@@ -225,54 +234,54 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
   exitSlide: "exit-slide",
   showButtons: false,
   quizzes: [
-    {
-      id: "quiz-6",
-      title: "What happens if Bleeblop overheats",
-      content: "",
-      type: "quiz",
-      quiz: {
-        options: [
-          { id: "a", text: "Bleeblop moves at superspeed", correct: false },
-          { id: "b", text: "Nothing", correct: false },
-          {
-            id: "c",
-            text: "Bleeblop goes back for help and loses progress",
-            correct: true,
-          },
-          {
-            id: "d",
-            text: "Bleeblop gives up and the game ends",
-            correct: false,
-          },
-        ],
-        explanation: "Correct!",
-      },
-      showButtons: false,
-    },
-    {
-      id: "quiz-7",
-      title: "What happens if Bleeblop shuts down?",
-      content: "",
-      type: "quiz",
-      quiz: {
-        options: [
-          { id: "a", text: "Nothing", correct: false },
-          { id: "b", text: "Bleeblop stops moving", correct: false },
-          {
-            id: "c",
-            text: "Bleeblop gives up and the game ends",
-            correct: false,
-          },
-          {
-            id: "d",
-            text: "Bleeblop goes back for help and loses progress",
-            correct: true,
-          },
-        ],
-        explanation: "Correct!",
-      },
-      showButtons: false,
-    },
+    // {
+    //   id: "quiz-6",
+    //   title: "What happens if Bleeblop overheats",
+    //   content: "",
+    //   type: "quiz",
+    //   quiz: {
+    //     options: [
+    //       { id: "a", text: "Bleeblop moves at superspeed", correct: false },
+    //       { id: "b", text: "Nothing", correct: false },
+    //       {
+    //         id: "c",
+    //         text: "Bleeblop goes back for help and loses progress",
+    //         correct: true,
+    //       },
+    //       {
+    //         id: "d",
+    //         text: "Bleeblop gives up and the game ends",
+    //         correct: false,
+    //       },
+    //     ],
+    //     explanation: "Correct!",
+    //   },
+    //   showButtons: false,
+    // },
+    // {
+    //   id: "quiz-7",
+    //   title: "What happens if Bleeblop shuts down?",
+    //   content: "",
+    //   type: "quiz",
+    //   quiz: {
+    //     options: [
+    //       { id: "a", text: "Nothing", correct: false },
+    //       { id: "b", text: "Bleeblop stops moving", correct: false },
+    //       {
+    //         id: "c",
+    //         text: "Bleeblop gives up and the game ends",
+    //         correct: false,
+    //       },
+    //       {
+    //         id: "d",
+    //         text: "Bleeblop goes back for help and loses progress",
+    //         correct: true,
+    //       },
+    //     ],
+    //     explanation: "Correct!",
+    //   },
+    //   showButtons: false,
+    // },
     {
       id: "quiz-8",
       title:
@@ -432,6 +441,7 @@ const ABUND_DEPR_SLIDES = [
   { id: "ad-5", image: "AD5.png", showButtons: false },
   { id: "ad-6", image: "AD6.png", showButtons: false },
   { id: "ad-7", image: "AD7.png", showButtons: false },
+  { id: "ad-8", image: "AD8.png", showButtons: false },
 ];
 const SHARED_ENDING_QUIZ_GROUP = {
   id: "group-ending-quiz",

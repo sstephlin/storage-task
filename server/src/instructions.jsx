@@ -76,7 +76,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       return;
     }
     setShowResultOverlay(type);
-    const delay = type === "incorrect" ? 6000 : 2000;
+    const delay = type === "incorrect" ? 4000 : 2000;
     setTimeout(() => {
       setShowResultOverlay(null);
       redirectFn();
@@ -158,7 +158,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                 [group.id]: newAttempts,
               }));
 
-              if (newAttempts >= 2) {
+              if (newAttempts >= 3) {
                 showOverlayThenRedirect("exit", () => setIsDisqualified(true));
               } else {
                 showOverlayThenRedirect("incorrect", () => {
@@ -202,7 +202,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
             const newAttempts = prevAttempts + 1;
             setGroupAttempts((prev) => ({ ...prev, [group.id]: newAttempts }));
 
-            if (newAttempts >= 2) {
+            if (newAttempts >= 3) {
               showOverlayThenRedirect("exit", () => setIsDisqualified(true));
             } else {
               showOverlayThenRedirect("incorrect", () => {
@@ -500,7 +500,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
 
           {slide.type === "quiz" && slide.quiz && (
             <div className="quiz-section">
-              {quizAttempts[slide.id] === 2 &&
+              {quizAttempts[slide.id] === 3 &&
                 !quizFeedback &&
                 !slide._group && (
                   <div
