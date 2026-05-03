@@ -56,6 +56,7 @@ const App = () => {
 
   const tabHiddenTimerRef = useRef(null);
   const tabHiddenAtRef = useRef(null);
+  const gameCompletedRef = useRef(false);
 
   // Bootstrap
   useEffect(() => {
@@ -261,20 +262,38 @@ const App = () => {
       reloadWarningCleanupRef.current();
       reloadWarningCleanupRef.current = null;
     }
+    if (gameCompletedRef.current) return; // block any second call
+    gameCompletedRef.current = true;
 
-    setGameComplete(true);
-    console.log("cumulative", cumulativeProgress);
+    // setGameComplete(true);
     var reachedBonusGoal = false;
+    console.log("userId at completion:", userId);
     if (userId) {
-      reachedBonusGoal = await logGameCompletion({
+      const result = await logGameCompletion({
         finalScore: finalScore ?? 0,
         totalRounds: totalRounds ?? 0,
         cumulativeProgress: cumulativeProgress ?? 0,
         isTrainingMode: false,
       });
+      console.log("raw result from logGameCompletion:", result);
+      reachedBonusGoal = result?.reachedBonusGoal === true;
+      console.log("reachedBonusGoal after assignment:", reachedBonusGoal);
       await completeSession(userId);
       await endSession();
     }
+    console.log("reachedBonusGoal before building URL:", reachedBonusGoal);
+    // console.log("cumulative", cumulativeProgress);
+    // var reachedBonusGoal = false;
+    // if (userId) {
+    //   reachedBonusGoal = await logGameCompletion({
+    //     finalScore: finalScore ?? 0,
+    //     totalRounds: totalRounds ?? 0,
+    //     cumulativeProgress: cumulativeProgress ?? 0,
+    //     isTrainingMode: false,
+    //   });
+    //   await completeSession(userId);
+    //   await endSession();
+    // }
 
     const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
     if (redirectUrl) {
@@ -283,6 +302,7 @@ const App = () => {
       if (userId) url.searchParams.set("PROLIFIC_PID", userId);
       if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
       url.searchParams.set("B", reachedBonusGoal ? "true" : "false");
+      console.log("qualtrics link", url.toString(), reachedBonusGoal);
 
       setTimeout(() => {
         redirectTo(url.toString(), "game complete", "experiment complete");

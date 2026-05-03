@@ -105,6 +105,7 @@ const VialGame = ({
   const disableTimerRef = useRef(null);
   const previousPauseState = useRef(false);
   const audioContextRef = useRef(null);
+  const round0LoggedRef = useRef(false);
 
   // Bucket assignment
   const vial1HasBucket = currentBucketConfig.vial1 === 1;
@@ -192,26 +193,29 @@ const VialGame = ({
   const handleTutorialExit = () => {
     setShowTutorial(false);
     setGameRunning(true);
-    setTimeout(() => {
-      logRoundStart(
-        0,
-        {
-          numVials: versionConfig.numVials,
-          vial1HasBucket: vial1HasBucket,
-          vial2HasBucket: vial2HasBucket,
-          velocity: currentDrainRate,
-          setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-          phase: currentPhase,
-          initialVial1Level: vial1Level,
-          initialVial2Level: vial2Level,
-          initialBucket1Level: bucket1Level,
-          initialBucket2Level: bucket2Level,
-          isTrainingMode: isTrainingMode,
-        },
-        isTrainingMode,
-      );
-      logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
-    }, 100);
+    // setTimeout(() => {
+    //   if (!round0LoggedRef.current) {
+    //     round0LoggedRef.current = true;
+    //     logRoundStart(
+    //       0,
+    //       {
+    //         numVials: versionConfig.numVials,
+    //         vial1HasBucket: vial1HasBucket,
+    //         vial2HasBucket: vial2HasBucket,
+    //         velocity: currentDrainRate,
+    //         setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+    //         phase: currentPhase,
+    //         initialVial1Level: vial1Level,
+    //         initialVial2Level: vial2Level,
+    //         initialBucket1Level: bucket1Level,
+    //         initialBucket2Level: bucket2Level,
+    //         isTrainingMode: isTrainingMode,
+    //       },
+    //       isTrainingMode,
+    //     );
+    //     logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
+    //   }
+    // }, 100);
   };
 
   // Initialize audio context
@@ -231,24 +235,27 @@ const VialGame = ({
     if (!showTutorial && !gameRunning && currentRound === 0) {
       setGameRunning(true);
       setTimeout(() => {
-        logRoundStart(
-          0,
-          {
-            numVials: versionConfig.numVials,
-            vial1HasBucket: vial1HasBucket,
-            vial2HasBucket: vial2HasBucket,
-            velocity: currentDrainRate,
-            setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-            phase: currentPhase,
-            initialVial1Level: vial1Level,
-            initialVial2Level: vial2Level,
-            initialBucket1Level: bucket1Level,
-            initialBucket2Level: bucket2Level,
-            isTrainingMode: isTrainingMode,
-          },
-          isTrainingMode,
-        );
-        logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
+        if (!round0LoggedRef.current) {
+          round0LoggedRef.current = true;
+          logRoundStart(
+            0,
+            {
+              numVials: versionConfig.numVials,
+              vial1HasBucket: vial1HasBucket,
+              vial2HasBucket: vial2HasBucket,
+              velocity: currentDrainRate,
+              setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+              phase: currentPhase,
+              initialVial1Level: vial1Level,
+              initialVial2Level: vial2Level,
+              initialBucket1Level: bucket1Level,
+              initialBucket2Level: bucket2Level,
+              isTrainingMode: isTrainingMode,
+            },
+            isTrainingMode,
+          );
+          logGasStationToggle(!isAddingDisabled, isTrainingMode, true);
+        }
       }, 100);
     }
   }, [showTutorial]); // Only run once when component mounts

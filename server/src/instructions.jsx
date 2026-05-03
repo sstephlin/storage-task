@@ -158,7 +158,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                 [group.id]: newAttempts,
               }));
 
-              if (newAttempts >= 3) {
+              if (newAttempts >= 2) {
                 showOverlayThenRedirect("exit", () => setIsDisqualified(true));
               } else {
                 showOverlayThenRedirect("incorrect", () => {
@@ -182,13 +182,10 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
           }
         });
       } else {
-        const penalizeError = !slide.multiSelect;
-        if (penalizeError) setGroupHadError(true);
+        setGroupHadError(true);
         setQuizFeedback({
           type: "error",
-          message: penalizeError
-            ? "Not quite right. Let's keep going."
-            : "Not quite — but this question won't affect your progress. Let's keep going.",
+          message: "Not quite right. Let's keep going.",
         });
         setTimeout(() => {
           setQuizFeedback(null);
@@ -202,7 +199,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
             const newAttempts = prevAttempts + 1;
             setGroupAttempts((prev) => ({ ...prev, [group.id]: newAttempts }));
 
-            if (newAttempts >= 3) {
+            if (newAttempts >= 2) {
               showOverlayThenRedirect("exit", () => setIsDisqualified(true));
             } else {
               showOverlayThenRedirect("incorrect", () => {
@@ -269,6 +266,173 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       }
     }
   };
+
+  // const validateQuizAnswers = () => {
+  //   const quiz = slide.quiz;
+  //   const correctAnswers = quiz.options
+  //     .filter((opt) => opt.correct)
+  //     .map((opt) => opt.id);
+
+  //   const userAnswers = Object.keys(selectedAnswers).filter(
+  //     (key) => selectedAnswers[key],
+  //   );
+
+  //   const isCorrect =
+  //     correctAnswers.length === userAnswers.length &&
+  //     correctAnswers.every((id) => userAnswers.includes(id));
+
+  //   const group = slide._group;
+  //   const isLastInGroup = group
+  //     ? groupQuizIndex === group.quizzes.length - 1
+  //     : false;
+
+  //   // Determine attempt number for this quiz
+  //   const attemptKey = group ? group.id : slide.id;
+  //   const attemptNumber = (quizAttempts[attemptKey] || 0) + 1;
+
+  //   // Log the answer
+  //   logTutorialQuizAnswer({
+  //     quizId: slide.id,
+  //     slideId: group ? group.id : slide.id,
+  //     selectedIds: userAnswers,
+  //     isCorrect,
+  //     attemptNumber,
+  //     gameVersion,
+  //   });
+
+  //   if (group) {
+  //     if (isCorrect) {
+  //       setQuizFeedback({
+  //         type: "success",
+  //         message: quiz.explanation || "Correct!",
+  //       });
+  //       setTimeout(() => {
+  //         setQuizFeedback(null);
+  //         setSelectedAnswers({});
+
+  //         if (isLastInGroup) {
+  //           setGroupQuizIndex(0);
+  //           setGroupHadError(false);
+
+  //           if (groupHadError) {
+  //             const prevAttempts = groupAttempts[group.id] || 0;
+  //             const newAttempts = prevAttempts + 1;
+  //             setGroupAttempts((prev) => ({
+  //               ...prev,
+  //               [group.id]: newAttempts,
+  //             }));
+
+  //             if (newAttempts >= 3) {
+  //               showOverlayThenRedirect("exit", () => setIsDisqualified(true));
+  //             } else {
+  //               showOverlayThenRedirect("incorrect", () => {
+  //                 const returnIndex = getSlideIndexById(
+  //                   TUTORIAL_SLIDES,
+  //                   group.returnToSlide,
+  //                 );
+  //                 logSlideChange(returnIndex, "redirect-incorrect");
+  //                 setCurrentSlide(returnIndex);
+  //               });
+  //             }
+  //           } else {
+  //             showOverlayThenRedirect("correct", () => {
+  //               const nextIndex = currentSlide + 1;
+  //               logSlideChange(nextIndex, "redirect-correct");
+  //               setCurrentSlide(nextIndex);
+  //             });
+  //           }
+  //         } else {
+  //           setGroupQuizIndex((i) => i + 1);
+  //         }
+  //       });
+  //     } else {
+  //       const penalizeError = !slide.multiSelect;
+  //       if (penalizeError) setGroupHadError(true);
+  //       setQuizFeedback({
+  //         type: "error",
+  //         message: penalizeError
+  //           ? "Not quite right. Let's keep going."
+  //           : "Not quite — but this question won't affect your progress. Let's keep going.",
+  //       });
+  //       setTimeout(() => {
+  //         setQuizFeedback(null);
+  //         setSelectedAnswers({});
+
+  //         if (isLastInGroup) {
+  //           setGroupQuizIndex(0);
+  //           setGroupHadError(false);
+
+  //           const prevAttempts = groupAttempts[group.id] || 0;
+  //           const newAttempts = prevAttempts + 1;
+  //           setGroupAttempts((prev) => ({ ...prev, [group.id]: newAttempts }));
+
+  //           if (newAttempts >= 3) {
+  //             showOverlayThenRedirect("exit", () => setIsDisqualified(true));
+  //           } else {
+  //             showOverlayThenRedirect("incorrect", () => {
+  //               const returnIndex = getSlideIndexById(
+  //                 TUTORIAL_SLIDES,
+  //                 group.returnToSlide,
+  //               );
+  //               logSlideChange(returnIndex, "redirect-incorrect");
+  //               setCurrentSlide(returnIndex);
+  //             });
+  //           }
+  //         } else {
+  //           setGroupQuizIndex((i) => i + 1);
+  //         }
+  //       });
+  //     }
+
+  //     return isCorrect;
+  //   } else {
+  //     // Non-group quiz
+  //     if (isCorrect) {
+  //       setQuizFeedback({
+  //         type: "success",
+  //         message: quiz.explanation || "Correct!",
+  //       });
+  //       setTimeout(() => {
+  //         setQuizFeedback(null);
+  //         setSelectedAnswers({});
+  //         goNext();
+  //       }, 1500);
+  //       return true;
+  //     } else {
+  //       const currentAttempts = quizAttempts[slide.id] || 0;
+  //       const newAttempts = currentAttempts + 1;
+  //       setQuizAttempts((prev) => ({ ...prev, [slide.id]: newAttempts }));
+
+  //       if (newAttempts >= 3) {
+  //         setQuizFeedback({
+  //           type: "error",
+  //           message:
+  //             "You have reached the maximum number of attempts. You will not be able to continue with the study.",
+  //         });
+  //         setTimeout(() => setIsDisqualified(true), 2500);
+  //       } else {
+  //         const attemptsRemaining = 3 - newAttempts;
+  //         setQuizFeedback({
+  //           type: "error",
+  //           message: `Not quite right. Let's review that information again. (${attemptsRemaining} attempt${
+  //             attemptsRemaining !== 1 ? "s" : ""
+  //           } remaining)`,
+  //         });
+  //         setTimeout(() => {
+  //           const returnIndex = getSlideIndexById(
+  //             TUTORIAL_SLIDES,
+  //             quiz.returnToSlide,
+  //           );
+  //           logSlideChange(returnIndex, "redirect-incorrect");
+  //           setCurrentSlide(returnIndex);
+  //           setSelectedAnswers({});
+  //           setQuizFeedback(null);
+  //         }, 2500);
+  //       }
+  //       return false;
+  //     }
+  //   }
+  // };
 
   const handleCheckboxChange = (optionId) => {
     if (slide.multiSelect) {
