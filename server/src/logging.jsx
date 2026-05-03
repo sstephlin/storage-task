@@ -622,7 +622,11 @@ export const logTabVisibilityChange = async (visibilityState, stage) => {
 // ROUND END
 // ============================================================================
 
-export const logRoundEnd = async (successful, isTrainingMode = false) => {
+export const logRoundEnd = async (
+  successful,
+  isTrainingMode = false,
+  cumulativeProgress = null,
+) => {
   if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
 
   try {
@@ -645,6 +649,10 @@ export const logRoundEnd = async (successful, isTrainingMode = false) => {
       isTrainingMode: isTrainingMode ? 1 : 0,
       roundEndTime,
       roundDuration,
+      cumulativeProgress:
+        cumulativeProgress !== null // add this
+          ? Math.round(cumulativeProgress * 100) / 100
+          : null,
     });
 
     console.log(

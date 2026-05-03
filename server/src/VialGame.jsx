@@ -788,7 +788,6 @@ const VialGame = ({
   }, [showingAnimation]);
 
   const completeRound = () => {
-    logRoundEnd(true, isTrainingMode);
     const previousProgress = cumulativeProgress;
 
     const optimalAverage = 0;
@@ -813,6 +812,8 @@ const VialGame = ({
 
     const roundContribution = (100 / GAME_PARAMS.MAX_ROUNDS) * performanceRatio;
     const newProgress = previousProgress + roundContribution;
+
+    logRoundEnd(true, isTrainingMode, newProgress);
 
     setScore((prev) => prev + 1);
     setRoundWasSuccessful(true);
@@ -893,13 +894,14 @@ const VialGame = ({
   };
 
   const failRound = () => {
-    logRoundEnd(false, isTrainingMode);
-
     const stepBack = 100 / GAME_PARAMS.MAX_ROUNDS;
     const newProgress = Math.max(0, cumulativeProgress - stepBack);
 
     setPreviousRoundProgress(cumulativeProgress);
     setCumulativeProgress(newProgress);
+
+    logRoundEnd(false, isTrainingMode, newProgress);
+
     setDistanceSamples([]);
 
     if (isTrainingMode && onRoundComplete) {
