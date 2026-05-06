@@ -637,6 +637,12 @@ const SHARED_ENDING_SLIDES = [
   // { id: "end-4", image: "Ending4.png", showButtons: false },
   // { id: "end-5", image: "Ending5.png", showButtons: false },
 ];
+
+const TWO_VIAL_ENDING_SLIDES = [
+  { id: "end-1", image: "Ending1.png", showButtons: false },
+  { id: "end-2", image: "EndingAD2.png", showButtons: false },
+  { id: "end-3", image: "Ending3.png", showButtons: false },
+];
 const SHARED_READY_SLIDES = [
   { id: "ready-1", image: "Ready1.png", showButtons: false },
   { id: "ready-2", image: "Ready2.png", showButtons: false },
@@ -673,33 +679,35 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_READY_SLIDES,
   ],
 
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
-    ...SHARED_INTRO_SLIDES,
-    SHARED_INTRO_QUIZ_GROUP,
-    ...SHARED_COMMANDS_SLIDES,
-    SHARED_COMMANDS_QUIZ_GROUP,
-    ...SHARED_ENDING_SLIDES,
-    SHARED_ENDING_QUIZ_GROUP,
-    ...SHARED_READY_SLIDES,
-    // ...QUIZ_RESULT_SLIDES,
-  ],
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
-    ...SHARED_INTRO_SLIDES,
-    SHARED_INTRO_QUIZ_GROUP,
-    ...SHARED_COMMANDS_SLIDES,
-    SHARED_COMMANDS_QUIZ_GROUP,
-    ...SHARED_ENDING_SLIDES,
-    SHARED_ENDING_QUIZ_GROUP,
-    ...SHARED_READY_SLIDES,
-    // ...QUIZ_RESULT_SLIDES,
-  ],
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
+  //   ...SHARED_INTRO_SLIDES,
+  //   SHARED_INTRO_QUIZ_GROUP,
+  //   ...SHARED_COMMANDS_SLIDES,
+  //   SHARED_COMMANDS_QUIZ_GROUP,
+  //   ...SHARED_ENDING_SLIDES,
+  //   SHARED_ENDING_QUIZ_GROUP,
+  //   ...SHARED_READY_SLIDES,
+  //   // ...QUIZ_RESULT_SLIDES,
+  // ],
+  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
+  //   ...SHARED_INTRO_SLIDES,
+  //   SHARED_INTRO_QUIZ_GROUP,
+  //   ...SHARED_COMMANDS_SLIDES,
+  //   SHARED_COMMANDS_QUIZ_GROUP,
+  //   ...SHARED_ENDING_SLIDES,
+  //   SHARED_ENDING_QUIZ_GROUP,
+  //   ...SHARED_READY_SLIDES,
+  //   // ...QUIZ_RESULT_SLIDES,
+  // ],
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: [
   //   ...SHARED_INTRO_SLIDES,
-  //   ...SHARED_MECHANICS_SLIDES,
-  //   ...SHARED_QUIZ_SLIDES,
-  //   ...TWO_VIALS_SINGLE_BUCKET_SPECIFIC,
-  //   ...SHARED_ENDING_SLIDES,
+  //   SHARED_INTRO_QUIZ_GROUP,
+  //   ...SHARED_COMMANDS_SLIDES,
+  //   SHARED_COMMANDS_QUIZ_GROUP,
+  //   ...TWO_VIAL_ENDING_SLIDES,
+  //   SHARED_ENDING_QUIZ_GROUP,
+  //   ...SHARED_READY_SLIDES,
   // ],
 
   // [GAME_VERSIONS.TWO_VIALS_PHASES]: [

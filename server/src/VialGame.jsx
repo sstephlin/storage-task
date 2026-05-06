@@ -106,6 +106,8 @@ const VialGame = ({
   const previousPauseState = useRef(false);
   const audioContextRef = useRef(null);
   const round0LoggedRef = useRef(false);
+  const vial1LevelRef = useRef(GAME_PARAMS.INITIAL_VIAL_LEVEL);
+  const vial2LevelRef = useRef(GAME_PARAMS.INITIAL_VIAL_LEVEL);
 
   // Bucket assignment
   const vial1HasBucket = currentBucketConfig.vial1 === 1;
@@ -158,6 +160,8 @@ const VialGame = ({
   const isAbundancePhase = currentPhase === "abundance";
 
   useEffect(() => {
+    vial1LevelRef.current = vial1Level;
+    vial2LevelRef.current = vial2Level;
     gameStateRef.current = {
       vial1Level,
       vial2Level,
@@ -376,6 +380,7 @@ const VialGame = ({
             },
             isTrainingMode,
           );
+          console.log("button press bucket level", bucket1Level);
           vial1Paused.current = true;
           setVial1Level((prev) =>
             Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT),
@@ -542,15 +547,21 @@ const VialGame = ({
           if (vial1HasBucket && newLevel1 < prev) {
             if (allowUnrestrictedBucketFilling) {
               if (prev > GAME_PARAMS.OPTIMAL_ZONE_MAX) {
-                setBucket1Level((bucketPrev) =>
-                  Math.min(100, bucketPrev + currentDrainRate),
+                // console.log("bucket1", bucket1Level);
+                setBucket1Level(
+                  (bucketPrev) => Math.min(100, bucketPrev + currentDrainRate),
+                  console.log("bucket1", bucket1Level),
                 );
+                // console.log("bucket1", bucket1Level);
               }
             } else {
               if (
                 prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
                 prev <= GAME_PARAMS.DANGER_UPPER &&
                 newLevel1 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
+                // vial1LevelRef.current > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
+                // vial1LevelRef.current <= GAME_PARAMS.DANGER_UPPER &&
+                // newLevel1 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
               ) {
                 setBucket1Level((bucketPrev) =>
                   Math.min(100, bucketPrev + currentDrainRate),
@@ -575,6 +586,9 @@ const VialGame = ({
                 }
               } else {
                 if (
+                  // vial2LevelRef.current > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
+                  // vial2LevelRef.current <= GAME_PARAMS.DANGER_UPPER &&
+                  // newLevel2 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
                   prev > GAME_PARAMS.OPTIMAL_ZONE_MAX &&
                   prev <= GAME_PARAMS.DANGER_UPPER &&
                   newLevel2 >= GAME_PARAMS.OPTIMAL_ZONE_MAX
@@ -620,8 +634,8 @@ const VialGame = ({
     vial2HasBucket,
     currentDrainRate,
     versionConfig.numVials,
-    vial1Level,
-    vial2Level,
+    // vial1HasBucket ? vial1Level : null, // only include vial1Level if it has the bucket
+    // vial2HasBucket ? vial2Level : null, // only include vial2Level if it has the bucket
     allowUnrestrictedBucketFilling,
   ]);
 
@@ -882,8 +896,8 @@ const VialGame = ({
             phase: nextPhase,
             initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
             initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-            initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-            initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+            initialBucket1Level: bucket1Level,
+            initialBucket2Level: bucket2Level,
             isTrainingMode: isTrainingMode,
           },
           isTrainingMode,
@@ -955,8 +969,8 @@ const VialGame = ({
           phase: nextPhase,
           initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
           initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-          initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-          initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+          initialBucket1Level: bucket1Level,
+          initialBucket2Level: bucket2Level,
           isTrainingMode: isTrainingMode,
         },
         isTrainingMode,
