@@ -325,14 +325,33 @@ async function exportData() {
   }
 
   // ── Write CSVs ────────────────────────────────────────────────────────────
+  // console.log("\nWriting CSV files…");
+  // write("sessions.csv", sessionRows);
+  // write("tutorial_slides.csv", tutorialSlideRows);
+  // write("tutorial_quizzes.csv", tutorialQuizRows);
+  // write("rounds.csv", roundRows);
+  // write("button_presses.csv", buttonPressRows);
+  // write("gas_station_events.csv", gasStationRows);
+  // write("tab_events.csv", tabEventRows);
+  // ── Write CSVs ────────────────────────────────────────────────────────────
   console.log("\nWriting CSV files…");
-  write("sessions.csv", sessionRows);
-  write("tutorial_slides.csv", tutorialSlideRows);
-  write("tutorial_quizzes.csv", tutorialQuizRows);
-  write("rounds.csv", roundRows);
-  write("button_presses.csv", buttonPressRows);
-  write("gas_station_events.csv", gasStationRows);
-  write("tab_events.csv", tabEventRows);
+
+  const sortByUserThenTime = (rows, timeField = "timestamp") =>
+    rows.sort((a, b) => {
+      if (a.userId < b.userId) return -1;
+      if (a.userId > b.userId) return 1;
+      const ta = a[timeField] ?? "";
+      const tb = b[timeField] ?? "";
+      return ta < tb ? -1 : ta > tb ? 1 : 0;
+    });
+
+  write("sessions.csv", sortByUserThenTime(sessionRows, "startTime"));
+  write("tutorial_slides.csv", sortByUserThenTime(tutorialSlideRows));
+  write("tutorial_quizzes.csv", sortByUserThenTime(tutorialQuizRows));
+  write("rounds.csv", sortByUserThenTime(roundRows, "startTime"));
+  write("button_presses.csv", sortByUserThenTime(buttonPressRows));
+  write("gas_station_events.csv", sortByUserThenTime(gasStationRows));
+  write("tab_events.csv", sortByUserThenTime(tabEventRows));
 
   console.log("\nDone! Files written:");
   console.log("  sessions.csv           — one row per session");
