@@ -6,7 +6,7 @@ import { PARTIAL_COMPLETION_CODES } from "./params";
 import { logTrainingResult } from "./logging";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 1,
+  MAX_ROUNDS: 2,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -20,6 +20,16 @@ export const TRAINING_PARAMS = {
       SLOW: 1.2,
       MEDIUM: 1.4,
       FAST: 1.6,
+    },
+    one_vial_always_bucket_simple: {
+      SLOW: 1.2,
+      MEDIUM: 1.4,
+      FAST: 1.6,
+    },
+    one_vial_always_bucket_simple_fast: {
+      SLOW: 2.2,
+      MEDIUM: 2.4,
+      FAST: 2.6,
     },
     two_vials_single_bucket: {
       SLOW: 1.4,
@@ -40,225 +50,104 @@ export const TRAINING_PARAMS = {
     danger: "#f87171",
   },
 };
+
+const makeRounds = (velocities, bucket, phases) =>
+  velocities.map((velocity, i) => ({
+    velocity,
+    bucket,
+    phase: Array.isArray(phases) ? phases[i] : phases,
+  }));
+
 const TRAINING_ROUND_TEMPLATES = {
   one_vial_alternating: [
-    // bucket
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
+    // bucket rounds
+    ...makeRounds(
+      [
+        ...Array(2).fill(TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW),
+        ...Array(2).fill(
+          TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+        ),
+        ...Array(1).fill(TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST),
+      ],
+      { vial1: 1, vial2: 0 },
+      "abundance",
+    ),
+    // no bucket rounds
+    ...makeRounds(
+      [
+        ...Array(2).fill(TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW),
+        ...Array(2).fill(
+          TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
+        ),
+        ...Array(1).fill(TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST),
+      ],
+      { vial1: 0, vial2: 0 },
+      "abundance",
+    ),
+  ],
 
-    // no bucket
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
-      bucket: { vial1: 0, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
-      bucket: { vial1: 0, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.SLOW,
-      bucket: { vial1: 0, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.MEDIUM,
-      bucket: { vial1: 0, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_alternating.FAST,
-      bucket: { vial1: 0, vial2: 0 },
-      phase: "abundance",
-    },
-  ],
-  one_vial_always_bucket: [
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "deprivation",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "deprivation",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "deprivation",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "deprivation",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "abundance",
-    },
-    {
-      velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
-      bucket: { vial1: 1, vial2: 0 },
-      phase: "deprivation",
-    },
-  ],
-  one_vial_always_bucket_simple: [
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-  ],
-  one_vial_always_bucket_simple_fast: [
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-    // {
-    //   velocity: TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
-    //   bucket: { vial1: 1, vial2: 0 },
-    //   phase: "abundance",
-    // },
-  ],
-  two_vials_single_bucket: [
-    // { velocity: 1.4, bucket: { vial1: 1, vial2: 0 }, phase: "abundance" },
-  ],
-  two_vials_phases: [
-    // { velocity: 1.4, bucket: { vial1: 1, vial2: 0 }, phase: "abundance" },
-  ],
+  one_vial_always_bucket: makeRounds(
+    [
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.SLOW,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.MEDIUM,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
+      TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket.FAST,
+    ],
+    { vial1: 1, vial2: 0 },
+    [
+      "abundance",
+      "abundance",
+      "deprivation",
+      "deprivation",
+      "abundance",
+      "abundance",
+      "deprivation",
+      "deprivation",
+      "abundance",
+      "deprivation",
+    ],
+  ),
+
+  one_vial_always_bucket_simple: makeRounds(
+    [
+      ...Array(4).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+      ),
+      ...Array(3).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+      ),
+      ...Array(3).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+      ),
+    ],
+    { vial1: 1, vial2: 0 },
+    "abundance",
+  ),
+
+  one_vial_always_bucket_simple_fast: makeRounds(
+    [
+      ...Array(4).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.SLOW,
+      ),
+      ...Array(3).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.MEDIUM,
+      ),
+      ...Array(3).fill(
+        TRAINING_PARAMS.VELOCITIES.one_vial_always_bucket_simple.FAST,
+      ),
+    ],
+    { vial1: 1, vial2: 0 },
+    "abundance",
+  ),
 };
+
+//build and shuffle training sequence settings
 const buildTrainingSequences = (gameVersion) => {
   const templates = TRAINING_ROUND_TEMPLATES[gameVersion] ?? [];
   const shuffled = [...templates];

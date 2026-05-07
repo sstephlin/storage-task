@@ -40,7 +40,7 @@ const SHARED_INTRO_SLIDES = [
   { id: "intro-16", image: "Intro-16.png", showButtons: false },
   { id: "intro-17", image: "Intro-17.png", showButtons: false },
 ];
-const SHARED_COMMANDS_SLIDES = [
+const SHARED_COMMANDS_SLIDES_PART1 = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
   {
     id: "commands-2",
@@ -48,7 +48,9 @@ const SHARED_COMMANDS_SLIDES = [
     title: "Use the left arrow key to add to the main gloop container.",
     showButtons: false,
   },
-  { id: "commands-3", image: "Commands-3.png", showButtons: false },
+];
+
+const SHARED_COMMANDS_SLIDES_PART2 = [
   {
     id: "commands-4",
     image: "gifs/draining1.gif",
@@ -94,6 +96,17 @@ const SHARED_COMMANDS_SLIDES = [
   { id: "commands-10", image: "Commands-8.png", showButtons: false },
   { id: "commands-11", image: "Commands-9.png", showButtons: false },
   { id: "commands-12", image: "Commands-10.png", showButtons: false },
+];
+
+const STORAGE_INTRO_SOMETIMES = [
+  { id: "commands-3", image: "Commands-3.png", showButtons: false },
+];
+const STORAGE_INTRO_ALWAYS = [
+  {
+    id: "commands-3-Always-Storage",
+    image: "Commands-3-Always-Storage.png",
+    showButtons: false,
+  },
 ];
 const SHARED_INTRO_QUIZ_GROUP = {
   id: "group-intro-quiz",
@@ -646,6 +659,14 @@ const TWO_VIAL_ENDING_SLIDES = [
 const SHARED_READY_SLIDES = [
   { id: "ready-1", image: "Ready1.png", showButtons: false },
   { id: "ready-2", image: "Ready2.png", showButtons: false },
+  { id: "ready-3", image: "Ready3.png", showButtons: false },
+  { id: "ready-4", image: "Ready4.png", showButtons: false },
+];
+const SHARED_READY_SLIDES_STORAGE = [
+  { id: "ready-1", image: "Ready1-Storage.png", showButtons: false },
+  { id: "ready-2", image: "Ready2-Storage.png", showButtons: false },
+  { id: "ready-3", image: "Ready3-Storage.png", showButtons: false },
+  { id: "ready-4", image: "Ready4-Storage.png", showButtons: false },
 ];
 
 const QUIZ_RESULT_SLIDES = [
@@ -659,7 +680,9 @@ const VERSION_SLIDE_SEQUENCES = {
   [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: [
     ...SHARED_INTRO_SLIDES,
     SHARED_INTRO_QUIZ_GROUP,
-    ...SHARED_COMMANDS_SLIDES,
+    ...SHARED_COMMANDS_SLIDES_PART1,
+    ...STORAGE_INTRO_SOMETIMES,
+    ...SHARED_COMMANDS_SLIDES_PART2,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
@@ -670,35 +693,41 @@ const VERSION_SLIDE_SEQUENCES = {
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: [
     ...SHARED_INTRO_SLIDES,
     SHARED_INTRO_QUIZ_GROUP,
-    ...SHARED_COMMANDS_SLIDES,
+    ...SHARED_COMMANDS_SLIDES_PART1,
+    ...STORAGE_INTRO_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART2,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...ABUND_DEPR_SLIDES,
     ABUND_DEPR_QUIZ_GROUP,
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
-    ...SHARED_READY_SLIDES,
+    ...SHARED_READY_SLIDES_STORAGE,
   ],
 
-  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
-  //   ...SHARED_INTRO_SLIDES,
-  //   SHARED_INTRO_QUIZ_GROUP,
-  //   ...SHARED_COMMANDS_SLIDES,
-  //   SHARED_COMMANDS_QUIZ_GROUP,
-  //   ...SHARED_ENDING_SLIDES,
-  //   SHARED_ENDING_QUIZ_GROUP,
-  //   ...SHARED_READY_SLIDES,
-  //   // ...QUIZ_RESULT_SLIDES,
-  // ],
-  // [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
-  //   ...SHARED_INTRO_SLIDES,
-  //   SHARED_INTRO_QUIZ_GROUP,
-  //   ...SHARED_COMMANDS_SLIDES,
-  //   SHARED_COMMANDS_QUIZ_GROUP,
-  //   ...SHARED_ENDING_SLIDES,
-  //   SHARED_ENDING_QUIZ_GROUP,
-  //   ...SHARED_READY_SLIDES,
-  //   // ...QUIZ_RESULT_SLIDES,
-  // ],
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: [
+    ...SHARED_INTRO_SLIDES,
+    SHARED_INTRO_QUIZ_GROUP,
+    ...SHARED_COMMANDS_SLIDES_PART1,
+    ...STORAGE_INTRO_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART2,
+    SHARED_COMMANDS_QUIZ_GROUP,
+    ...SHARED_ENDING_SLIDES,
+    SHARED_ENDING_QUIZ_GROUP,
+    ...SHARED_READY_SLIDES_STORAGE,
+    // ...QUIZ_RESULT_SLIDES,
+  ],
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
+    ...SHARED_INTRO_SLIDES,
+    SHARED_INTRO_QUIZ_GROUP,
+    ...SHARED_COMMANDS_SLIDES_PART1,
+    ...STORAGE_INTRO_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART2,
+    SHARED_COMMANDS_QUIZ_GROUP,
+    ...SHARED_ENDING_SLIDES,
+    SHARED_ENDING_QUIZ_GROUP,
+    ...SHARED_READY_SLIDES_STORAGE,
+    // ...QUIZ_RESULT_SLIDES,
+  ],
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: [
   //   ...SHARED_INTRO_SLIDES,
