@@ -15,6 +15,8 @@
 }
 
 .vial {
+  transform: translateZ(0);
+  will-change: transform;
   width: 60px;
   height: 200px;
   border: 2px solid #34495e;
@@ -32,9 +34,12 @@
   bottom: 0;
   left: 0;
   right: 0;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
+  transition: height 80ms linear;
   border-radius: 0 0 12px 12px;
   background-color: rgb(127, 185, 255);
+  transform: translateZ(0);
+  will-change: height;
 }
 
 .bucket-container {

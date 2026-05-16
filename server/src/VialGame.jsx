@@ -108,6 +108,7 @@ const VialGame = ({
   const round0LoggedRef = useRef(false);
   const cumulativeProgressRef = useRef(0);
   const distanceSamplesRef = useRef([]);
+  const isAddingDisabledRef = useRef(false);
 
   // const vial1LevelRef = useRef(GAME_PARAMS.INITIAL_VIAL_LEVEL);
   // const vial2LevelRef = useRef(GAME_PARAMS.INITIAL_VIAL_LEVEL);
@@ -180,7 +181,7 @@ const VialGame = ({
       velocity: currentDrainRate,
       roundWasSuccessful,
       setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-      addAmount: GAME_PARAMS.ADD_AMOUNT,
+      // addAmount: GAME_PARAMS.ADD_AMOUNT,
     };
   }, [
     vial1Level,
@@ -367,14 +368,12 @@ const VialGame = ({
 
       switch (event.key) {
         case "ArrowLeft":
-          if (isAddingDisabled) return;
           event.preventDefault();
           keyLocked.current = true;
           logButtonPress(
             "add_vial_1",
             {
               ...getCurrentState(),
-              addAmount: GAME_PARAMS.ADD_AMOUNT,
               bucket1Level: bucket1Level,
               bucket2Level: bucket2Level,
               velocity: currentDrainRate,
@@ -382,15 +381,18 @@ const VialGame = ({
               gasStationActive: !isAddingDisabled,
             },
             isTrainingMode,
+            isAddingDisabled ? 0 : GAME_PARAMS.ADD_AMOUNT,
           );
-          console.log("button press bucket level", bucket1Level);
-          vial1Paused.current = true;
-          setVial1Level((prev) =>
-            Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT),
-          );
-          setTimeout(() => {
-            vial1Paused.current = false;
-          }, 100);
+          if (!isAddingDisabled) {
+            console.log("button press bucket level", bucket1Level);
+            vial1Paused.current = true;
+            setVial1Level((prev) =>
+              Math.min(GAME_PARAMS.MAX_LEVEL, prev + GAME_PARAMS.ADD_AMOUNT),
+            );
+            setTimeout(() => {
+              vial1Paused.current = false;
+            }, 100);
+          }
           setTimeout(() => {
             keyLocked.current = false;
           }, buttonDelay);
@@ -404,7 +406,6 @@ const VialGame = ({
             "add_vial_2",
             {
               ...getCurrentState(),
-              addAmount: GAME_PARAMS.ADD_AMOUNT,
               bucket1Level: bucket1Level,
               bucket2Level: bucket2Level,
               velocity: currentDrainRate,
@@ -412,6 +413,7 @@ const VialGame = ({
               gasStationActive: !isAddingDisabled,
             },
             isTrainingMode,
+            isAddingDisabled ? 0 : GAME_PARAMS.ADD_AMOUNT,
           );
           vial2Paused.current = true;
           setVial2Level((prev) =>
@@ -424,50 +426,100 @@ const VialGame = ({
             keyLocked.current = false;
           }, buttonDelay);
           break;
+        case "ArrowUp":
+          event.preventDefault();
+          keyLocked.current = true;
+          if (vial1HasBucket) {
+            if (bucket1Level <= 0) {
+              console.log("empty bucket", bucket1Level);
+              logButtonPress(
+                "empty_bucket_1",
+                {
+                  ...getCurrentState(),
+                  bucket1Level: bucket1Level,
+                  bucket2Level: bucket2Level,
+                  velocity: currentDrainRate,
+                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                  gasStationActive: !isAddingDisabled,
+                },
+                isTrainingMode,
+                0,
+              );
+            } else {
+              const currentVial1 = gameStateRef.current.vial1Level;
+              const currentBucket1 = gameStateRef.current.bucket1Level;
+              const maxAddAmount = GAME_PARAMS.OPTIMAL_ZONE_MAX - currentVial1;
+              const amountToAdd =
+                maxAddAmount > 0
+                  ? Math.min(
+                      maxAddAmount,
+                      bucket1Level,
+                      GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
+                    )
+                  : 0;
+              console.log("bucket", maxAddAmount, amountToAdd, currentBucket1);
 
-        // case "ArrowUp":
-        //   console.log("arrow up");
+              logButtonPress(
+                "empty_bucket_1",
+                {
+                  ...getCurrentState(),
+                  bucket1Level: bucket1Level,
+                  bucket2Level: bucket2Level,
+                  velocity: currentDrainRate,
+                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                  gasStationActive: !isAddingDisabled,
+                },
+                isTrainingMode,
+                amountToAdd,
+              );
+
+              if (amountToAdd > 0) {
+                setVial1Level((prev) => prev + amountToAdd);
+                setBucket1Level((prev) => Math.max(0, prev - amountToAdd));
+              }
+            }
+          } else if (vial2HasBucket && versionConfig.numVials === 2) {
+            const currentVial2 = gameStateRef.current.vial2Level;
+            // const currentBucket2 = gameStateRef.current.bucket2Level;
+            const maxAddAmount = GAME_PARAMS.OPTIMAL_ZONE_MAX - currentVial2;
+            const amountToAdd =
+              maxAddAmount > 0
+                ? Math.min(
+                    maxAddAmount,
+                    bucket2Level,
+                    GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
+                  )
+                : 0;
+
+            logButtonPress(
+              "empty_bucket_2",
+              {
+                ...getCurrentState(),
+                bucket1Level: bucket1Level,
+                bucket2Level: bucket2Level,
+                velocity: currentDrainRate,
+                setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
+                gasStationActive: !isAddingDisabled,
+              },
+              isTrainingMode,
+              amountToAdd,
+            );
+
+            if (amountToAdd > 0) {
+              setVial2Level((prev) => prev + amountToAdd);
+              setBucket2Level((prev) => Math.max(0, prev - amountToAdd));
+            }
+          }
+          setTimeout(() => {
+            keyLocked.current = false;
+          }, buttonDelay);
+          break;
+
+        // case "ArrowDown":
+        //   if (versionConfig.numVials !== 2) return;
         //   event.preventDefault();
         //   keyLocked.current = true;
-        //   if (vial1HasBucket && bucket1Level > 0) {
-        //     setVial1Level((prev) => {
-        //       const maxAddAmount = allowUnrestrictedBucketFilling
-        //         ? GAME_PARAMS.MAX_LEVEL - prev
-        //         : GAME_PARAMS.OPTIMAL_ZONE_MAX - prev;
-
-        //       if (maxAddAmount <= 0) return prev;
-
-        //       const availableInBucket = bucket1Level;
-        //       const amountToAdd = Math.min(
-        //         maxAddAmount,
-        //         availableInBucket,
-        //         GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
-        //       );
-        //       console.log("amount to add", amountToAdd);
-
-        //       logButtonPress(
-        //         "empty_bucket_1",
-        //         {
-        //           ...getCurrentState(),
-        //           addAmount: amountToAdd,
-        //           bucket1Level: bucket1Level,
-        //           bucket2Level: bucket2Level,
-        //           velocity: currentDrainRate,
-        //           setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-        //           gasStationActive: !isAddingDisabled,
-        //         },
-        //         isTrainingMode,
-        //       );
-        //       setBucket1Level((bucketPrev) =>
-        //         Math.max(0, bucketPrev - amountToAdd),
-        //       );
-        //       return prev + amountToAdd;
-        //     });
-        //   } else if (
-        //     vial2HasBucket &&
-        //     bucket2Level > 0 &&
-        //     versionConfig.numVials === 2
-        //   ) {
+        //   if (vial2HasBucket && bucket2Level > 0) {
         //     setVial2Level((prev) => {
         //       const maxAddAmount = allowUnrestrictedBucketFilling
         //         ? GAME_PARAMS.MAX_LEVEL - prev
@@ -476,24 +528,8 @@ const VialGame = ({
         //       if (maxAddAmount <= 0) return prev;
 
         //       const availableInBucket = bucket2Level;
-        //       const amountToAdd = Math.min(
-        //         maxAddAmount,
-        //         availableInBucket,
-        //         GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
-        //       );
-        //       logButtonPress(
-        //         "empty_bucket_2",
-        //         {
-        //           ...getCurrentState(),
-        //           addAmount: amountToAdd,
-        //           bucket1Level: bucket1Level,
-        //           bucket2Level: bucket2Level,
-        //           velocity: currentDrainRate,
-        //           setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-        //           gasStationActive: !isAddingDisabled,
-        //         },
-        //         isTrainingMode,
-        //       );
+        //       const amountToAdd = Math.min(maxAddAmount, availableInBucket);
+        //       logButtonPress("empty_bucket_2", getCurrentState());
         //       setBucket2Level((bucketPrev) =>
         //         Math.max(0, bucketPrev - amountToAdd),
         //       );
@@ -504,100 +540,6 @@ const VialGame = ({
         //     keyLocked.current = false;
         //   }, buttonDelay);
         //   break;
-        case "ArrowUp":
-          event.preventDefault();
-          keyLocked.current = true;
-          if (vial1HasBucket && bucket1Level > 0) {
-            const currentVial1 = gameStateRef.current.vial1Level;
-            const maxAddAmount = GAME_PARAMS.OPTIMAL_ZONE_MAX - currentVial1;
-
-            if (maxAddAmount > 0) {
-              const amountToAdd = Math.min(
-                maxAddAmount,
-                bucket1Level,
-                GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
-              );
-
-              logButtonPress(
-                "empty_bucket_1",
-                {
-                  ...getCurrentState(),
-                  addAmount: amountToAdd,
-                  bucket1Level: bucket1Level,
-                  bucket2Level: bucket2Level,
-                  velocity: currentDrainRate,
-                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-                  gasStationActive: !isAddingDisabled,
-                },
-                isTrainingMode,
-              );
-
-              setVial1Level((prev) => prev + amountToAdd);
-              setBucket1Level((prev) => Math.max(0, prev - amountToAdd));
-            }
-          } else if (
-            vial2HasBucket &&
-            bucket2Level > 0 &&
-            versionConfig.numVials === 2
-          ) {
-            const currentVial2 = gameStateRef.current.vial2Level;
-            const maxAddAmount = GAME_PARAMS.OPTIMAL_ZONE_MAX - currentVial2;
-
-            if (maxAddAmount > 0) {
-              const amountToAdd = Math.min(
-                maxAddAmount,
-                bucket2Level,
-                GAME_PARAMS.EMPTY_BUCKET_AMOUNT,
-              );
-
-              logButtonPress(
-                "empty_bucket_2",
-                {
-                  ...getCurrentState(),
-                  addAmount: amountToAdd,
-                  bucket1Level: bucket1Level,
-                  bucket2Level: bucket2Level,
-                  velocity: currentDrainRate,
-                  setpoint: GAME_PARAMS.OPTIMAL_ZONE_MAX,
-                  gasStationActive: !isAddingDisabled,
-                },
-                isTrainingMode,
-              );
-
-              setVial2Level((prev) => prev + amountToAdd);
-              setBucket2Level((prev) => Math.max(0, prev - amountToAdd));
-            }
-          }
-          setTimeout(() => {
-            keyLocked.current = false;
-          }, buttonDelay);
-          break;
-
-        case "ArrowDown":
-          if (versionConfig.numVials !== 2) return;
-          event.preventDefault();
-          keyLocked.current = true;
-          if (vial2HasBucket && bucket2Level > 0) {
-            setVial2Level((prev) => {
-              const maxAddAmount = allowUnrestrictedBucketFilling
-                ? GAME_PARAMS.MAX_LEVEL - prev
-                : GAME_PARAMS.OPTIMAL_ZONE_MAX - prev;
-
-              if (maxAddAmount <= 0) return prev;
-
-              const availableInBucket = bucket2Level;
-              const amountToAdd = Math.min(maxAddAmount, availableInBucket);
-              logButtonPress("empty_bucket_2", getCurrentState());
-              setBucket2Level((bucketPrev) =>
-                Math.max(0, bucketPrev - amountToAdd),
-              );
-              return prev + amountToAdd;
-            });
-          }
-          setTimeout(() => {
-            keyLocked.current = false;
-          }, buttonDelay);
-          break;
       }
     };
 
@@ -609,7 +551,7 @@ const VialGame = ({
     showTutorial,
     showingAnimation,
     isPaused,
-    isAddingDisabled,
+    // isAddingDisabled,
     vial1HasBucket,
     vial2HasBucket,
     bucket1Level,
@@ -773,10 +715,12 @@ const VialGame = ({
   useEffect(() => {
     if (!versionConfig.hasPhases) {
       setIsAddingDisabled(false);
+      isAddingDisabledRef.current = false;
       return;
     }
     if (isAbundancePhase) {
       setIsAddingDisabled(false);
+      isAddingDisabledRef.current = false;
       if (disableTimerRef.current) {
         clearTimeout(disableTimerRef.current);
         disableTimerRef.current = null;
@@ -796,8 +740,10 @@ const VialGame = ({
                   deprivationConfig.minDisableDuration) +
               deprivationConfig.minDisableDuration;
             setIsAddingDisabled(true);
+            isAddingDisabledRef.current = true;
             disableTimerRef.current = setTimeout(() => {
               setIsAddingDisabled(false);
+              isAddingDisabledRef.current = false;
               scheduleNextDisable();
             }, disableDuration);
           }, timeUntilDisable);
@@ -812,6 +758,7 @@ const VialGame = ({
           disableTimerRef.current = null;
         }
         setIsAddingDisabled(false);
+        isAddingDisabledRef.current = false;
       }
     }
     return () => {

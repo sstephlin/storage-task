@@ -93,8 +93,11 @@ const SHARED_COMMANDS_SLIDES_PART2 = [
       "At the end of each day, you will get to see how far you helped Bleeblop travel.",
     showButtons: false,
   },
+
   { id: "commands-10", image: "Commands-8.png", showButtons: false },
-  { id: "commands-11", image: "Commands-9.png", showButtons: false },
+];
+
+const SHARED_COMMANDS_SLIDES_PART3 = [
   { id: "commands-12", image: "Commands-10.png", showButtons: false },
 ];
 
@@ -105,6 +108,18 @@ const STORAGE_INTRO_ALWAYS = [
   {
     id: "commands-3-Always-Storage",
     image: "Commands-3-Always-Storage.png",
+    showButtons: false,
+  },
+];
+
+const KEEP_STORE_SOMETIMES = [
+  { id: "commands-11", image: "Commands-9.png", showButtons: false },
+];
+
+const KEEP_STORE_ALWAYS = [
+  {
+    id: "commands-11",
+    image: "Commands-9-Always-Storage.png",
     showButtons: false,
   },
 ];
@@ -683,6 +698,8 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_COMMANDS_SLIDES_PART1,
     ...STORAGE_INTRO_SOMETIMES,
     ...SHARED_COMMANDS_SLIDES_PART2,
+    ...KEEP_STORE_SOMETIMES,
+    ...SHARED_COMMANDS_SLIDES_PART3,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
@@ -696,6 +713,8 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_COMMANDS_SLIDES_PART1,
     ...STORAGE_INTRO_ALWAYS,
     ...SHARED_COMMANDS_SLIDES_PART2,
+    ...KEEP_STORE_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART3,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...ABUND_DEPR_SLIDES,
     ABUND_DEPR_QUIZ_GROUP,
@@ -710,6 +729,8 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_COMMANDS_SLIDES_PART1,
     ...STORAGE_INTRO_ALWAYS,
     ...SHARED_COMMANDS_SLIDES_PART2,
+    ...KEEP_STORE_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART3,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
@@ -722,6 +743,8 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_COMMANDS_SLIDES_PART1,
     ...STORAGE_INTRO_ALWAYS,
     ...SHARED_COMMANDS_SLIDES_PART2,
+    ...KEEP_STORE_ALWAYS,
+    ...SHARED_COMMANDS_SLIDES_PART3,
     SHARED_COMMANDS_QUIZ_GROUP,
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,

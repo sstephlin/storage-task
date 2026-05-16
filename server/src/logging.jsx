@@ -457,7 +457,12 @@ export const logRoundStart = async (
  * @param {string} buttonType
  * @param {object} gameState  — now includes gasStationActive
  */
-export const logButtonPress = async (buttonType, gameState) => {
+export const logButtonPress = async (
+  buttonType,
+  gameState,
+  trainingMode,
+  addAmount,
+) => {
   if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
 
   try {
@@ -493,7 +498,7 @@ export const logButtonPress = async (buttonType, gameState) => {
       vial2Level: Math.round(gameState.vial2Level * 100) / 100,
       bucket1Level: Math.round(gameState.bucket1Level * 100) / 100,
       bucket2Level: Math.round(gameState.bucket2Level * 100) / 100,
-      addAmount: gameState.addAmount || 5,
+      addAmount: addAmount,
       roundTimeRemaining: gameState.roundTimeRemaining || 0,
       roundNumber: currentRoundNumber,
       velocity: Math.round(gameState.velocity * 100) / 100,

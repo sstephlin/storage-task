@@ -6,7 +6,7 @@ import { PARTIAL_COMPLETION_CODES } from "./params";
 import { logTrainingResult } from "./logging";
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 2,
+  MAX_ROUNDS: 1,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 

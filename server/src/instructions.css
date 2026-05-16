@@ -85,17 +85,20 @@
 
 .progress-dots {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
 }
 
 .progress-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #ddd;
   transition: all 0.3s;
+  flex-shrink: 0;
 }
-
 .progress-dot.active {
   background: #4a90e2;
   transform: scale(1.3);

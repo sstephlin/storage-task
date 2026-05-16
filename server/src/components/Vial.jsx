@@ -11,7 +11,7 @@ const Vial = ({
   isTrainingMode = false,
   trainingColors = null,
 }) => {
-  const displayLevel = Math.min(level, 100);
+  const displayLevel = Math.min(Math.round(level), 100);
 
   // Determine if liquid is in optimal zone
   const isOptimal =
@@ -32,7 +32,10 @@ const Vial = ({
         <div className="vial">
           <div
             className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
-            style={{ height: `${displayLevel}%`, backgroundColor: liquidColor }}
+            style={{
+              height: `${Math.round(displayLevel)}%`,
+              backgroundColor: liquidColor,
+            }}
           />
 
           {/* Top danger line with flame icon */}
@@ -117,4 +120,4 @@ const Vial = ({
   );
 };
 
-export default Vial;
+export default React.memo(Vial);

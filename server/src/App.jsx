@@ -170,11 +170,12 @@ const App = () => {
   useEffect(() => {
     if (!userId || !gameVersion) return;
 
+    const currentStage = trainingComplete ? "main_game" : "training";
     const AWAY_LIMIT_MS = 15000;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        logTabVisibilityChange("hidden", stage);
+        logTabVisibilityChange("hidden", currentStage);
         tabHiddenTimerRef.current = setTimeout(() => {
           if (gameComplete || isDisqualified) return;
 
@@ -191,14 +192,10 @@ const App = () => {
           // url.searchParams.set("reason", "tab_switch");
 
           // redirectTo(url.toString());
-          redirectTo(
-            url.toString(),
-            "tab_switch",
-            trainingComplete ? "main_game" : "training",
-          );
+          redirectTo(url.toString(), "tab_switch", currentStage);
         }, AWAY_LIMIT_MS);
       } else {
-        logTabVisibilityChange("visible", stage);
+        logTabVisibilityChange("visible", currentStage);
         if (tabHiddenTimerRef.current) {
           clearTimeout(tabHiddenTimerRef.current);
           tabHiddenTimerRef.current = null;
