@@ -32,4 +32,3 @@ scripts/tutorial_quizzes.csv
 scripts/tutorial_slides.csv
 .env
 src/firebase.jsx
-
