@@ -147,7 +147,6 @@ const App = () => {
             "reload",
             trainingComplete ? "main_game" : "training",
           );
-          // redirectTo(finalUrl);
           return 0;
         }
         return prev - 1;
@@ -189,9 +188,6 @@ const App = () => {
           const url = new URL(redirectUrl);
           if (userId) url.searchParams.set("PROLIFIC_PID", userId);
           if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-          // url.searchParams.set("reason", "tab_switch");
-
-          // redirectTo(url.toString());
           redirectTo(url.toString(), "tab_switch", currentStage);
         }, AWAY_LIMIT_MS);
       } else {
@@ -228,22 +224,6 @@ const App = () => {
       console.warn("[DEV] Would redirect to:", url);
     }
   };
-  // const redirectTo = (url) => {
-  //   // Mark as intentional FIRST so beforeunload handler stands down
-  //   markIntentionalRedirect();
-
-  //   // Then clean up the listener too (belt and suspenders)
-  //   if (reloadWarningCleanupRef.current) {
-  //     reloadWarningCleanupRef.current();
-  //     reloadWarningCleanupRef.current = null;
-  //   }
-
-  //   if (PRODUCTION_MODE) {
-  //     window.location.replace(url);
-  //   } else {
-  //     console.warn("[DEV] Would redirect to:", url);
-  //   }
-  // };
 
   const handleTrainingComplete = () => {
     sessionStorage.setItem("mainGameStarted", "true");
@@ -262,7 +242,6 @@ const App = () => {
     if (gameCompletedRef.current) return; // block any second call
     gameCompletedRef.current = true;
 
-    // setGameComplete(true);
     var reachedBonusGoal = false;
     console.log("userId at completion:", userId);
     if (userId) {
@@ -279,18 +258,6 @@ const App = () => {
       await endSession();
     }
     console.log("reachedBonusGoal before building URL:", reachedBonusGoal);
-    // console.log("cumulative", cumulativeProgress);
-    // var reachedBonusGoal = false;
-    // if (userId) {
-    //   reachedBonusGoal = await logGameCompletion({
-    //     finalScore: finalScore ?? 0,
-    //     totalRounds: totalRounds ?? 0,
-    //     cumulativeProgress: cumulativeProgress ?? 0,
-    //     isTrainingMode: false,
-    //   });
-    //   await completeSession(userId);
-    //   await endSession();
-    // }
 
     const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
     if (redirectUrl) {
@@ -307,11 +274,6 @@ const App = () => {
     }
   };
   const handleInstructionsDisqualified = () => {
-    // if (reloadWarningCleanupRef.current) {
-    //   reloadWarningCleanupRef.current();
-    //   reloadWarningCleanupRef.current = null;
-    // }
-    // redirectTo(url.toString());
     setIsDisqualified(true);
     logInstructionsResult(false);
 
@@ -321,15 +283,10 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    // redirectTo(url.toString());
     redirectTo(url.toString(), "instructions_failed", "instructions");
   };
 
   const handleTrainingDisqualified = () => {
-    // if (reloadWarningCleanupRef.current) {
-    //   reloadWarningCleanupRef.current();
-    //   reloadWarningCleanupRef.current = null;
-    // }
     setIsDisqualified(true);
 
     const redirectUrl = FAIL_TRAINING_REDIRECT_URL[gameVersion];
@@ -338,7 +295,6 @@ const App = () => {
     const url = new URL(redirectUrl);
     if (userId) url.searchParams.set("PROLIFIC_PID", userId);
     if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
-    // redirectTo(url.toString());
     redirectTo(url.toString(), "training_failed", "training");
   };
 
@@ -435,20 +391,6 @@ const App = () => {
       </>
     );
   }
-
-  // const redirectTo = (url) => {
-  //   // Always kill the beforeunload listener before any redirect
-  //   // so the browser never shows the "are you sure?" popup
-  //   if (reloadWarningCleanupRef.current) {
-  //     reloadWarningCleanupRef.current();
-  //     reloadWarningCleanupRef.current = null;
-  //   }
-  //   if (PRODUCTION_MODE) {
-  //     window.location.replace(url);
-  //   } else {
-  //     console.warn("[DEV] Would redirect to:", url);
-  //   }
-  // };
 
   return (
     <div>

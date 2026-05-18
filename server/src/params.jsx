@@ -46,13 +46,13 @@ export const DRAIN_RATES = {
 // Note: version strings here correspond to the values in VERSION_CODE_MAP
 // in participantConfig.js. If you add a version, update both files.
 //
-//   URL code  →  version key (here)
-//   0.1       →  one_vial_alternating
-//   0.2       →  one_vial_always_bucket
-//   0.3       →  one_vial_always_bucket_simple
-//   0.4       →  one_vial_always_bucket_simple_fast
-//   0.5       →  two_vials_single_bucket
-//   0.6       →  two_vials_phases
+//   URL code  ->  version key (here)
+//   0.1  -> one_vial_alternating
+//   0.2  -> one_vial_always_bucket
+//   0.3  -> one_vial_always_bucket_simple
+//   0.4  -> one_vial_always_bucket_simple_fast
+//   0.5  -> two_vials_single_bucket
+//   0.6  -> two_vials_phases
 // ============================================================================
 export const GAME_VERSIONS = {
   ONE_VIAL_ALTERNATING: "one_vial_alternating",
@@ -90,7 +90,6 @@ export const VERSION_CONFIG = {
     numVials: 1,
     hasPhases: false,
     bucketBehavior: "always",
-    // allowUnrestrictedBucketFilling: true,
     enabled: true,
   },
 
@@ -101,7 +100,6 @@ export const VERSION_CONFIG = {
     numVials: 1,
     hasPhases: false,
     bucketBehavior: "always",
-    // allowUnrestrictedBucketFilling: true,
     enabled: true,
   },
 

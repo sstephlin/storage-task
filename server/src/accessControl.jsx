@@ -37,26 +37,6 @@ export const hasParticipantAccessed = async (userId) => {
  * @param {Object} metadata - Additional metadata to store
  * @returns {Promise<boolean>} True if successfully marked
  */
-// export const markParticipantAccessed = async (userId, metadata = {}) => {
-//   if (!PRODUCTION_MODE) return true;
-
-//   try {
-//     const db = getDatabase();
-//     const accessRef = ref(db, `participant_access/${userId}`);
-
-//     await set(accessRef, {
-//       accessed: true,
-//       timestamp: serverTimestamp(),
-//       userAgent: navigator.userAgent,
-//       ...metadata,
-//     });
-
-//     return true;
-//   } catch (error) {
-//     console.error("Error marking participant accessed:", error);
-//     return false;
-//   }
-// };
 export const markParticipantAccessed = async (userId, metadata = {}) => {
   if (!PRODUCTION_MODE) return true;
 
@@ -73,7 +53,7 @@ export const markParticipantAccessed = async (userId, metadata = {}) => {
 
     return true;
   } catch (error) {
-    console.error("🔥 Firebase WRITE ERROR:", error);
+    console.error("Firebase WRITE ERROR:", error);
     return false;
   }
 };
@@ -179,26 +159,6 @@ export const setupReloadWarning = () => {
     window.removeEventListener("beforeunload", handleBeforeUnload);
   };
 };
-
-// /**
-//  * Setup beforeunload warning to prevent accidental page closure
-//  */
-// export const setupReloadWarning = () => {
-//   if (!PRODUCTION_MODE) return () => {};
-
-//   const handleBeforeUnload = (e) => {
-//     e.preventDefault();
-//     e.returnValue = ""; // Chrome requires returnValue to be set
-//     return ""; // Some browsers use the return value
-//   };
-
-//   window.addEventListener("beforeunload", handleBeforeUnload);
-
-//   // Return cleanup function
-//   return () => {
-//     window.removeEventListener("beforeunload", handleBeforeUnload);
-//   };
-// };
 
 /**
  * Check if user is attempting to reload and handle accordingly

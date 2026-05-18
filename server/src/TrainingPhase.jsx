@@ -271,31 +271,6 @@ const TrainingPhase = ({
     }, 3000);
   };
 
-  // const handleTrainingEnd = () => {
-  //   setIsTraining(false);
-
-  //   const results = roundResultsRef.current;
-  //   const successCount = results.filter((r) => r).length;
-  //   const totalRecorded = results.length;
-
-  //   // Guard against no data
-  //   if (totalRecorded === 0) {
-  //     logTrainingResult(false, 0, 0);
-  //     setShowDisqualified(true);
-  //     return;
-  //   }
-
-  //   const successRate = successCount / totalRecorded; // ← use actual length
-
-  //   if (successRate >= TRAINING_PARAMS.REQUIRED_SURVIVAL_RATE) {
-  //     setTrainingComplete(true);
-  //   } else {
-  //     setShowDisqualified(true);
-  //     setTimeout(() => {
-  //       if (onDisqualified) onDisqualified();
-  //     }, 5000);
-  //   }
-  // };
   const handleTrainingEnd = () => {
     setIsTraining(false);
     const results = roundResultsRef.current;

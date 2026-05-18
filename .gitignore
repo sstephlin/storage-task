@@ -24,8 +24,12 @@ dist-ssr
 *.sw?
 scripts/serviceAccountKey.json
 scripts/button_presses.csv
-scripts/session_meta.csv
-scripts/vial_snapshots.csv
+scripts/gas_station_events
+scripts/gas_station_events.csv
+scripts/rounds.csv
+scripts/sessions.csv
+scripts/tutorial_quizzes.csv
+scripts/tutorial_slides.csv
 .env
-server/src/firebase.jsx
-V0.1
+src/firebase.jsx
+

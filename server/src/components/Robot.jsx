@@ -293,124 +293,6 @@ const Robot = ({
                 )}
               </div>
             </div>
-
-            {/* Overheat steam */}
-            {isOverheated && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-20px",
-                    left: "20%",
-                    fontSize: "40px",
-                    animation: "steam 1s infinite",
-                  }}
-                >
-                  💨
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-25px",
-                    right: "20%",
-                    fontSize: "40px",
-                    animation: "steam 1s infinite 0.3s",
-                  }}
-                >
-                  💨
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    left: "10%",
-                    fontSize: "30px",
-                    animation: "steam 1.2s infinite 0.5s",
-                  }}
-                >
-                  💨
-                </div>
-              </>
-            )}
-
-            {/* Sleep zzz */}
-            {isPoweredDown && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-30px",
-                    right: "-60px",
-                    fontSize: "32px",
-                    animation: "float 2s infinite",
-                  }}
-                >
-                  💤
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-15px",
-                    right: "-75px",
-                    fontSize: "24px",
-                    animation: "float 2s infinite 0.5s",
-                    opacity: 0.7,
-                  }}
-                >
-                  💤
-                </div>
-              </>
-            )}
-
-            {/* Celebration sparks */}
-            {isCelebrating && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-40px",
-                    left: "10%",
-                    fontSize: "32px",
-                    animation: "sparkFloat 1.5s ease-out infinite",
-                  }}
-                >
-                  ✨
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-30px",
-                    right: "10%",
-                    fontSize: "28px",
-                    animation: "sparkFloat 1.5s ease-out infinite 0.4s",
-                  }}
-                >
-                  ⭐
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "-50px",
-                    fontSize: "24px",
-                    animation: "sparkFloat 1.5s ease-out infinite 0.8s",
-                  }}
-                >
-                  ✨
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    right: "-50px",
-                    fontSize: "24px",
-                    animation: "sparkFloat 1.5s ease-out infinite 1.2s",
-                  }}
-                >
-                  ⭐
-                </div>
-              </>
-            )}
           </div>
 
           {/* Neck */}
@@ -550,7 +432,7 @@ const Robot = ({
             </div>
           </div>
 
-          {/* Arms (moved out of the body container so they're not clipped by the body's overflow) */}
+          {/* Arms */}
           <div
             style={{
               position: "absolute",

@@ -262,54 +262,6 @@ const SHARED_COMMANDS_QUIZ_GROUP = {
   exitSlide: "exit-slide",
   showButtons: false,
   quizzes: [
-    // {
-    //   id: "quiz-6",
-    //   title: "What happens if Bleeblop overheats",
-    //   content: "",
-    //   type: "quiz",
-    //   quiz: {
-    //     options: [
-    //       { id: "a", text: "Bleeblop moves at superspeed", correct: false },
-    //       { id: "b", text: "Nothing", correct: false },
-    //       {
-    //         id: "c",
-    //         text: "Bleeblop goes back for help and loses progress",
-    //         correct: true,
-    //       },
-    //       {
-    //         id: "d",
-    //         text: "Bleeblop gives up and the game ends",
-    //         correct: false,
-    //       },
-    //     ],
-    //     explanation: "Correct!",
-    //   },
-    //   showButtons: false,
-    // },
-    // {
-    //   id: "quiz-7",
-    //   title: "What happens if Bleeblop shuts down?",
-    //   content: "",
-    //   type: "quiz",
-    //   quiz: {
-    //     options: [
-    //       { id: "a", text: "Nothing", correct: false },
-    //       { id: "b", text: "Bleeblop stops moving", correct: false },
-    //       {
-    //         id: "c",
-    //         text: "Bleeblop gives up and the game ends",
-    //         correct: false,
-    //       },
-    //       {
-    //         id: "d",
-    //         text: "Bleeblop goes back for help and loses progress",
-    //         correct: true,
-    //       },
-    //     ],
-    //     explanation: "Correct!",
-    //   },
-    //   showButtons: false,
-    // },
     {
       id: "quiz-8",
       title:
@@ -662,8 +614,6 @@ const SHARED_ENDING_SLIDES = [
   { id: "end-1", image: "Ending1.png", showButtons: false },
   { id: "end-2", image: "Ending2.png", showButtons: false },
   { id: "end-3", image: "Ending3.png", showButtons: false },
-  // { id: "end-4", image: "Ending4.png", showButtons: false },
-  // { id: "end-5", image: "Ending5.png", showButtons: false },
 ];
 
 const TWO_VIAL_ENDING_SLIDES = [
@@ -704,7 +654,6 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES,
-    // ...QUIZ_RESULT_SLIDES,
   ],
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: [
@@ -735,7 +684,6 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES_STORAGE,
-    // ...QUIZ_RESULT_SLIDES,
   ],
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: [
     ...SHARED_INTRO_SLIDES,
@@ -749,7 +697,6 @@ const VERSION_SLIDE_SEQUENCES = {
     ...SHARED_ENDING_SLIDES,
     SHARED_ENDING_QUIZ_GROUP,
     ...SHARED_READY_SLIDES_STORAGE,
-    // ...QUIZ_RESULT_SLIDES,
   ],
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: [
