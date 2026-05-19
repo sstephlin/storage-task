@@ -18,11 +18,9 @@ import {
   logGasStationToggle,
 } from "./logging";
 import { PRODUCTION_MODE } from "./participantConfig";
-import { getVersionCode } from "./participantConfig";
 import {
   GAME_PARAMS,
   GAME_MESSAGES,
-  INSTRUCTIONS,
   VERSION_CONFIG,
   generateGameSequences,
   VERSION_BUTTON_DELAYS,

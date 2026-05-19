@@ -634,11 +634,11 @@ const SHARED_READY_SLIDES_STORAGE = [
   { id: "ready-4", image: "Ready4-Storage.png", showButtons: false },
 ];
 
-const QUIZ_RESULT_SLIDES = [
-  { id: "quiz-correct", image: "quiz-correct.png", showButtons: false },
-  { id: "quiz-wrong", image: "quiz-wrong.png", showButtons: false },
-  { id: "exit-slide", image: "exit-slide.png", showButtons: false },
-];
+// const QUIZ_RESULT_SLIDES = [
+//   { id: "quiz-correct", image: "quiz-correct.png", showButtons: false },
+//   { id: "quiz-wrong", image: "quiz-wrong.png", showButtons: false },
+//   { id: "exit-slide", image: "exit-slide.png", showButtons: false },
+// ];
 
 // ASSEMBLE SLIDES
 const VERSION_SLIDE_SEQUENCES = {

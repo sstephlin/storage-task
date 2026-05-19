@@ -30,5 +30,7 @@ server/scripts/rounds.csv
 server/scripts/sessions.csv
 server/scripts/tutorial_quizzes.csv
 server/scripts/tutorial_slides.csv
+server/scripts/tab_events.csv
 server/.env
 server/src/firebase.jsx
+server/scripts/exportFirestore.js

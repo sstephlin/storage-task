@@ -7,6 +7,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { VERSION_CODE_MAP } from "./participantConfig";
 
 // ============================================================================
 // STRING TO INTEGER MAPPINGS
@@ -18,15 +19,23 @@ export const BUTTON_TYPE_MAP = {
   empty_bucket_1: 3,
   empty_bucket_2: 4,
 };
+/**
+ * Reverse mapping of button types for easy lookup.
+ * This allows you to get the button type string (e.g., "add_vial_1") from the code (e.g., 1).
+ * Used to export the mapping as JSON for use in data analysis.
+ */
+export const BUTTON_TYPE_REVERSE = Object.fromEntries(
+  Object.entries(BUTTON_TYPE_MAP).map(([k, v]) => [v, k]),
+);
+/**
+ * Reverse mapping of game versions for easy lookup.
+ * This allows you to get the version code (e.g., 0.1) from the version name (e.g., "one_vial_alternating").
+ */
+export const GAME_VERSION_MAP = Object.fromEntries(
+  Object.entries(VERSION_CODE_MAP).map(([code, name]) => [name, Number(code)]),
+);
 
-export const GAME_VERSION_MAP = {
-  one_vial_alternating: 0.1,
-  one_vial_always_bucket: 0.2,
-  // one_vial_always_bucket_simple: 3,
-  // one_vial_always_bucket_simple_fast: 4,
-  two_vials_single_bucket: 0.3,
-  two_vials_phases: 0.4,
-};
+export const GAME_VERSION_REVERSE = VERSION_CODE_MAP;
 
 export const PHASE_MAP = {
   abundance: 1,
@@ -34,12 +43,10 @@ export const PHASE_MAP = {
   none: 0,
 };
 
-export const BUTTON_TYPE_REVERSE = Object.fromEntries(
-  Object.entries(BUTTON_TYPE_MAP).map(([k, v]) => [v, k]),
-);
-export const GAME_VERSION_REVERSE = Object.fromEntries(
-  Object.entries(GAME_VERSION_MAP).map(([k, v]) => [v, k]),
-);
+/**
+ * Reverse mapping of phase mapping  for easy lookup.
+ * Used to export the mapping as JSON for use in data analysis.
+ */
 export const PHASE_REVERSE = Object.fromEntries(
   Object.entries(PHASE_MAP).map(([k, v]) => [v, k]),
 );
@@ -65,7 +72,9 @@ let lastSlideChangeTime = null;
 
 /**
  * Initialize a new game session.
+ * logs session ID, session start time, participant ID, game version, game version code and production mode.
  */
+// maaybe take out production mode 5/18
 export const initializeSession = async (
   userId,
   gameVersion,
@@ -116,11 +125,6 @@ export const initializeSession = async (
       gameVersion,
       gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0,
       productionMode: productionMode ? 1 : 0,
-
-      // ── Phase results (filled in later) ──────────────────────────────────
-      // instructionsResult: { passed, msSinceSessionStart, timestamp }
-      // trainingResult:     { passed, roundsSurvived, totalRounds, msSinceSessionStart, timestamp }
-      // termination:        { reason, stage, msSinceSessionStart, timestamp }
     });
 
     console.log("Session initialized:", currentSessionId);
@@ -131,6 +135,7 @@ export const initializeSession = async (
 
 /**
  * End the current session.
+ * Logs end time and session duration, and resets session state variables.
  */
 export const endSession = async () => {
   if (!currentUserId || !currentSessionId) return;
@@ -167,10 +172,10 @@ export const endSession = async () => {
 // ============================================================================
 
 /**
- * Log whether the participant passed or failed the instructions quiz.
+ * Log whether the participant passed or failed the instructions quiz, duration in ms, and timestamp of endtime
  * Call this in App.jsx from handleInstructionsDisqualified (passed=false)
  * and from handleTutorialComplete (passed=true).
- *
+ * Added to user's session document
  * @param {boolean} passed
  */
 export const logInstructionsResult = async (passed) => {
@@ -198,12 +203,14 @@ export const logInstructionsResult = async (passed) => {
 
 /**
  * Log the outcome of the training phase.
+ *  Logs whether training was passed, how many rounds they survived, total rounds attempted, survival rate, duration in ms, and timestamp of endtime
  * Call this in TrainingPhase.jsx / App.jsx when training ends.
  *
  * @param {boolean} passed            - Whether they met the survival threshold
  * @param {number}  roundsSurvived    - How many rounds they survived
  * @param {number}  totalRounds       - Total training rounds attempted
  */
+// check if i should call this from App.jsx instead of TrainingPhase.jsx 5/18
 export const logTrainingResult = async (
   passed,
   roundsSurvived,
@@ -246,6 +253,7 @@ export const logTrainingResult = async (
 /**
  * Log an experiment termination event to the session document.
  * Call this before any redirect that ends the experiment early.
+ * Logs the reason for termination, which stage they were in, duration in ms, and timestamp.
  *
  * @param {string} reason
  *   One of: "tab_switch" | "reload" | "instructions_failed" | "training_failed"
@@ -279,7 +287,10 @@ export const logTermination = async (reason, stage) => {
 // ============================================================================
 // PRELIM QUESTION
 // ============================================================================
-
+/**
+ * Log the participant's answer to the preliminary question about their platform, timestamp, and ms since session start.
+ */
+// do i need to log timestamp? 5/18
 export const logPrelimAnswer = async (answer) => {
   if (!currentUserId || !currentSessionId) return;
   try {
@@ -305,9 +316,12 @@ export const logPrelimAnswer = async (answer) => {
 // TUTORIAL / INSTRUCTIONS SLIDE NAVIGATION
 // ============================================================================
 
+/**
+ * Log a change in the tutorial slide.
+ * Logs new slide number, whether it's a quiz slide, direction of navigation (next, initial, redirect), game version, timestamp, and ms since previous slide change.
+ */
 export const logTutorialSlideChange = async ({
   slideIndex,
-  slideId,
   isQuizSlide,
   direction,
   gameVersion,
@@ -343,6 +357,10 @@ export const logTutorialSlideChange = async ({
   }
 };
 
+/**
+ * Log an answer to a quiz question within the tutorial.
+ * Logs quiz ID, slide ID, selected answer IDs, whether the answer was correct, attempt number, game version, timestamp, and ms since session start.
+ */
 export const logTutorialQuizAnswer = async ({
   quizId,
   slideId,
@@ -382,6 +400,14 @@ export const logTutorialQuizAnswer = async ({
 // ROUND LOGGING
 // ============================================================================
 
+/**
+ * Log the start of a new round.
+ * Logs round number, time since the session start, current timestamp, whether it's training mode, round configuration details (phase, game version, vial/bucket setup, velocity, setpoint, initial levels).
+ * @param {*} roundNumber
+ * @param {*} roundConfig
+ * @param {*} isTrainingMode
+ * @returns
+ */
 export const logRoundStart = async (
   roundNumber,
   roundConfig,
@@ -450,12 +476,11 @@ export const logRoundStart = async (
 
 /**
  * Log a button/key press within the current round.
- *
- * CHANGED: gameState now accepts `gasStationActive` (boolean).
- * Pass it from VialGame like: { ...getCurrentState(), gasStationActive: !isAddingDisabled }
+ * Logs the type of button pressed, time since round start, time since last button press, current timestamp, game state at the time of press
+ * (vial/bucket levels, velocity, setpoint, round time remaining), whether gasStation is active
  *
  * @param {string} buttonType
- * @param {object} gameState  — now includes gasStationActive
+ * @param {object} gameState
  */
 export const logButtonPress = async (
   buttonType,
@@ -503,10 +528,6 @@ export const logButtonPress = async (
       roundNumber: currentRoundNumber,
       velocity: Math.round(gameState.velocity * 100) / 100,
       setpoint: Math.round(gameState.setpoint * 100) / 100,
-
-      // NEW: whether the gas station was active at the moment of the press
-      // true  = participant had free access to gloop (green pump)
-      // false = access was restricted (grey pump)
       gasStationActive: gameState.gasStationActive === true ? 1 : 0,
     });
   } catch (error) {
@@ -515,15 +536,14 @@ export const logButtonPress = async (
 };
 
 // ============================================================================
-// GAS STATION TOGGLE EVENTS  (new)
+// GAS STATION TOGGLE EVENTS
 // ============================================================================
 
 /**
  * Log each time the gas station turns on or off.
  * Call this in VialGame.jsx inside the useEffect that watches isAddingDisabled.
- *
- * Stored as a session-level subcollection so you can reconstruct the full
- * availability timeline independent of button presses.
+ * Logs whether the gas station just turned active (green) or inactive (grey), time since session start, time since round start,
+ * current round number, whether it's training mode, and timestamp.
  *
  * @param {boolean} isNowActive   - true = pump just turned GREEN, false = just turned GREY
  * @param {string}  isTrainingMode
@@ -546,7 +566,7 @@ export const logGasStationToggle = async (
 
     await addDoc(eventsRef, {
       isNowActive: isNowActive ? 1 : 0,
-      isRoundStart: isRoundStart ? 1 : 0, // add this field
+      isRoundStart: isRoundStart ? 1 : 0,
       roundNumber: currentRoundNumber,
       roundDocId: currentRoundDocId,
       isTrainingMode: isTrainingMode ? 1 : 0,
@@ -558,43 +578,11 @@ export const logGasStationToggle = async (
     console.error("Error logging gas station toggle:", error);
   }
 };
-// export const logGasStationToggle = async (
-//   isNowActive,
-//   isTrainingMode = false,
-// ) => {
-//   if (!currentUserId || !currentSessionId) return;
-//   try {
-//     const eventsRef = collection(
-//       db,
-//       "user_sessions",
-//       currentUserId,
-//       "sessions",
-//       currentSessionId,
-//       "gas_station_events",
-//     );
-
-//     await addDoc(eventsRef, {
-//       isNowActive: isNowActive ? 1 : 0, // 1 = turned on, 0 = turned off
-//       roundNumber: currentRoundNumber,
-//       roundDocId: currentRoundDocId,
-//       isTrainingMode: isTrainingMode ? 1 : 0,
-//       msSinceSessionStart: Date.now() - sessionStartTime,
-//       msSinceRoundStart: roundStartTime ? Date.now() - roundStartTime : null,
-//       timestamp: serverTimestamp(),
-//     });
-//   } catch (error) {
-//     console.error("Error logging gas station toggle:", error);
-//   }
-// };
-
-// ============================================================================
-// TAB VISIBILITY EVENTS  (new)
-// ============================================================================
 
 /**
  * Log each time the participant hides or shows the tab.
  * Call this from the visibilitychange handler in App.jsx.
- *
+ * Logs whether the tab is now hidden or visible, which stage they were in (instructions, training, or main game), time since session start, time since round start, current round number, and timestamp.
  * @param {"hidden"|"visible"} visibilityState
  * @param {string} stage   - "instructions" | "training" | "main_game"
  */
@@ -627,6 +615,13 @@ export const logTabVisibilityChange = async (visibilityState, stage) => {
 // ROUND END
 // ============================================================================
 
+/**
+ * Logs the end of a round, including its success status, training mode, end time, and cumulative progress.
+ * @param {*} successful
+ * @param {*} isTrainingMode
+ * @param {*} cumulativeProgress
+ * @returns
+ */
 export const logRoundEnd = async (
   successful,
   isTrainingMode = false,
@@ -655,7 +650,7 @@ export const logRoundEnd = async (
       roundEndTime,
       roundDuration,
       cumulativeProgress:
-        cumulativeProgress !== null // add this
+        cumulativeProgress !== null
           ? Math.round(cumulativeProgress * 100) / 100
           : null,
     });
@@ -672,6 +667,9 @@ export const logRoundEnd = async (
 // GAME COMPLETION
 // ============================================================================
 
+/**
+ * Log the completion of the game, including final score, total rounds, cumulative progress, and whether they reached the bonus goal.
+ */
 export const logGameCompletion = async ({
   finalScore,
   totalRounds,
@@ -719,6 +717,10 @@ export const logGameCompletion = async ({
 // UTILITY
 // ============================================================================
 
+/**
+ * Returns the mappings for button types, game versions, and phases.
+ * @returns 
+ */
 export const getMappings = () => ({
   buttonTypes: { forward: BUTTON_TYPE_MAP, reverse: BUTTON_TYPE_REVERSE },
   gameVersions: { forward: GAME_VERSION_MAP, reverse: GAME_VERSION_REVERSE },

@@ -7,7 +7,7 @@ const Vial = ({
   level,
   numBuckets,
   bucketLevel,
-  liquidColor = "#4A90E2",
+  liquidColor,
   isTrainingMode = false,
   trainingColors = null,
 }) => {

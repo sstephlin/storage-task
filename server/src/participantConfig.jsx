@@ -22,8 +22,8 @@ export const VERSION_CODE_MAP = {
   0.2: "one_vial_always_bucket",
   0.3: "one_vial_always_bucket_simple",
   0.4: "one_vial_always_bucket_simple_fast",
-  0.5: "two_vials_single_bucket",
-  0.6: "two_vials_phases",
+  // 0.5: "two_vials_single_bucket",
+  // 0.6: "two_vials_phases",
 };
 
 // ============================================================================

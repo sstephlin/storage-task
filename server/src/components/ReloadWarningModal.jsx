@@ -30,17 +30,6 @@ const ReloadWarningModal = ({
       return "";
     };
 
-    // const handleBeforeUnload = (e) => {
-    //   if (!isNavigatingAway) {
-    //     setAttemptedAction("reload");
-    //     setShowModal(true);
-    //     if (onModalOpen) onModalOpen();
-    //   }
-    //   e.preventDefault();
-    //   e.returnValue = "";
-    //   return "";
-    // };
-
     const handlePopState = () => {
       if (!isNavigatingAway) {
         setAttemptedAction("navigate");
