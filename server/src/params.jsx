@@ -17,7 +17,6 @@ export const GAME_PARAMS = {
 };
 
 const numPhases1Vial = 4;
-const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
 
 // ============================================================================
 // GAME VERSION DEFINITIONS
@@ -132,6 +131,52 @@ export const VERSION_VELOCITIES = {
     SLOW: 1.6,
     MEDIUM: 1.8,
     FAST: 2.0,
+  },
+};
+
+export const TRAINING_PARAMS = {
+  MAX_ROUNDS: 1,
+  ROUND_DURATION: 10,
+  REQUIRED_SURVIVAL_RATE: 0.5,
+
+  VELOCITIES: {
+    one_vial_alternating: {
+      SLOW: 1.2,
+      MEDIUM: 1.4,
+      FAST: 1.6,
+    },
+    one_vial_always_bucket: {
+      SLOW: 1.2,
+      MEDIUM: 1.4,
+      FAST: 1.6,
+    },
+    one_vial_always_bucket_simple: {
+      SLOW: 1.2,
+      MEDIUM: 1.4,
+      FAST: 1.6,
+    },
+    one_vial_always_bucket_simple_fast: {
+      SLOW: 2.2,
+      MEDIUM: 2.4,
+      FAST: 2.6,
+    },
+    two_vials_single_bucket: {
+      SLOW: 1.4,
+      MEDIUM: 1.5,
+      FAST: 1.6,
+    },
+    two_vials_phases: {
+      SLOW: 1.4,
+      MEDIUM: 1.5,
+      FAST: 1.6,
+    },
+  },
+
+  VIAL_COLORS: {
+    primary: "#a78bfa",
+    secondary: "#34d399",
+    optimal: "#fbbf24",
+    danger: "#f87171",
   },
 };
 

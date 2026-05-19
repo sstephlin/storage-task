@@ -551,7 +551,7 @@ export const logButtonPress = async (
 export const logGasStationToggle = async (
   isNowActive,
   isTrainingMode = false,
-  isRoundStart = false, // add this parameter
+  isRoundStart = false,
 ) => {
   if (!currentUserId || !currentSessionId) return;
   try {
@@ -719,7 +719,7 @@ export const logGameCompletion = async ({
 
 /**
  * Returns the mappings for button types, game versions, and phases.
- * @returns 
+ * @returns
  */
 export const getMappings = () => ({
   buttonTypes: { forward: BUTTON_TYPE_MAP, reverse: BUTTON_TYPE_REVERSE },
