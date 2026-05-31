@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import Robot from "./components/Robot";
-import RoundTransition from "./components/RoundTransition";
+import Robot from "./Robot";
+import RoundTransition from "./RoundTransition";
 import Tutorial from "./instructions";
-import GasStationIndicator from "./components/GasStationIndicator";
+import GasStationIndicator from "./GasStationIndicator";
 import {
   logButtonPress,
   logRoundStart,
   logRoundEnd,
   logGasStationToggle,
-} from "./logging";
-import { PRODUCTION_MODE } from "./participantConfig";
+} from "../data/logging";
+import { PRODUCTION_MODE } from "../data/participantConfig";
 import {
   GAME_PARAMS,
   VERSION_CONFIG,
@@ -17,13 +17,13 @@ import {
   VERSION_BUTTON_DELAYS,
   VERSION_DEPRIVATION_CONFIG,
   VERSION_VELOCITIES,
-} from "./params";
+} from "../data/params";
 import {
   playOverheatSound,
   playPowerDownSound,
   playSuccessSound,
-} from "./components/sounds";
-import "./styles/VialGame.css";
+} from "./sounds";
+import "../styles/VialGame.css";
 
 const VialGame = ({
   userId,
@@ -112,6 +112,7 @@ const VialGame = ({
     setIsAddingDisabled(val);
   };
   const [frozenAddingDisabled, setFrozenAddingDisabled] = useState(false);
+  const isAbundancePhase = currentPhase === "abundance";
 
   useEffect(() => {
     if (isPaused) {
@@ -121,8 +122,7 @@ const VialGame = ({
     }
   }, [isPaused, isRoundTransition, showingAnimation]);
 
-  const isAbundancePhase = currentPhase === "abundance";
-
+  // used in debugging mode
   const handleTutorialExit = () => {
     setShowTutorial(false);
     setGameRunning(true);
@@ -164,7 +164,7 @@ const VialGame = ({
       );
       logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode, true);
     }
-  }, [showTutorial]); // Only run once when component mounts
+  }, [showTutorial]);
 
   const handleAddVial = (vialNum, event, getCurrentState) => {
     const setVial = vialNum === 1 ? setVial1Level : setVial2Level;
@@ -608,15 +608,6 @@ const VialGame = ({
     }, 2000);
   };
 
-  if (showTutorial) {
-    return (
-      <Tutorial
-        onExit={handleTutorialExit}
-        gameVersion={gameVersion}
-        userId={userId}
-      />
-    );
-  }
   if (gameComplete && isTrainingMode) {
     return null;
   }

@@ -1,22 +1,5 @@
 export const PRODUCTION_MODE = true;
 
-// Production mode (all security features enabled)
-// export const PRODUCTION_MODE = true;
-
-// ============================================================================
-// VERSION CODE MAP
-// The URL uses short numeric codes (e.g. ?v=0.1) that are opaque to
-// participants. This map is the single source of truth — update here only.
-//
-//   Code   Internal version key
-//   ----   -----------------------------
-//   0.1    one_vial_alternating
-//   0.2    one_vial_always_bucket
-//   0.3    one_vial_always_bucket_simple
-//   0.4    one_vial_always_bucket_simple_fast
-//   0.5    two_vials_single_bucket
-//   0.6    two_vials_phases
-// ============================================================================
 export const VERSION_CODE_MAP = {
   0.1: "one_vial_alternating",
   0.2: "one_vial_always_bucket",

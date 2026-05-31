@@ -1,5 +1,5 @@
 import React from "react";
-import { GAME_PARAMS } from "../params";
+import { GAME_PARAMS } from "../data/params";
 import "../styles/Vial.css";
 import { Star, Flame, Skull } from "lucide-react";
 

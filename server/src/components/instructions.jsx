@@ -1,132 +1,19 @@
 import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import "./styles/instructions.css";
-import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
-import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
+import "../styles/instructions.css";
+import { getTutorialSlides, getSlideIndexById } from "../data/tutorialSlides";
+import { logTutorialSlideChange, logTutorialQuizAnswer } from "../data/logging";
+import { WarningModal } from "./instructionsWarningModal";
+import { TimeExpiredModal } from "./instructionsTimeoutModal";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 // ─── Timing constants ────────────────────────────────────────────────────────
-const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide
+const SLIDE_IDLE_LIMIT_MS = 1 * 60 * 1000; // 3 min per slide
 const SLIDE_WARNING_GRACE_MS = 30 * 1000; // 30-sec grace after warning
 const TOTAL_TIME_LIMIT_MS = 27 * 60 * 1000; // 27 min overall
 
-// ─── Warning modal ────────────────────────────────────────────────────────────
-const WarningModal = ({ secondsLeft, onDismiss }) => (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 10000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(0,0,0,0.75)",
-    }}
-  >
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "12px",
-        padding: "40px 48px",
-        maxWidth: "480px",
-        textAlign: "center",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-      }}
-    >
-      <h2 style={{ color: "#c0392b", marginBottom: "12px", fontSize: "22px" }}>
-        Are you still there?
-      </h2>
-      <p
-        style={{
-          color: "#444",
-          fontSize: "16px",
-          lineHeight: "1.6",
-          marginBottom: "8px",
-        }}
-      >
-        You've been on this slide for a while. You must continue within:
-      </p>
-      <p
-        style={{
-          fontSize: "36px",
-          fontWeight: "700",
-          color: "#c0392b",
-          margin: "12px 0",
-        }}
-      >
-        {secondsLeft}s
-      </p>
-      <p style={{ color: "#666", fontSize: "14px", marginBottom: "24px" }}>
-        If time runs out you will be removed from the study.
-      </p>
-      <button
-        onClick={onDismiss}
-        style={{
-          background: "#2ecc71",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          padding: "12px 32px",
-          fontSize: "16px",
-          fontWeight: "600",
-          cursor: "pointer",
-        }}
-      >
-        I'm here — continue
-      </button>
-    </div>
-  </div>
-);
-
-// ─── Total-time-expired modal ─────────────────────────────────────────────────
-const TimeExpiredModal = ({ secondsLeft }) => (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 10000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(0,0,0,0.85)",
-    }}
-  >
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "12px",
-        padding: "40px 48px",
-        maxWidth: "480px",
-        textAlign: "center",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-      }}
-    >
-      <div style={{ fontSize: "48px", marginBottom: "16px" }}>⌛</div>
-      <h2 style={{ color: "#c0392b", marginBottom: "12px", fontSize: "22px" }}>
-        Time Limit Reached
-      </h2>
-      <p
-        style={{
-          color: "#444",
-          fontSize: "16px",
-          lineHeight: "1.6",
-          marginBottom: "8px",
-        }}
-      >
-        The instructions phase has a 27-minute time limit, which has been
-        reached. You will not be able to continue with this study.
-      </p>
-      <p style={{ color: "#888", fontSize: "14px", marginTop: "20px" }}>
-        Redirecting in <strong>{secondsLeft}</strong> second
-        {secondsLeft !== 1 ? "s" : ""}…
-      </p>
-    </div>
-  </div>
-);
-
-// ─── Main component ───────────────────────────────────────────────────────────
 const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
     return getTutorialSlides(gameVersion);
@@ -158,6 +45,9 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const totalTimeTimerRef = useRef(null);
   const totalTimeTickRef = useRef(null);
   const isDisqualifiedRef = useRef(false); // sync ref so timers don't fire after disqualify
+  const TOTAL_TIME_LIMIT_MS =
+    gameVersion === "one_vial_always_bucket" ? 40 * 60 * 1000 : 27 * 60 * 1000;
+  // console.log("time limit", TOTAL_TIME_LIMIT_MS);
 
   const totalSlides = TUTORIAL_SLIDES.length;
   const imageCache = useRef({});
@@ -220,7 +110,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
     startSlideTimer(); // fresh 3-min timer from now
   };
 
-  // ── Overall 27-min timer (mount / unmount only) ───────────────────────────
+  // ── Overall timer (mount / unmount only) ───────────────────────────
   React.useEffect(() => {
     if (DEBUG_MODE) return;
 
@@ -245,13 +135,13 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       clearTimeout(totalTimeTimerRef.current);
       clearInterval(totalTimeTickRef.current);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Per-slide timer: restart whenever currentSlide changes ───────────────
   React.useEffect(() => {
     startSlideTimer();
     return () => clearSlideTimers();
-  }, [currentSlide]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentSlide]);
 
   // ── Slide helpers ─────────────────────────────────────────────────────────
 
@@ -517,7 +407,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       setDisqualifyCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          if (onDisqualified) onDisqualified();
+          if (onDisqualified) onDisqualified(disqualifyReason);
           return 0;
         }
         return prev - 1;
@@ -537,11 +427,11 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
         imageCache.current[src] = img;
       }
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     logSlideChange(0, "initial");
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Disqualified screen ───────────────────────────────────────────────────
   const DISQUALIFY_MESSAGES = {
@@ -559,7 +449,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
     },
     total_timeout: {
       heading: "Time Limit Reached",
-      body: "The instructions phase has a 27-minute time limit, which has been reached. You will not be able to continue with this study.",
+      body: "The instructions phase has a total time limit, which has been reached. You will not be able to continue with this study.",
     },
   };
 
@@ -575,7 +465,6 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
             className={`tutorial-content ${isFading ? "fading" : ""}`}
             style={{ textAlign: "center", padding: "40px" }}
           >
-            <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
             <h1
               className="tutorial-title"
               style={{ color: "#e74c3c", marginBottom: "20px" }}
@@ -753,7 +642,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                       textAlign: "center",
                     }}
                   >
-                    ⚠️ Warning: This is your final attempt. An incorrect answer
+                    Warning: This is your final attempt. An incorrect answer
                     will end your participation in the study.
                   </div>
                 )}

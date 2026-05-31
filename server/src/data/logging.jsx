@@ -178,7 +178,7 @@ export const endSession = async () => {
  * Added to user's session document
  * @param {boolean} passed
  */
-export const logInstructionsResult = async (passed) => {
+export const logInstructionsResult = async (passed, reason) => {
   if (!currentUserId || !currentSessionId) return;
   try {
     const sessionRef = doc(
@@ -191,6 +191,7 @@ export const logInstructionsResult = async (passed) => {
     await updateDoc(sessionRef, {
       instructionsResult: {
         passed: passed ? 1 : 0,
+        reason: reason,
         msSinceSessionStart: Date.now() - sessionStartTime,
         timestamp: serverTimestamp(),
       },

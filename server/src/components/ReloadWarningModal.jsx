@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { PRODUCTION_MODE } from "../participantConfig";
-import { markIntentionalRedirect } from "../accessControl";
-import { isIntentionalRedirect } from "../accessControl";
+import { PRODUCTION_MODE } from "../data/participantConfig";
+import { markIntentionalRedirect } from "../data/accessControl";
+import { isIntentionalRedirect } from "../data/accessControl";
 
 const ReloadWarningModal = ({
   isActive,

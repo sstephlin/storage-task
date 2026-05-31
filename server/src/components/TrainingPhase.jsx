@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import VialGame from "./VialGame";
 import Tutorial from "./instructions";
-import "./styles/TrainingPhase.css";
-import { PARTIAL_COMPLETION_CODES } from "./params";
-import { logTrainingResult } from "./logging";
-import { TRAINING_PARAMS } from "./params";
+import "../styles/TrainingPhase.css";
+import { PARTIAL_COMPLETION_CODES } from "../data/params";
+import { logTrainingResult } from "../data/logging";
+import { TRAINING_PARAMS } from "../data/params";
 
 const makeRounds = (velocities, bucket, phases) =>
   velocities.map((velocity, i) => ({
@@ -126,7 +126,6 @@ const TrainingPhase = ({
   onInstructionsDisqualified,
 }) => {
   const [showTutorial, setShowTutorial] = useState(true);
-  // const [trainingAttempt, setTrainingAttempt] = useState(1);
   const [showIntro, setShowIntro] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
@@ -141,8 +140,6 @@ const TrainingPhase = ({
   const [trainingSequences] = useState(() =>
     buildTrainingSequences(gameVersion),
   );
-
-  console.log("TrainingPhase received gameVersion:", gameVersion);
 
   const handleTutorialComplete = () => {
     setShowTutorial(false);
@@ -210,12 +207,6 @@ const TrainingPhase = ({
     const newResults = [...roundResultsRef.current, wasSuccessful];
     roundResultsRef.current = newResults;
     setRoundResults(newResults);
-    console.log(
-      "handleRoundComplete called:",
-      wasSuccessful,
-      "| ref now:",
-      roundResultsRef.current,
-    );
 
     const feedback = generateRoundFeedback(wasSuccessful, newResults.length);
     setCurrentFeedback(feedback);
@@ -250,10 +241,6 @@ const TrainingPhase = ({
         if (onDisqualified) onDisqualified();
       }, 5000);
     }
-  };
-
-  const handleStartMainGame = () => {
-    onComplete();
   };
 
   useEffect(() => {
@@ -311,7 +298,6 @@ const TrainingPhase = ({
     return (
       <div className="training-retry">
         <div className="training-retry-content">
-          <div style={{ fontSize: "64px", marginBottom: "20px" }}>⚠️</div>
           <h2>Training Not Completed</h2>
           <div className="results-summary">
             <p className="score-display">
@@ -376,7 +362,7 @@ const TrainingPhase = ({
 
           <button
             className="start-main-btn"
-            onClick={handleStartMainGame}
+            onClick={onComplete}
             disabled={partialCode && !codeConfirmed}
           >
             Click here to start the main game

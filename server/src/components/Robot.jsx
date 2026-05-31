@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Star, Flame, Skull } from "lucide-react";
 import Vial from "./Vial";
-import { PRODUCTION_MODE } from "../participantConfig";
+import { PRODUCTION_MODE } from "../data/participantConfig";
 
 const Robot = ({
   vial1Level,

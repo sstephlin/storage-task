@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import VialGame from "./VialGame";
-import TrainingPhase from "./TrainingPhase";
+import VialGame from "./components/VialGame";
+import TrainingPhase from "./components/TrainingPhase";
 import PrelimQuestion from "./components/PrelimQuestions";
 import ReloadWarningModal from "./components/ReloadWarningModal";
 import {
@@ -12,14 +12,14 @@ import {
   logTrainingResult,
   logTermination,
   logTabVisibilityChange,
-} from "./logging";
+} from "./data/logging";
 import "./styles/App.css";
 
 import {
   PRODUCTION_MODE,
   validateUrlParams,
   getVersionCode,
-} from "./participantConfig";
+} from "./data/participantConfig";
 
 import {
   initializeAccess,
@@ -27,7 +27,7 @@ import {
   setupReloadWarning,
   checkReloadAttempt,
   markIntentionalRedirect,
-} from "./accessControl";
+} from "./data/accessControl";
 
 import {
   VERSION_CONFIG,
@@ -36,7 +36,7 @@ import {
   RELOAD_REDIRECT_URLS_MAIN_GAME,
   FAIL_TRAINING_REDIRECT_URL,
   FAIL_INSTRUCTIONS_REDIRECT_URL,
-} from "./params";
+} from "./data/params";
 
 const App = () => {
   const [userId, setUserId] = useState(null);
@@ -224,7 +224,7 @@ const App = () => {
 
   const handleTrainingComplete = () => {
     sessionStorage.setItem("mainGameStarted", "true");
-    logInstructionsResult(true);
+    logInstructionsResult(true, null);
     setTrainingComplete(true);
   };
   const handleGameComplete = async ({
@@ -265,9 +265,9 @@ const App = () => {
       }, 5000);
     }
   };
-  const handleInstructionsDisqualified = () => {
+  const handleInstructionsDisqualified = async (reason) => {
     setIsDisqualified(true);
-    logInstructionsResult(false);
+    await logInstructionsResult(false, reason);
 
     const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
     if (!redirectUrl) return;
@@ -325,7 +325,6 @@ const App = () => {
     return (
       <div className="reload-overlay">
         <div className="reload-card">
-          <div className="reload-icon">⚠️</div>
           <h2 className="reload-title">Experiment Terminated</h2>
           <p className="reload-text">
             This page was reloaded, which is not allowed during the experiment.
