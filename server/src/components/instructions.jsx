@@ -10,7 +10,7 @@ import { TimeExpiredModal } from "./instructionsTimeoutModal";
 const DEBUG_MODE = false;
 
 // ─── Timing constants ────────────────────────────────────────────────────────
-const SLIDE_IDLE_LIMIT_MS = 1 * 60 * 1000; // 3 min per slide
+const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide
 const SLIDE_WARNING_GRACE_MS = 30 * 1000; // 30-sec grace after warning
 const TOTAL_TIME_LIMIT_MS = 27 * 60 * 1000; // 27 min overall
 
@@ -47,7 +47,6 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const isDisqualifiedRef = useRef(false); // sync ref so timers don't fire after disqualify
   const TOTAL_TIME_LIMIT_MS =
     gameVersion === "one_vial_always_bucket" ? 40 * 60 * 1000 : 27 * 60 * 1000;
-  // console.log("time limit", TOTAL_TIME_LIMIT_MS);
 
   const totalSlides = TUTORIAL_SLIDES.length;
   const imageCache = useRef({});

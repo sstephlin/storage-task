@@ -11,7 +11,43 @@ const ReloadWarningModal = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [attemptedAction, setAttemptedAction] = useState(null);
+  const [countdownSeconds, setCountdownSeconds] = useState(30);
   const beforeUnloadRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showModal) {
+      // Clean up countdown when modal closes
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      setCountdownSeconds(30);
+      return;
+    }
+
+    // Start 30-second countdown when modal opens
+    setCountdownSeconds(30);
+    let remaining = 30;
+
+    countdownTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      setCountdownSeconds(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(countdownTimerRef.current);
+        // Auto-redirect when countdown reaches 0
+        handleForceLeave();
+      }
+    }, 1000);
+
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+    };
+  }, [showModal]);
 
   useEffect(() => {
     if (!isActive || !PRODUCTION_MODE) return;
@@ -76,10 +112,8 @@ const ReloadWarningModal = ({
     setShowModal(false);
     if (onModalClose) onModalClose();
 
-    if (beforeUnloadRef.current) {
-      window.removeEventListener("beforeunload", beforeUnloadRef.current);
-      beforeUnloadRef.current = null;
-    }
+    // Mark as intentional so beforeunload handler returns silently
+    markIntentionalRedirect();
 
     if (attemptedAction === "reload") {
       window.location.reload();
@@ -139,24 +173,9 @@ const ReloadWarningModal = ({
         <div
           style={{
             textAlign: "center",
-            marginBottom: "24px",
+            marginBottom: "16px",
           }}
         >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              backgroundColor: "#fff3cd",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "48px",
-              marginBottom: "16px",
-            }}
-          >
-            ⚠️
-          </div>
           <h2
             style={{
               margin: 0,
@@ -199,21 +218,21 @@ const ReloadWarningModal = ({
               borderLeft: "4px solid #dc3545",
             }}
           >
-            <p style={{ margin: "0 0 12px 0", fontWeight: "600" }}>
+            <p style={{ margin: "0 0 4px 0", fontWeight: "600" }}>
               Why this matters:
             </p>
             <ul style={{ margin: 0, paddingLeft: "24px" }}>
-              <li style={{ marginBottom: "8px" }}>
+              <li style={{ marginBottom: "6px" }}>
                 Each participant can only access the experiment{" "}
                 <strong>ONE TIME</strong>
               </li>
-              <li style={{ marginBottom: "8px" }}>
+              <li style={{ marginBottom: "6px" }}>
                 Reloading or leaving will end your session permanently
               </li>
-              <li style={{ marginBottom: "8px" }}>
+              <li style={{ marginBottom: "6px" }}>
                 You will not be able to log in again with your credentials
               </li>
-              <li style={{ marginBottom: "8px" }}>
+              <li style={{ marginBottom: "6px" }}>
                 Your data may be incomplete and cannot be used
               </li>
             </ul>
@@ -232,10 +251,43 @@ const ReloadWarningModal = ({
               {userId}
             </code>
           </p>
+        </div>
 
-          <p style={{ margin: 0, color: "#666" }}>
-            If you're experiencing technical issues, please contact the
-            researcher instead of reloading the page.
+        {/* Auto-redirect Countdown */}
+        <div
+          style={{
+            backgroundColor: "#fff3cd",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "24px",
+            textAlign: "center",
+            border: "2px solid #ffc107",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 12px 0",
+              color: "#856404",
+              fontSize: "14px",
+              fontWeight: "600",
+            }}
+          >
+            Automatic redirect in:
+          </p>
+          <p
+            style={{
+              fontSize: "30px",
+              fontWeight: "700",
+              color: "#dc3545",
+              margin: "0",
+            }}
+          >
+            {countdownSeconds}s
+          </p>
+          <p
+            style={{ margin: "6px 0 0 0", color: "#856404", fontSize: "13px" }}
+          >
+            Click "Continue Experiment" to dismiss this timer
           </p>
         </div>
 
