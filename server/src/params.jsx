@@ -1,11 +1,7 @@
 export const GAME_PARAMS = {
-  // DRAIN_RATE: 0.5,
   ADD_AMOUNT: 10,
   MAX_LEVEL: 100,
-  OPTIMAL_ZONE_MIN: 35,
-  OPTIMAL_ZONE_MAX: 50,
-  DANGER_UPPER: 90,
-  DANGER_LOWER: 10,
+  OPTIMAL_LEVEL: 50,
   GAME_SPEED: 100,
   ROUND_DURATION: 15,
   MAX_ROUNDS: 36,
@@ -13,7 +9,6 @@ export const GAME_PARAMS = {
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
   TRANSITION_TIME: 3000,
-  // SETPOINT: 50,
 };
 
 const numPhases1Vial = 4;
@@ -135,7 +130,7 @@ export const VERSION_VELOCITIES = {
 };
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 10,
+  MAX_ROUNDS: 2,
   ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
@@ -435,13 +430,6 @@ const generateTwoVialSingleBucket = (totalRounds) => {
     { vial1: 0, vial2: 1 },
     { vial1: 0, vial2: 0 },
   ];
-  // for (let phase = 0; phase < numPhases; phase++) {
-  //   const bucketState = Math.floor(phase % 3);
-  //   phaseSequence = [];
-  //   for (let i = 0; i < roundsPerPhase; i++) {
-  //     phaseSequence.push(bucketState[i]);
-  //   }
-  // }
 
   const firstIteration = [...bucketStates];
   shuffleArray(firstIteration);
@@ -558,15 +546,6 @@ const shuffleArray = (array) => {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
-};
-
-// ============================================================================
-// GAME MESSAGES / LABELS
-// ============================================================================
-
-export const GAME_MESSAGES = {
-  PLAYING: "Keep both vials at healthy level!",
-  GAME_COMPLETE: "Congratulations! You completed all rounds!",
 };
 
 // ============================================================================

@@ -129,7 +129,6 @@ const App = () => {
     const redirectUrl = trainingComplete
       ? RELOAD_REDIRECT_URLS_MAIN_GAME[version]
       : RELOAD_REDIRECT_URLS_GENERAL[version];
-    console.log("Redirecting to:", redirectUrl);
     if (!redirectUrl) return;
 
     const versionCode = getVersionCode(version);
@@ -212,7 +211,7 @@ const App = () => {
   // Handlers
   const redirectTo = (url, reason = "unknown", stage = "unknown") => {
     markIntentionalRedirect();
-    logTermination(reason, stage); // fire-and-forget is fine here
+    logTermination(reason, stage);
 
     if (reloadWarningCleanupRef.current) {
       reloadWarningCleanupRef.current();
@@ -220,8 +219,6 @@ const App = () => {
     }
     if (PRODUCTION_MODE) {
       window.location.replace(url);
-    } else {
-      console.warn("[DEV] Would redirect to:", url);
     }
   };
 
@@ -243,7 +240,6 @@ const App = () => {
     gameCompletedRef.current = true;
 
     var reachedBonusGoal = false;
-    console.log("userId at completion:", userId);
     if (userId) {
       const result = await logGameCompletion({
         finalScore: finalScore ?? 0,
@@ -251,13 +247,10 @@ const App = () => {
         cumulativeProgress: cumulativeProgress ?? 0,
         isTrainingMode: false,
       });
-      console.log("raw result from logGameCompletion:", result);
       reachedBonusGoal = result?.reachedBonusGoal === true;
-      console.log("reachedBonusGoal after assignment:", reachedBonusGoal);
       await completeSession(userId);
       await endSession();
     }
-    console.log("reachedBonusGoal before building URL:", reachedBonusGoal);
 
     const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
     if (redirectUrl) {
@@ -266,7 +259,6 @@ const App = () => {
       if (userId) url.searchParams.set("PROLIFIC_PID", userId);
       if (versionCode) url.searchParams.set("STUDY_ID", versionCode);
       url.searchParams.set("B", reachedBonusGoal ? "true" : "false");
-      console.log("qualtrics link", url.toString(), reachedBonusGoal);
 
       setTimeout(() => {
         redirectTo(url.toString(), "game complete", "experiment complete");
