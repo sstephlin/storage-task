@@ -5,7 +5,7 @@ import { getTutorialSlides, getSlideIndexById } from "./tutorialSlides";
 import { logTutorialSlideChange, logTutorialQuizAnswer } from "./logging";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 // ─── Timing constants ────────────────────────────────────────────────────────
 const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide
@@ -265,7 +265,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       setSelectedAnswers({});
       setQuizFeedback(null);
       setTimeout(() => setIsFading(false), 50);
-    }, 500);
+    }, 750);
   };
 
   const slide = React.useMemo(() => {

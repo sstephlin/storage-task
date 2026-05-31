@@ -1,5 +1,5 @@
 export const GAME_PARAMS = {
-  DRAIN_RATE: 0.5,
+  // DRAIN_RATE: 0.5,
   ADD_AMOUNT: 10,
   MAX_LEVEL: 100,
   OPTIMAL_ZONE_MIN: 35,
@@ -13,7 +13,7 @@ export const GAME_PARAMS = {
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
   TRANSITION_TIME: 3000,
-  SETPOINT: 50,
+  // SETPOINT: 50,
 };
 
 const numPhases1Vial = 4;
