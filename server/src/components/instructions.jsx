@@ -8,7 +8,7 @@ import { TimeExpiredModal } from "./instructionsTimeoutModal";
 import { PRODUCTION_MODE } from "../data/participantConfig";
 
 // // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = !PRODUCTION_MODE;
+const DEBUG_MODE = true;
 
 // ─── Timing constants ────────────────────────────────────────────────────────
 const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide

@@ -1,7 +1,7 @@
 /**
  * Parse and validate URL parameters for participant ID and game version.
  */
-export const PRODUCTION_MODE = false;
+export const PRODUCTION_MODE = true;
 
 export const VERSION_CODE_MAP = {
   0.1: "one_vial_alternating",

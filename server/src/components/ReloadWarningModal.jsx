@@ -3,12 +3,7 @@ import { PRODUCTION_MODE } from "../data/participantConfig";
 import { markIntentionalRedirect } from "../data/accessControl";
 import { isIntentionalRedirect } from "../data/accessControl";
 
-const ReloadWarningModal = ({
-  isActive,
-  userId,
-  onModalOpen,
-  onModalClose,
-}) => {
+const ReloadWarningModal = ({ isActive, userId }) => {
   const [showModal, setShowModal] = useState(false);
   const [attemptedAction, setAttemptedAction] = useState(null);
   const [countdownSeconds, setCountdownSeconds] = useState(30);
@@ -59,7 +54,6 @@ const ReloadWarningModal = ({
       if (!isNavigatingAway) {
         setAttemptedAction("reload");
         setShowModal(true);
-        if (onModalOpen) onModalOpen();
       }
       e.preventDefault();
       e.returnValue = "";
@@ -70,7 +64,6 @@ const ReloadWarningModal = ({
       if (!isNavigatingAway) {
         setAttemptedAction("navigate");
         setShowModal(true);
-        if (onModalOpen) onModalOpen();
         window.history.pushState(null, "", window.location.href);
       }
     };
@@ -84,7 +77,6 @@ const ReloadWarningModal = ({
         e.preventDefault();
         setAttemptedAction("reload");
         setShowModal(true);
-        if (onModalOpen) onModalOpen();
       }
     };
 
@@ -101,16 +93,14 @@ const ReloadWarningModal = ({
       document.removeEventListener("keydown", handleKeyDown);
       beforeUnloadRef.current = null;
     };
-  }, [isActive, onModalOpen]);
+  }, [isActive]);
 
   const handleClose = () => {
     setShowModal(false);
-    if (onModalClose) onModalClose();
   };
 
   const handleForceLeave = () => {
     setShowModal(false);
-    if (onModalClose) onModalClose();
 
     // Mark as intentional so beforeunload handler returns silently
     markIntentionalRedirect();

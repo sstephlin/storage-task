@@ -13,6 +13,7 @@ import {
   VERSION_CONFIG,
   VERSION_VELOCITIES,
   TRAINING_PARAMS,
+  GAME_VERSIONS,
 } from "./params";
 import { version } from "react";
 
@@ -58,10 +59,6 @@ export const PHASE_REVERSE = Object.fromEntries(
   Object.entries(PHASE_MAP).map(([k, v]) => [v, k]),
 );
 
-// ============================================================================
-// SESSION STATE
-// ============================================================================
-
 let currentUserId = null;
 let currentSessionId = null;
 let sessionStartTime = null;
@@ -73,10 +70,6 @@ let currentRoundDocId = null;
 // Tutorial state
 let lastSlideChangeTime = null;
 
-// ============================================================================
-// SESSION LIFECYCLE
-// ============================================================================
-
 /**
  * Initialize a new game session.
  * logs session ID, session start time, participant ID, game version, game version code and production mode.
@@ -87,14 +80,8 @@ export const initializeSession = async (
   gameVersion,
   productionMode,
 ) => {
-  currentUserId = userId;
   currentSessionId = `${userId}_${Date.now()}`;
   sessionStartTime = Date.now();
-  lastButtonPressTime = null;
-  lastSlideChangeTime = null;
-  roundStartTime = null;
-  currentRoundNumber = null;
-  currentRoundDocId = null;
 
   try {
     const userRef = doc(db, "user_sessions", userId);
@@ -132,12 +119,6 @@ export const initializeSession = async (
       gameVersion,
       gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0,
       productionMode: productionMode ? 1 : 0,
-      gameConfig: {
-        gameParams: GAME_PARAMS,
-        versionConfig: VERSION_CONFIG[version] || null,
-        gameVelocities: VERSION_VELOCITIES[version] || null,
-        trainingVelocities: TRAINING_PARAMS.VELOCITIES[version] || null,
-      },
     });
 
     console.log("Session initialized:", currentSessionId);
@@ -179,10 +160,73 @@ export const endSession = async () => {
     console.error("Error ending session:", error);
   }
 };
+/**
+ * Log game config for new session
+ */
+export const logGameConfig = async (userId, gameVersion, productionMode) => {
+  currentUserId = userId;
+  currentSessionId = `${userId}_${Date.now()}`;
+  sessionStartTime = Date.now();
 
-// ============================================================================
-// PHASE RESULTS  (instructions + training)
-// ============================================================================
+  try {
+    const userRef = doc(db, "user_sessions", userId);
+    await setDoc(
+      userRef,
+      {
+        userId,
+        lastSession: currentSessionId,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      userId,
+      "sessions",
+      "game config",
+    );
+    await setDoc(sessionRef, {
+      sessionId: currentSessionId,
+      participantId: userId,
+      startTimeFormatted: new Date(sessionStartTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+        hour12: true,
+      }),
+      gameVersion,
+      gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0,
+      versionConfig: VERSION_CONFIG[gameVersion] || null,
+      gameParams: {
+        add_amount: GAME_PARAMS.ADD_AMOUNT || null,
+        bucket_empty_amount: GAME_PARAMS.EMPTY_BUCKET_AMOUNT || null,
+        optimal_level: GAME_PARAMS.OPTIMAL_LEVEL || null,
+        initial_vial_level: GAME_PARAMS.INITIAL_VIAL_LEVEL || null,
+        initial_bucket_level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
+      },
+      mainGameParams: {
+        mainGameVelocities: VERSION_VELOCITIES[gameVersion] || null,
+        mainGameRoundDuration: GAME_PARAMS.ROUND_DURATION || null,
+        mainGameRounds: GAME_PARAMS.MAX_ROUNDS || null,
+      },
+      trainingParams: {
+        trainingVelocities: TRAINING_PARAMS.VELOCITIES[gameVersion] || null,
+        trainingRoundDuration: TRAINING_PARAMS.ROUND_DURATION || null,
+        trainingRounds: TRAINING_PARAMS.MAX_ROUNDS || null,
+      },
+    });
+
+    console.log("Game config logged:", currentSessionId);
+  } catch (error) {
+    console.error("Error logging game config:", error);
+  }
+};
 
 /**
  * Log whether the participant passed or failed the instructions quiz, duration in ms, and timestamp of endtime
