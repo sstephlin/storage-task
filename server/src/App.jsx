@@ -305,16 +305,6 @@ const App = () => {
     window.location.reload();
   };
 
-  const DevOverlay = ({ status }) =>
-    PRODUCTION_MODE ? null : (
-      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
-        <div>User: {userId}</div>
-        <div>Version: {gameVersion}</div>
-        <div>Status: {status}</div>
-        <button onClick={handleDevReset}>Reset</button>
-      </div>
-    );
-
   // Reload Block Screen
   if (showReloadModal) {
     const { version } = validateUrlParams();
@@ -370,7 +360,6 @@ const App = () => {
             onModalClose={handleModalClose}
           />
         )}
-        <DevOverlay status="TRAINING" />
         <TrainingPhase
           userId={userId}
           gameVersion={gameVersion}
@@ -393,7 +382,6 @@ const App = () => {
           onModalClose={handleModalClose}
         />
       )}
-      <DevOverlay status="MAIN GAME" />
       <VialGame
         userId={userId}
         gameVersion={gameVersion}

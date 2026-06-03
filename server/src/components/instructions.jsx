@@ -5,9 +5,10 @@ import { getTutorialSlides, getSlideIndexById } from "../data/tutorialSlides";
 import { logTutorialSlideChange, logTutorialQuizAnswer } from "../data/logging";
 import { WarningModal } from "./instructionsWarningModal";
 import { TimeExpiredModal } from "./instructionsTimeoutModal";
+import { PRODUCTION_MODE } from "../data/participantConfig";
 
-// Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = false;
+// // Set to false for production, true for debugging (disables timer and quiz validation)
+const DEBUG_MODE = !PRODUCTION_MODE;
 
 // ─── Timing constants ────────────────────────────────────────────────────────
 const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide

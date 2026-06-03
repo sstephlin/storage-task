@@ -1,4 +1,7 @@
-export const PRODUCTION_MODE = true;
+/**
+ * Parse and validate URL parameters for participant ID and game version.
+ */
+export const PRODUCTION_MODE = false;
 
 export const VERSION_CODE_MAP = {
   0.1: "one_vial_alternating",
@@ -9,13 +12,9 @@ export const VERSION_CODE_MAP = {
   // 0.6: "two_vials_phases",
 };
 
-// ============================================================================
-// URL PARAMETER PARSING
-// ============================================================================
-
 /**
  * Extract participant ID and resolve game version from URL parameters.
- * Expected URL format: https://yourdomain.com/?PROLIFIC_ID=P001&STUDY_ID=0.3
+ * Expected URL format: https://https://petzschner-storage-task.web.app/?PROLIFIC_ID=[XX]&STUDY_ID=[XX]
  *
  * @returns {{ participantId: string|null, versionCode: string|null, version: string|null }}
  */
@@ -26,10 +25,6 @@ export const getParamsFromUrl = () => {
   const version = versionCode ? (VERSION_CODE_MAP[versionCode] ?? null) : null;
   return { participantId, versionCode, version };
 };
-
-// ============================================================================
-// VALIDATION
-// ============================================================================
 
 /**
  * Validate the URL parameters needed to start a session.
@@ -85,34 +80,6 @@ export const validateUrlParams = () => {
   }
 
   return { valid: true, participantId, version, error: null };
-};
-
-// ============================================================================
-// UTILITY – kept for admin / data-export convenience
-// ============================================================================
-
-/**
- * Generate a CSV of shareable links using numeric version codes.
- *
- * @param {string[]} participantIds
- * @param {string[]} versionCodes  - e.g. ["0.1","0.2"] — cycled across participants
- * @param {string}   baseUrl
- * @returns {string} CSV
- */
-export const generateLinksCSV = (
-  participantIds,
-  versionCodes,
-  baseUrl = "",
-) => {
-  const header = "Participant ID,Version Code,Link\n";
-  const rows = participantIds
-    .map((id, i) => {
-      const code = versionCodes[i % versionCodes.length];
-      const link = `${baseUrl}/?PROLIFIC_ID=${encodeURIComponent(id)}&STUDY_ID=${encodeURIComponent(code)}`;
-      return `${id},${code},${link}`;
-    })
-    .join("\n");
-  return header + rows;
 };
 
 export const getVersionCode = (versionString) => {

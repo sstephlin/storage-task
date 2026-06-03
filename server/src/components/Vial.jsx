@@ -13,25 +13,16 @@ const Vial = ({
 }) => {
   const displayLevel = Math.min(Math.round(level), 100);
 
-  // Determine if liquid is in optimal zone
-  const isOptimal =
-    level >= GAME_PARAMS.OPTIMAL_ZONE_MIN &&
-    level <= GAME_PARAMS.OPTIMAL_ZONE_MAX;
-
   // Get icon colors based on training mode
-  const dangerColor =
-    isTrainingMode && trainingColors ? trainingColors.danger : "#dc2626";
-
-  const optimalColor =
-    isTrainingMode && trainingColors ? trainingColors.optimal : "#000000";
+  const dangerColor = "#dc2626";
+  const optimalColor = "#fbbf24";
 
   return (
     <div className="vial-container">
       <div className="vial_wrapper">
-        {/* <ZoneMeter /> */}
         <div className="vial">
           <div
-            className={`liquid ${isOptimal ? "optimal" : "suboptimal"}`}
+            className={`liquid`}
             style={{
               height: `${Math.round(displayLevel)}%`,
               backgroundColor: liquidColor,

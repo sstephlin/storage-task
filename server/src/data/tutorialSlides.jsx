@@ -1,9 +1,7 @@
+/**
+ * Tutorial slide definitions for different game versions.
+ */
 import { GAME_VERSIONS } from "./params";
-
-// =============================================================================
-// SHARED SLIDE SECTIONS
-// These can be reused across different versions
-// =============================================================================
 
 const SHARED_INTRO_SLIDES = [
   { id: "intro-1.1", image: "Intro-1.1.png", showButtons: false },

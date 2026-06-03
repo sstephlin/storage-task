@@ -1,5 +1,5 @@
 // Access Control System for Experiment
-// Uses Firebase for persistent access tracking
+// Uses Firebase for persistent access tracking. Ensures participants can only access the experiment once, and detects reloads to prevent multiple attempts.
 
 import { PRODUCTION_MODE } from "./participantConfig";
 import { getDatabase, ref, set, get, serverTimestamp } from "firebase/database";
@@ -25,8 +25,6 @@ export const hasParticipantAccessed = async (userId) => {
     return snapshot.exists();
   } catch (error) {
     console.error("Error checking participant access:", error);
-    // In case of Firebase error, allow access but log the error
-    // You may want to handle this differently based on your needs
     return false;
   }
 };
@@ -221,7 +219,6 @@ export const initializeAccess = async (userId, metadata = {}) => {
 
     // Mark session as active in sessionStorage
     markSessionActive(userId);
-    // setupReloadWarning();
 
     return { success: true };
   } catch (error) {
@@ -260,75 +257,5 @@ export const completeSession = async (userId, completionData = {}) => {
     console.error("Error completing session:", error);
     // Still clear session even if Firebase update fails
     clearSession();
-  }
-};
-
-/**
- * Reset a participant's access (admin function for testing)
- * WARNING: Only use this in development or for specific admin purposes
- * @param {string} userId - Participant ID
- * @returns {Promise<boolean>} True if successfully reset
- */
-export const resetParticipantAccess = async (userId) => {
-  if (PRODUCTION_MODE) {
-    console.warn("Attempting to reset access in PRODUCTION mode!");
-  }
-
-  try {
-    const db = getDatabase();
-    const accessRef = ref(db, `participant_access/${userId}`);
-
-    // Remove the entry from Firebase
-    await set(accessRef, null);
-
-    // Clear local session
-    clearSession();
-
-    return true;
-  } catch (error) {
-    console.error("Error resetting participant access:", error);
-    return false;
-  }
-};
-
-/**
- * Get access information for a participant (admin function)
- * @param {string} userId - Participant ID
- * @returns {Promise<Object|null>} Access data or null
- */
-export const getParticipantAccessInfo = async (userId) => {
-  try {
-    const db = getDatabase();
-    const accessRef = ref(db, `participant_access/${userId}`);
-    const snapshot = await get(accessRef);
-
-    if (snapshot.exists()) {
-      return snapshot.val();
-    }
-    return null;
-  } catch (error) {
-    console.error("Error getting participant access info:", error);
-    return null;
-  }
-};
-
-/**
- * Get all participant access records (admin function)
- * Use with caution - could be a large dataset
- * @returns {Promise<Object|null>} All access records
- */
-export const getAllParticipantAccess = async () => {
-  try {
-    const db = getDatabase();
-    const accessRef = ref(db, "participant_access");
-    const snapshot = await get(accessRef);
-
-    if (snapshot.exists()) {
-      return snapshot.val();
-    }
-    return {};
-  } catch (error) {
-    console.error("Error getting all participant access:", error);
-    return null;
   }
 };

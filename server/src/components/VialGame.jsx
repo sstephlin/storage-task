@@ -13,11 +13,11 @@ import { PRODUCTION_MODE } from "../data/participantConfig";
 import {
   GAME_PARAMS,
   VERSION_CONFIG,
-  generateGameSequences,
   VERSION_BUTTON_DELAYS,
   VERSION_DEPRIVATION_CONFIG,
   VERSION_VELOCITIES,
 } from "../data/params";
+import { generateGameSequences } from "../data/gameSequences";
 import {
   playOverheatSound,
   playPowerDownSound,

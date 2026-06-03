@@ -33,6 +33,6 @@ server/scripts/tutorial_quizzes.csv
 server/scripts/tutorial_slides.csv
 server/scripts/tab_events.csv
 server/.env
-server/src/firebase.jsx
+server/src/data/firebase.jsx
 server/scripts/exportFirestore.js
 data_analysis

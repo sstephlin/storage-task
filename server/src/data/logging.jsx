@@ -8,6 +8,13 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { VERSION_CODE_MAP } from "./participantConfig";
+import {
+  GAME_PARAMS,
+  VERSION_CONFIG,
+  VERSION_VELOCITIES,
+  TRAINING_PARAMS,
+} from "./params";
+import { version } from "react";
 
 // ============================================================================
 // STRING TO INTEGER MAPPINGS
@@ -125,6 +132,12 @@ export const initializeSession = async (
       gameVersion,
       gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0,
       productionMode: productionMode ? 1 : 0,
+      gameConfig: {
+        gameParams: GAME_PARAMS,
+        versionConfig: VERSION_CONFIG[version] || null,
+        gameVelocities: VERSION_VELOCITIES[version] || null,
+        trainingVelocities: TRAINING_PARAMS.VELOCITIES[version] || null,
+      },
     });
 
     console.log("Session initialized:", currentSessionId);
