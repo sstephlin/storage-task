@@ -17,10 +17,6 @@ import {
 } from "./params";
 import { version } from "react";
 
-// ============================================================================
-// STRING TO INTEGER MAPPINGS
-// ============================================================================
-
 export const BUTTON_TYPE_MAP = {
   add_vial_1: 1,
   add_vial_2: 2,
@@ -70,16 +66,13 @@ let currentRoundDocId = null;
 // Tutorial state
 let lastSlideChangeTime = null;
 
+// SESSIONS.csv
+
 /**
  * Initialize a new game session.
- * logs session ID, session start time, participant ID, game version, game version code and production mode.
+ * logs session ID, session start time, participant ID, game version, game version code.
  */
-// maaybe take out production mode 5/18
-export const initializeSession = async (
-  userId,
-  gameVersion,
-  productionMode,
-) => {
+export const initializeSession = async (userId, gameVersion) => {
   currentSessionId = `${userId}_${Date.now()}`;
   sessionStartTime = Date.now();
 
@@ -104,7 +97,6 @@ export const initializeSession = async (
     );
     await setDoc(sessionRef, {
       sessionId: currentSessionId,
-      // startTime: sessionStartTime,
       startTimeFormatted: new Date(sessionStartTime).toLocaleString("en-US", {
         year: "numeric",
         month: "short",
@@ -118,7 +110,6 @@ export const initializeSession = async (
       participantId: userId,
       gameVersion,
       gameVersionCode: GAME_VERSION_MAP[gameVersion] || 0,
-      productionMode: productionMode ? 1 : 0,
     });
 
     console.log("Session initialized:", currentSessionId);
@@ -149,6 +140,7 @@ export const endSession = async () => {
 
     console.log("Session ended:", currentSessionId);
 
+    // Reset session state
     currentSessionId = null;
     currentUserId = null;
     lastButtonPressTime = null;
@@ -161,9 +153,181 @@ export const endSession = async () => {
   }
 };
 /**
+ * Log whether the participant passed or failed the instructions quiz, duration in ms, and timestamp of endtime
+ * Call this in App.jsx from handleInstructionsDisqualified (passed=false)
+ * and from handleTutorialComplete (passed=true).
+ * Added to user's session document
+ * @param {boolean} passed
+ */
+export const logInstructionsResult = async (passed, reason) => {
+  if (!currentUserId || !currentSessionId) return;
+  try {
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+    );
+    await updateDoc(sessionRef, {
+      instructionsResult: {
+        passed: passed ? 1 : 0,
+        reason: reason,
+        msSinceSessionStart: Date.now() - sessionStartTime,
+        timestamp: serverTimestamp(),
+      },
+    });
+    console.log(`Instructions result: ${passed ? "PASSED" : "FAILED"}`);
+  } catch (error) {
+    console.error("Error logging instructions result:", error);
+  }
+};
+
+/**
+ * Log the outcome of the training phase.
+ *  Logs whether training was passed, how many rounds they survived, total rounds attempted, survival rate, duration in ms, and timestamp of endtime
+ * Call this in TrainingPhase.jsx / App.jsx when training ends.
+ *
+ * @param {boolean} passed            - Whether they met the survival threshold
+ * @param {number}  roundsSurvived    - How many rounds they survived
+ * @param {number}  totalRounds       - Total training rounds attempted
+ */
+// check if i should call this from App.jsx instead of TrainingPhase.jsx 5/18
+export const logTrainingResult = async (
+  passed,
+  roundsSurvived,
+  totalRounds,
+) => {
+  if (!currentUserId || !currentSessionId) return;
+  try {
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+    );
+    await updateDoc(sessionRef, {
+      trainingResult: {
+        passed: passed ? 1 : 0,
+        roundsSurvived,
+        totalRounds,
+        timestamp: serverTimestamp(),
+      },
+    });
+    console.log(
+      `Training result: ${passed ? "PASSED" : "FAILED"} — ${roundsSurvived}/${totalRounds} rounds survived`,
+    );
+  } catch (error) {
+    console.error("Error logging training result:", error);
+  }
+};
+
+/**
+ * Log an experiment termination event to the session document.
+ * Call this before any redirect that ends the experiment early.
+ * Logs the reason for termination, which stage they were in, duration in ms, and timestamp.
+ *
+ * @param {string} reason
+ *   One of: "tab_switch" | "reload" | "instructions_failed" | "training_failed"
+ * @param {string} stage
+ *   One of: "instructions" | "training" | "main_game"
+ */
+export const logTermination = async (reason, stage) => {
+  if (!currentUserId || !currentSessionId) return;
+  try {
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+    );
+    await updateDoc(sessionRef, {
+      termination: {
+        reason, // why they were terminated
+        stage, // which stage they were at
+        timestamp: serverTimestamp(),
+      },
+    });
+    console.log(`Termination logged: reason=${reason} stage=${stage}`);
+  } catch (error) {
+    console.error("Error logging termination:", error);
+  }
+};
+
+/**
+ * Log the participant's answer to the preliminary question about their platform, timestamp, and ms since session start.
+ */
+export const logPrelimAnswer = async (answer) => {
+  if (!currentUserId || !currentSessionId) return;
+  try {
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+    );
+    await updateDoc(sessionRef, {
+      prelimAnswer: answer,
+      prelimAnsweredAt: serverTimestamp(),
+    });
+    console.log("Prelim answer logged:", answer);
+  } catch (error) {
+    console.error("Error logging prelim answer:", error);
+  }
+};
+
+/**
+ * Log the completion of the game, including final score, total rounds, cumulative progress, and whether they reached the bonus goal.
+ */
+export const logGameCompletion = async ({
+  finalScore,
+  totalRounds,
+  cumulativeProgress,
+  isTrainingMode = false,
+}) => {
+  if (!currentUserId || !currentSessionId) return;
+
+  const BONUS_THRESHOLD = 75;
+  const reachedBonusGoal =
+    Math.round(cumulativeProgress * 100) / 100 >= BONUS_THRESHOLD;
+  try {
+    const sessionRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+    );
+
+    await updateDoc(sessionRef, {
+      game_completion: {
+        finalScore,
+        cumulativeProgress: Math.round(cumulativeProgress * 100) / 100,
+        reachedBonusGoal: reachedBonusGoal ? 1 : 0,
+        bonusThresholdPct: BONUS_THRESHOLD,
+        completedAt: serverTimestamp(),
+        msSinceSessionStart: Date.now() - sessionStartTime,
+      },
+    });
+
+    console.log(
+      `Game complete — progress: ${cumulativeProgress}% — bonus goal ${reachedBonusGoal ? "REACHED" : "NOT reached"}`,
+    );
+    return { reachedBonusGoal };
+  } catch (error) {
+    console.error("Error logging game completion:", error);
+    return { reachedBonusGoal };
+  }
+};
+
+// GAME CONFIG CSV
+/**
  * Log game config for new session
  */
-export const logGameConfig = async (userId, gameVersion, productionMode) => {
+export const logGameConfig = async (userId, gameVersion) => {
   currentUserId = userId;
 
   try {
@@ -226,147 +390,7 @@ export const logGameConfig = async (userId, gameVersion, productionMode) => {
   }
 };
 
-/**
- * Log whether the participant passed or failed the instructions quiz, duration in ms, and timestamp of endtime
- * Call this in App.jsx from handleInstructionsDisqualified (passed=false)
- * and from handleTutorialComplete (passed=true).
- * Added to user's session document
- * @param {boolean} passed
- */
-export const logInstructionsResult = async (passed, reason) => {
-  if (!currentUserId || !currentSessionId) return;
-  try {
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-    );
-    await updateDoc(sessionRef, {
-      instructionsResult: {
-        passed: passed ? 1 : 0,
-        reason: reason,
-        msSinceSessionStart: Date.now() - sessionStartTime,
-        timestamp: serverTimestamp(),
-      },
-    });
-    console.log(`Instructions result: ${passed ? "PASSED" : "FAILED"}`);
-  } catch (error) {
-    console.error("Error logging instructions result:", error);
-  }
-};
-
-/**
- * Log the outcome of the training phase.
- *  Logs whether training was passed, how many rounds they survived, total rounds attempted, survival rate, duration in ms, and timestamp of endtime
- * Call this in TrainingPhase.jsx / App.jsx when training ends.
- *
- * @param {boolean} passed            - Whether they met the survival threshold
- * @param {number}  roundsSurvived    - How many rounds they survived
- * @param {number}  totalRounds       - Total training rounds attempted
- */
-// check if i should call this from App.jsx instead of TrainingPhase.jsx 5/18
-export const logTrainingResult = async (
-  passed,
-  roundsSurvived,
-  totalRounds,
-) => {
-  if (!currentUserId || !currentSessionId) return;
-  try {
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-    );
-    await updateDoc(sessionRef, {
-      trainingResult: {
-        passed: passed ? 1 : 0,
-        roundsSurvived,
-        totalRounds,
-        survivalRate:
-          totalRounds > 0
-            ? Math.round((roundsSurvived / totalRounds) * 100) / 100
-            : 0,
-        msSinceSessionStart: Date.now() - sessionStartTime,
-        timestamp: serverTimestamp(),
-      },
-    });
-    console.log(
-      `Training result: ${passed ? "PASSED" : "FAILED"} — ${roundsSurvived}/${totalRounds} rounds survived`,
-    );
-  } catch (error) {
-    console.error("Error logging training result:", error);
-  }
-};
-
-/**
- * Log an experiment termination event to the session document.
- * Call this before any redirect that ends the experiment early.
- * Logs the reason for termination, which stage they were in, duration in ms, and timestamp.
- *
- * @param {string} reason
- *   One of: "tab_switch" | "reload" | "instructions_failed" | "training_failed"
- * @param {string} stage
- *   One of: "instructions" | "training" | "main_game"
- */
-export const logTermination = async (reason, stage) => {
-  if (!currentUserId || !currentSessionId) return;
-  try {
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-    );
-    await updateDoc(sessionRef, {
-      termination: {
-        reason, // why they were terminated
-        stage, // which stage they were at
-        msSinceSessionStart: Date.now() - sessionStartTime,
-        timestamp: serverTimestamp(),
-      },
-    });
-    console.log(`Termination logged: reason=${reason} stage=${stage}`);
-  } catch (error) {
-    console.error("Error logging termination:", error);
-  }
-};
-
-// ============================================================================
-// PRELIM QUESTION
-// ============================================================================
-/**
- * Log the participant's answer to the preliminary question about their platform, timestamp, and ms since session start.
- */
-// do i need to log timestamp? 5/18
-export const logPrelimAnswer = async (answer) => {
-  if (!currentUserId || !currentSessionId) return;
-  try {
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-    );
-    await updateDoc(sessionRef, {
-      prelimAnswer: answer,
-      prelimAnsweredAt: serverTimestamp(),
-      prelimMsSinceSessionStart: Date.now() - sessionStartTime,
-    });
-    console.log("Prelim answer logged:", answer);
-  } catch (error) {
-    console.error("Error logging prelim answer:", error);
-  }
-};
-
-// ============================================================================
-// TUTORIAL / INSTRUCTIONS SLIDE NAVIGATION
-// ============================================================================
+// TUTORIAL SLIDE CSV
 
 /**
  * Log a change in the tutorial slide.
@@ -409,6 +433,8 @@ export const logTutorialSlideChange = async ({
   }
 };
 
+// TUTORIAL QUIZ ANSWERS CSV
+
 /**
  * Log an answer to a quiz question within the tutorial.
  * Logs quiz ID, slide ID, selected answer IDs, whether the answer was correct, attempt number, game version, timestamp, and ms since session start.
@@ -448,10 +474,7 @@ export const logTutorialQuizAnswer = async ({
   }
 };
 
-// ============================================================================
-// ROUND LOGGING
-// ============================================================================
-
+// ROUNDS CSV
 /**
  * Log the start of a new round.
  * Logs round number, time since the session start, current timestamp, whether it's training mode, round configuration details (phase, game version, vial/bucket setup, velocity, setpoint, initial levels).
@@ -488,28 +511,17 @@ export const logRoundStart = async (
         fractionalSecondDigits: 3,
         hour12: true,
       }),
-      // timestamp: serverTimestamp(),
 
       isTrainingMode: isTrainingMode ? 1 : 0,
-      // phase: roundConfig.isTrainingMode,
       gameVersion: roundConfig.gameVersion || null,
-
-      // numVials: roundConfig.numVials || 1,
       vial1HasBucket: roundConfig.vial1HasBucket ? 1 : 0,
       vial2HasBucket: roundConfig.vial2HasBucket ? 1 : 0,
       velocity: Math.round(roundConfig.velocity * 100) / 100,
-      // setpoint: Math.round(roundConfig.setpoint * 100) / 100,
-
-      // phaseLabel: roundConfig.phase || "none",
       phaseCode: PHASE_MAP[roundConfig.phase] || 0,
-
-      // initialVial1Level: Math.round(roundConfig.initialVial1Level * 100) / 100,
-      // initialVial2Level: Math.round(roundConfig.initialVial2Level * 100) / 100,
       initialBucket1Level:
         Math.round(roundConfig.initialBucket1Level * 100) / 100,
       initialBucket2Level:
         Math.round(roundConfig.initialBucket2Level * 100) / 100,
-
       roundComplete: 0,
       roundSuccessful: null,
       roundEndTime: null,
@@ -536,6 +548,64 @@ export const logRoundStart = async (
   }
 };
 
+/**
+ * Logs the end of a round, including its success status, training mode, end time, and cumulative progress.
+ * @param {*} successful
+ * @param {*} isTrainingMode
+ * @param {*} cumulativeProgress
+ * @returns
+ */
+export const logRoundEnd = async (
+  successful,
+  isTrainingMode = false,
+  cumulativeProgress = null,
+) => {
+  if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
+
+  try {
+    const roundEndTime = Date.now();
+    const roundDuration = roundStartTime ? roundEndTime - roundStartTime : null;
+
+    const roundRef = doc(
+      db,
+      "user_sessions",
+      currentUserId,
+      "sessions",
+      currentSessionId,
+      "rounds",
+      currentRoundDocId,
+    );
+
+    await updateDoc(roundRef, {
+      roundComplete: 1,
+      roundSuccessful: successful ? 1 : 0,
+      isTrainingMode: isTrainingMode ? 1 : 0,
+      roundEndTime: new Date(roundEndTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+        hour12: true,
+      }),
+      roundDuration,
+      cumulativeProgress:
+        cumulativeProgress !== null
+          ? Math.round(cumulativeProgress * 100) / 100
+          : null,
+    });
+
+    console.log(
+      `[${isTrainingMode ? "TRAINING" : "GAME"}] Round ${currentRoundNumber}: ${successful ? "SUCCESS" : "FAILURE"}`,
+    );
+  } catch (error) {
+    console.error("Error logging round end:", error);
+  }
+};
+
+// BUTTON PRESSES CSV
 /**
  * Log a button/key press within the current round.
  * Logs the type of button pressed, time since round start, time since last button press, current timestamp, game state at the time of press
@@ -597,6 +667,7 @@ export const logButtonPress = async (
   }
 };
 
+// GAS STATION TOGGLES CSV
 /**
  * Log each time the gas station turns on or off.
  * Call this in VialGame.jsx inside the useEffect that watches isAddingDisabled.
@@ -636,6 +707,7 @@ export const logGasStationToggle = async (
   }
 };
 
+// TAB VISIBILITY CHANGES CSV
 /**
  * Log each time the participant hides or shows the tab.
  * Call this from the visibilitychange handler in App.jsx.
@@ -665,108 +737,5 @@ export const logTabVisibilityChange = async (visibilityState, stage) => {
     });
   } catch (error) {
     console.error("Error logging tab visibility change:", error);
-  }
-};
-
-/**
- * Logs the end of a round, including its success status, training mode, end time, and cumulative progress.
- * @param {*} successful
- * @param {*} isTrainingMode
- * @param {*} cumulativeProgress
- * @returns
- */
-export const logRoundEnd = async (
-  successful,
-  isTrainingMode = false,
-  cumulativeProgress = null,
-) => {
-  if (!currentUserId || !currentSessionId || !currentRoundDocId) return;
-
-  try {
-    const roundEndTime = Date.now();
-    const roundDuration = roundStartTime ? roundEndTime - roundStartTime : null;
-
-    const roundRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-      "rounds",
-      currentRoundDocId,
-    );
-
-    await updateDoc(roundRef, {
-      roundComplete: 1,
-      roundSuccessful: successful ? 1 : 0,
-      isTrainingMode: isTrainingMode ? 1 : 0,
-      roundEndTime: new Date(roundEndTime).toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        fractionalSecondDigits: 3,
-        hour12: true,
-      }),
-      roundDuration,
-      cumulativeProgress:
-        cumulativeProgress !== null
-          ? Math.round(cumulativeProgress * 100) / 100
-          : null,
-    });
-
-    console.log(
-      `[${isTrainingMode ? "TRAINING" : "GAME"}] Round ${currentRoundNumber}: ${successful ? "SUCCESS" : "FAILURE"}`,
-    );
-  } catch (error) {
-    console.error("Error logging round end:", error);
-  }
-};
-
-/**
- * Log the completion of the game, including final score, total rounds, cumulative progress, and whether they reached the bonus goal.
- */
-export const logGameCompletion = async ({
-  finalScore,
-  totalRounds,
-  cumulativeProgress,
-  isTrainingMode = false,
-}) => {
-  if (!currentUserId || !currentSessionId) return;
-
-  const BONUS_THRESHOLD = 75;
-  const reachedBonusGoal =
-    Math.round(cumulativeProgress * 100) / 100 >= BONUS_THRESHOLD;
-  try {
-    const sessionRef = doc(
-      db,
-      "user_sessions",
-      currentUserId,
-      "sessions",
-      currentSessionId,
-    );
-
-    await updateDoc(sessionRef, {
-      completion: {
-        finalScore,
-        totalRounds,
-        cumulativeProgress: Math.round(cumulativeProgress * 100) / 100,
-        reachedBonusGoal: reachedBonusGoal ? 1 : 0,
-        bonusThresholdPct: BONUS_THRESHOLD,
-        isTrainingMode: isTrainingMode ? 1 : 0,
-        completedAt: serverTimestamp(),
-        msSinceSessionStart: Date.now() - sessionStartTime,
-      },
-    });
-
-    console.log(
-      `Game complete — progress: ${cumulativeProgress}% — bonus goal ${reachedBonusGoal ? "REACHED" : "NOT reached"}`,
-    );
-    return { reachedBonusGoal };
-  } catch (error) {
-    console.error("Error logging game completion:", error);
-    return { reachedBonusGoal };
   }
 };
