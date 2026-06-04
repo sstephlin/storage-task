@@ -112,14 +112,11 @@ export const logRoundStartFromSequences = ({
   return logRoundStart(
     roundIndex,
     {
-      //   numVials: versionConfig.numVials,
       vial1HasBucket: bucketConfig.vial1 === 1,
       vial2HasBucket: bucketConfig.vial2 === 1,
       velocity: drainRate,
       setpoint: GAME_PARAMS.OPTIMAL_LEVEL,
       phase,
-      //   initialVial1Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
-      //   initialVial2Level: GAME_PARAMS.INITIAL_VIAL_LEVEL,
       initialBucket1Level: bucket1Level,
       initialBucket2Level: bucket2Level,
       isTrainingMode,

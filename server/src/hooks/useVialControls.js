@@ -53,7 +53,6 @@ export const useVialControls = ({
       bucket2Level,
       currentDrainRate,
       currentRound,
-      //   isAddingDisabledRef,
       roundTimeRemaining,
       roundWasSuccessful,
       score,
@@ -97,14 +96,11 @@ export const useVialControls = ({
     },
     [
       getCurrentState,
-      //   isAddingDisabledRef,
       isTrainingMode,
       keyLocked,
       setVial1Level,
       setVial2Level,
       unlockKeyAfterDelay,
-      //   vial1Paused,
-      //   vial2Paused,
     ],
   );
 

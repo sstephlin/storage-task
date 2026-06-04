@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Robot from "./Robot";
 import RoundTransition from "./RoundTransition";
 import GasStationIndicator from "./GasStationIndicator";
-import { logRoundEnd, logGasStationToggle } from "../data/logging";
+import { logRoundEnd } from "../data/logging";
 import { PRODUCTION_MODE } from "../data/participantConfig";
 import {
   GAME_PARAMS,
@@ -182,25 +182,25 @@ const VialGame = ({
         isTrainingMode,
         gameVersion,
       });
-      // logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode, true);
-      // .then(() => {
-      //   logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode, true);
-      // });
     },
     [gameSequences, gameVersion, isTrainingMode, roundDuration, versionConfig],
   );
 
+  // useEffect to start the first round automatically if not showing tutorial
   useEffect(() => {
     if (showTutorial || currentRound !== null) return;
     startRound(0);
   }, [showTutorial, currentRound, startRound]);
 
+  // start game loop when round starts
   useEffect(() => {
     if (!isRoundTransition && !showingAnimation) {
       setGameRunning(true);
     }
   }, [isRoundTransition, showingAnimation]);
 
+  // helper to advance round with success/failure and handle all the related state changes and logging.
+  // check for game completion
   const advanceRound = useCallback(
     (wasSuccessful, failureType = null) => {
       const newProgress = getNextProgress({
@@ -276,6 +276,7 @@ const VialGame = ({
     ],
   );
 
+  // useEffect to decrement round timer
   useEffect(() => {
     if (gameRunning && !isRoundTransition && !showingAnimation) {
       roundTimerRef.current = setInterval(() => {
@@ -294,6 +295,7 @@ const VialGame = ({
     return () => clearInterval(roundTimerRef.current);
   }, [gameRunning, isRoundTransition, showingAnimation]);
 
+  // useEffect to check for round ending conditions (success)
   useEffect(() => {
     if (
       roundTimeRemaining === 0 &&
@@ -311,6 +313,7 @@ const VialGame = ({
     showingAnimation,
   ]);
 
+  // useEffect to check for round ending conditions (failure)
   useEffect(() => {
     if (
       !gameRunning ||

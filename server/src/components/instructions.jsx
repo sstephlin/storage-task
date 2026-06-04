@@ -172,7 +172,6 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       targetSlide?.type === "quiz" || targetSlide?.type === "quizGroup";
     logTutorialSlideChange({
       slideIndex: newSlideIndex,
-      slideId: targetSlide?.id ?? String(newSlideIndex),
       isQuizSlide,
       direction,
       gameVersion,

@@ -94,7 +94,7 @@ Main Game Rounds: 36
 4. Participant engages in 36 rounds of the main game. They have the opportunity to receive a bonus based on their performance.
 5. Upon completion, participant will be redirected to the Qualtrics ending survey.
 
-### Participants are permitted to do the following actions while engaging with the experiment:
+### Participants are not permitted to do the following actions while engaging with the experiment:
 
 Tab change:
 

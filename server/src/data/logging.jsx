@@ -192,7 +192,6 @@ export const logInstructionsResult = async (passed, reason) => {
  * @param {number}  roundsSurvived    - How many rounds they survived
  * @param {number}  totalRounds       - Total training rounds attempted
  */
-// check if i should call this from App.jsx instead of TrainingPhase.jsx 5/18
 export const logTrainingResult = async (
   passed,
   roundsSurvived,

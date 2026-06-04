@@ -54,7 +54,7 @@ export const useExperimentBootstrap = () => {
         return;
       }
 
-      await initializeSession(participantId, version, PRODUCTION_MODE);
+      await initializeSession(participantId, version);
       await logGameConfig(participantId, version);
       setIsLoading(false);
     };
