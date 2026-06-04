@@ -86,24 +86,160 @@ Training Rounds: 10
 
 Main Game Rounds: 36
 
-## Game Flow
+## Experiment Flow
 
-1. Participant answers preliminary question as a form of bot detection
-2. Participant engages in instruction slides. Each slide is shown for at least 2 seconds. For each quiz group, the participants will have 3 attempts to answer all questions correctly. If participant fails any quiz group after 3 attempts, they are disqualified from the study.
-3. Participant enters TrainingPhase. If participant survives 50% of the training rounds, they will proceed. Otherwise, they will be disqualified.
-4. Participant engages in 36 rounds of the main game. They have the opportunity to receive a bonus based on their performance.
-5. Upon completion, participant will be redirected to the Qualtrics ending survey.
+The app is organized as a single-page React experiment. `App.jsx` controls the high-level participant flow and decides which screen should be shown.
 
-### Participants are not permitted to do the following actions while engaging with the experiment:
+1. **URL validation and session setup**
+   - Participants enter through a URL containing `PROLIFIC_ID` and `STUDY_ID`.
+   - `src/data/participantConfig.jsx` validates these URL params and maps the study code to an internal game version.
+   - `src/hooks/useExperimentBootstrap.js` initializes access control and starts the Firebase logging session.
 
-Tab change:
+2. **Preliminary question**
+   - The participant answers a preliminary question before seeing instructions.
+   - The response is logged with `logPrelimAnswer`.
 
-- If a tab change is detected and user does not return after 15 seconds, the will be automatically redirected back to Prolific.
+3. **Instructions/tutorial**
+   - Instruction slides and quizzes live in `src/components/instructions.jsx`.
+   - Each slide has a minimum viewing time.
+   - Quiz groups allow a limited number of attempts.
+   - Failing the instruction checks disqualifies the participant and redirects them to the appropriate Prolific completion link.
 
-Stale Tutorial:
+4. **Training phase**
+   - `src/components/TrainingPhase.jsx` manages the tutorial-to-training flow.
+   - It builds a training sequence from `TRAINING_PARAMS`.
+   - The participant must survive at least the required percentage of practice rounds.
+   - Passing training shows a transition screen with the partial completion code before the main game begins.
+   - Failing training redirects the participant to the training-failure link.
 
-- If a tutorial slide has not be interacted with for over 3 minutes, a warning will display for 30 seconds. After 30 seconds, the participant will be redirected to Prolific
+5. **Main game**
+   - `src/components/VialGame.jsx` runs the actual game rounds.
+   - Each round has a drain velocity, bucket/storage configuration, and phase label.
+   - The player tries to keep vial levels near the ideal level while avoiding emptying or overflowing.
+   - Round outcomes and button presses are logged to Firebase.
 
-Refresh Page:
+6. **Completion and redirect**
+   - On main-game completion, final score, total rounds, progress, and bonus eligibility are logged.
+   - The participant is redirected to the version-specific Qualtrics ending survey.
 
-- If the participant attempts to refresh the page, a warning modal will appear confirming their action. Participants have the opportunity to return to the game. If no confirmation is provided and partcipant does not resume the game, they will be redirected to Prolific.
+## Code Organization
+
+Most experiment behavior is split between high-level flow components, game components, hooks, and data helpers.
+
+### High-level app flow
+
+- `src/App.jsx`
+  - Coordinates the overall experiment state.
+  - Decides whether to show the preliminary question, training, reload termination screen, or main game.
+  - Handles completion, disqualification, and redirect callbacks.
+
+- `src/hooks/useExperimentBootstrap.js`
+  - Reads URL params.
+  - Validates participant/game version information.
+  - Checks reload/access-control state.
+  - Initializes the logging session.
+
+- `src/hooks/useReloadWarning.js`
+  - Sets up browser reload/leave protection.
+
+- `src/hooks/useReloadRedirect.js`
+  - Handles the reload termination countdown and redirect.
+
+- `src/hooks/useTabTermination.js`
+  - Logs tab visibility changes.
+  - Redirects participants if they remain away from the tab for too long.
+
+### Training and instruction flow
+
+- `src/components/instructions.jsx`
+  - Shows tutorial slides.
+  - Handles quiz answers, timing, warnings, and instruction disqualification.
+
+- `src/components/TrainingPhase.jsx`
+  - Shows instructions, training intro, active practice rounds, pass/fail results, and the transition screen before the main game.
+  - Uses `VialGame` in training mode.
+
+### Main game logic
+
+- `src/components/VialGame.jsx`
+  - Owns the round-level state: current round, score, round timer, game completion, animations, and progress.
+  - Calls hooks for controls, vial draining, gas-station behavior, and audio.
+
+- `src/hooks/useVialControls.js`
+  - Handles keyboard input.
+  - Logs button presses.
+  - Updates vial and bucket levels when participants add liquid or empty storage.
+
+- `src/hooks/useVialGameLoop.js`
+  - Runs the repeated vial-drain loop.
+  - Fills buckets when drained liquid is captured by available storage.
+  - Samples distance from the ideal level for performance scoring.
+
+- `src/hooks/useGasStationControl.js`
+  - Controls gas-station availability during abundance/deprivation versions.
+  - Logs gas-station active/inactive events.
+
+- `src/hooks/useAudioContext.js`
+  - Creates and cleans up the browser audio context used by game sounds.
+
+- `src/utils/vialGameLogic.js`
+  - Contains pure game calculations such as round settings, bucket transfer amounts, vial ticking, failure type, and performance progress.
+
+### Data, params, and logging
+
+- `src/data/params.jsx`
+  - Defines game constants, version configs, training params, velocity configs, and redirect URLs.
+
+- `src/data/gameSequences.jsx`
+  - Generates per-round velocity, bucket, and phase sequences for each game version.
+
+- `src/data/logging.jsx`
+  - Handles Firebase logging for sessions, tutorial events, preliminary answers, rounds, button presses, gas-station events, tab events, training results, and game completion.
+
+- `src/data/accessControl.jsx`
+  - Tracks participant access and reload/session state.
+
+## Logging Overview
+
+The experiment logs several categories of data:
+
+- **Session start/end**
+  - Participant ID, game version, production mode, and session timing.
+
+- **Tutorial/instructions**
+  - Slide changes, quiz answers, instruction pass/fail results, and stale-slide disqualification.
+
+- **Training**
+  - Whether the participant passed training, rounds survived.
+
+- **Rounds**
+  - Round number, phase, velocity, number of vials, bucket availability, initial vial/bucket levels, and round result.
+
+- **Button presses**
+  - Which control was pressed, current vial/bucket state, add amount, velocity, time since round start, and gas-station active state.
+
+- **Gas-station events**
+  - Whether the station is active or inactive.
+  - Initial round setting should be logged at round start.
+  - Later toggle logs should represent actual active/inactive changes.
+
+- **Tab visibility**
+  - When the participant hides or returns to the tab and which experiment stage they were in.
+
+- **Game Config**
+  - Displays all game settings in one central file.
+
+## Important Experiment Protections
+
+- **Reload protection**
+  - Participants should not refresh or leave the page during the experiment.
+  - Reload attempts trigger warning/termination behavior in production mode.
+
+- **Tab-away termination**
+  - If participants leave the tab and do not return within the configured time limit, they are redirected.
+
+- **Single access**
+  - Production access control is intended to prevent participants from restarting the experiment after beginning.
+
+- **Intentional redirects**
+  - Redirects triggered by the experiment are marked as intentional so browser unload protections do not block them.
