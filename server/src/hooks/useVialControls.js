@@ -53,7 +53,7 @@ export const useVialControls = ({
       bucket2Level,
       currentDrainRate,
       currentRound,
-      isAddingDisabledRef,
+      //   isAddingDisabledRef,
       roundTimeRemaining,
       roundWasSuccessful,
       score,
@@ -66,7 +66,7 @@ export const useVialControls = ({
     setTimeout(() => {
       keyLocked.current = false;
     }, buttonDelay);
-  }, [buttonDelay, keyLocked]);
+  }, [buttonDelay]);
 
   const handleAddVial = useCallback(
     (vialNum, event) => {
@@ -97,14 +97,14 @@ export const useVialControls = ({
     },
     [
       getCurrentState,
-      isAddingDisabledRef,
+      //   isAddingDisabledRef,
       isTrainingMode,
       keyLocked,
       setVial1Level,
       setVial2Level,
       unlockKeyAfterDelay,
-      vial1Paused,
-      vial2Paused,
+      //   vial1Paused,
+      //   vial2Paused,
     ],
   );
 

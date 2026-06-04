@@ -13,11 +13,13 @@ export const useGasStationControl = ({
   isRoundTransition,
   showingAnimation,
   isTrainingMode,
+  roundKey,
 }) => {
   const [isAddingDisabled, setIsAddingDisabledState] = useState(false);
   const [frozenAddingDisabled, setFrozenAddingDisabled] = useState(false);
   const isAddingDisabledRef = useRef(false);
   const disableTimerRef = useRef(null);
+  const prevRoundKey = useRef(null);
 
   const setAddingDisabled = useCallback((value) => {
     isAddingDisabledRef.current = value;
@@ -85,18 +87,19 @@ export const useGasStationControl = ({
   ]);
 
   useEffect(() => {
-    if (!hasPhases || !gameRunning || isRoundTransition || showingAnimation) {
-      return;
-    }
+    if (!gameRunning || isRoundTransition || showingAnimation) return;
 
-    logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode);
+    const isRoundStart = roundKey !== prevRoundKey.current;
+    prevRoundKey.current = roundKey;
+
+    logGasStationToggle(!isAddingDisabled, isTrainingMode, isRoundStart);
   }, [
-    gameRunning,
-    hasPhases,
     isAddingDisabled,
+    gameRunning,
     isRoundTransition,
-    isTrainingMode,
     showingAnimation,
+    isTrainingMode,
+    roundKey,
   ]);
 
   useEffect(() => {

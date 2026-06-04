@@ -48,7 +48,6 @@ const App = () => {
   const [prelimAnswered, setPrelimAnswered] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [isDisqualified, setIsDisqualified] = useState(false);
-  const [isGamePaused, setIsGamePaused] = useState(false);
 
   const gameCompletedRef = useRef(false);
 
@@ -221,7 +220,6 @@ const App = () => {
         userId={userId}
         gameVersion={gameVersion}
         onComplete={handleGameComplete}
-        isPaused={isGamePaused}
       />
     </div>
   );

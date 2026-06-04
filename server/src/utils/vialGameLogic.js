@@ -109,7 +109,7 @@ export const logRoundStartFromSequences = ({
     roundIndex,
   );
 
-  logRoundStart(
+  return logRoundStart(
     roundIndex,
     {
       //   numVials: versionConfig.numVials,

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Robot from "./Robot";
 import RoundTransition from "./RoundTransition";
 import GasStationIndicator from "./GasStationIndicator";
-import { logRoundEnd } from "../data/logging";
+import { logRoundEnd, logGasStationToggle } from "../data/logging";
 import { PRODUCTION_MODE } from "../data/participantConfig";
 import {
   GAME_PARAMS,
@@ -32,7 +32,6 @@ import "../styles/VialGame.css";
 const VialGame = ({
   gameVersion,
   onComplete,
-  isPaused = false,
   isTrainingMode = false,
   trainingParams = null,
   onRoundComplete = null,
@@ -96,6 +95,8 @@ const VialGame = ({
   const distanceSamplesRef = useRef([]);
   const vial1Paused = useRef(false);
   const vial2Paused = useRef(false);
+  const bucket1LevelRef = useRef(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
+  const bucket2LevelRef = useRef(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
 
   const vial1HasBucket = currentBucketConfig.vial1 === 1;
   const vial2HasBucket = currentBucketConfig.vial2 === 1;
@@ -109,16 +110,13 @@ const VialGame = ({
     isRoundTransition,
     showingAnimation,
     isTrainingMode,
+    roundKey: currentRound,
   });
 
   // call to useEffect for vial controls, like key press
   useVialControls({
     isEnabled:
-      !isRoundTransition &&
-      gameRunning &&
-      !showTutorial &&
-      !showingAnimation &&
-      !isPaused,
+      !isRoundTransition && gameRunning && !showTutorial && !showingAnimation,
     keyLocked,
     buttonDelay,
     numVials: versionConfig.numVials,
@@ -145,8 +143,7 @@ const VialGame = ({
 
   // call to useEffect for game loop, which handles vial level ticking and distance sampling
   useVialGameLoop({
-    isActive:
-      gameRunning && !isRoundTransition && !showingAnimation && !isPaused,
+    isActive: gameRunning && !isRoundTransition && !showingAnimation,
     currentDrainRate,
     numVials: versionConfig.numVials,
     vial1Level,
@@ -165,6 +162,7 @@ const VialGame = ({
   // helper to start a round
   const startRound = useCallback(
     (roundIndex, { resetVials = false } = {}) => {
+      console.log("Starting round", roundIndex);
       if (resetVials) {
         setVial1Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
         setVial2Level(GAME_PARAMS.INITIAL_VIAL_LEVEL);
@@ -174,42 +172,34 @@ const VialGame = ({
       setRoundTimeRemaining(roundDuration);
       setIsRoundTransition(false);
       setGameRunning(true);
+
       logRoundStartFromSequences({
         roundIndex,
         gameSequences,
         versionConfig,
-        bucket1Level,
-        bucket2Level,
+        bucket1Level: bucket1LevelRef.current,
+        bucket2Level: bucket2LevelRef.current,
         isTrainingMode,
         gameVersion,
       });
+      // logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode, true);
+      // .then(() => {
+      //   logGasStationToggle(!isAddingDisabledRef.current, isTrainingMode, true);
+      // });
     },
-    [
-      bucket1Level,
-      bucket2Level,
-      gameSequences,
-      gameVersion,
-      isTrainingMode,
-      roundDuration,
-      versionConfig,
-    ],
+    [gameSequences, gameVersion, isTrainingMode, roundDuration, versionConfig],
   );
 
   useEffect(() => {
     if (showTutorial || currentRound !== null) return;
-    startRound(0, {
-      initialBucket1Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-      initialBucket2Level: GAME_PARAMS.INITIAL_BUCKET_LEVEL,
-    });
+    startRound(0);
   }, [showTutorial, currentRound, startRound]);
 
   useEffect(() => {
-    if (isPaused) {
-      setGameRunning(false);
-    } else if (!isRoundTransition && !showingAnimation) {
+    if (!isRoundTransition && !showingAnimation) {
       setGameRunning(true);
     }
-  }, [isPaused, isRoundTransition, showingAnimation]);
+  }, [isRoundTransition, showingAnimation]);
 
   const advanceRound = useCallback(
     (wasSuccessful, failureType = null) => {
@@ -270,8 +260,6 @@ const VialGame = ({
         setTimeout(() => {
           startRound(nextRound, {
             resetVials: true,
-            initialBucket1Level: bucket1Level,
-            initialBucket2Level: bucket2Level,
           });
         }, GAME_PARAMS.TRANSITION_TIME);
       }, 2000);
@@ -289,7 +277,7 @@ const VialGame = ({
   );
 
   useEffect(() => {
-    if (gameRunning && !isRoundTransition && !showingAnimation && !isPaused) {
+    if (gameRunning && !isRoundTransition && !showingAnimation) {
       roundTimerRef.current = setInterval(() => {
         setRoundTimeRemaining((prev) => {
           if (prev <= 1) {
@@ -304,7 +292,7 @@ const VialGame = ({
     }
 
     return () => clearInterval(roundTimerRef.current);
-  }, [gameRunning, isRoundTransition, showingAnimation, isPaused]);
+  }, [gameRunning, isRoundTransition, showingAnimation]);
 
   useEffect(() => {
     if (
@@ -352,6 +340,13 @@ const VialGame = ({
     vial1Level,
     vial2Level,
   ]);
+  // sync bucket levels to refs
+  useEffect(() => {
+    bucket1LevelRef.current = bucket1Level;
+  }, [bucket1Level]);
+  useEffect(() => {
+    bucket2LevelRef.current = bucket2Level;
+  }, [bucket2Level]);
 
   if (gameComplete && isTrainingMode) {
     return null;

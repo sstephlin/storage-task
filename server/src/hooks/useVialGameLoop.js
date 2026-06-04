@@ -94,9 +94,9 @@ export const useVialGameLoop = ({
     setVial2Level,
     vial1HasBucket,
     vial1Level,
-    vial1Paused,
+    // vial1Paused,
     vial2HasBucket,
     vial2Level,
-    vial2Paused,
+    // vial2Paused,
   ]);
 };

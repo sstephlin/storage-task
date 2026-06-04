@@ -382,7 +382,6 @@ const TrainingPhase = ({
           userId={userId}
           gameVersion={gameVersion}
           onComplete={handleTrainingEnd}
-          isPaused={false}
           isTrainingMode={true}
           trainingParams={{ ...TRAINING_PARAMS, sequences: trainingSequences }}
           onRoundComplete={handleRoundComplete}
