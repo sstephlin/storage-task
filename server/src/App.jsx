@@ -1,3 +1,8 @@
+/**
+ * Loads page, checks if partcipant has alreay attempted experiment, sets up beforeunload listener to block reloads, and initializes session on successful access
+ * also handles showing reload warning modal if participant attempts to reload or leave page, and redirects to termination page if they confirm the reload/leave action.
+ * Displays preliminary question, training phase, and main game components based on participant's progress, and handles logging and redirection on training completion, game completion, and disqualification.
+ */
 import React, { useCallback, useRef, useState } from "react";
 import VialGame from "./components/VialGame";
 import TrainingPhase from "./components/TrainingPhase";
@@ -49,6 +54,7 @@ const App = () => {
 
   const cleanupReloadWarning = useReloadWarning(userId);
 
+  // function to redirect participant to specified link
   const redirectTo = useCallback(
     (url, reason = "unknown", stage = "unknown") => {
       markIntentionalRedirect();
@@ -62,6 +68,7 @@ const App = () => {
     [cleanupReloadWarning],
   );
 
+  //
   const { redirectCountdown, hasRedirect } = useReloadRedirect({
     showReloadModal,
     trainingComplete,
@@ -78,17 +85,22 @@ const App = () => {
     redirectTo,
   });
 
+  // preliminary question callback
   const handlePrelimComplete = useCallback(async (answer) => {
     await logPrelimAnswer(answer);
     setPrelimAnswered(true);
   }, []);
 
+  // training complete callback, logs completion
   const handleTrainingComplete = useCallback(() => {
     sessionStorage.setItem("mainGameStarted", "true");
     logInstructionsResult(true, null);
     setTrainingComplete(true);
   }, [setTrainingComplete]);
 
+  /**
+   * game complete callback, logs completion and bonus and redirects to final survey or debrief
+   */
   const handleGameComplete = useCallback(
     async ({ finalScore, totalRounds, cumulativeProgress } = {}) => {
       cleanupReloadWarning();
@@ -125,6 +137,9 @@ const App = () => {
     [cleanupReloadWarning, gameVersion, redirectTo, userId],
   );
 
+  /**
+   * disqualification callback for instructions, logs failure reason and redirects to appropriate link
+   */
   const handleInstructionsDisqualified = useCallback(
     async (reason) => {
       setIsDisqualified(true);
@@ -143,6 +158,9 @@ const App = () => {
     [gameVersion, redirectTo, userId],
   );
 
+  /**
+   * disqualification callback for training, logs failure and redirects to appropriate link
+   */
   const handleTrainingDisqualified = useCallback(() => {
     setIsDisqualified(true);
 
@@ -178,6 +196,7 @@ const App = () => {
     <ReloadWarningModal isActive={!!userId} userId={userId} />
   ) : null;
 
+  // show training phase
   if (!trainingComplete) {
     return (
       <>
@@ -194,6 +213,7 @@ const App = () => {
     );
   }
 
+  // show main game
   return (
     <div>
       {reloadWarningModal}

@@ -2,7 +2,7 @@
  * reading URL params, checking access, starting the session.
  */
 import { useEffect, useState } from "react";
-import { initializeSession, endSession } from "../data/logging";
+import { initializeSession, endSession, logGameConfig } from "../data/logging";
 import { PRODUCTION_MODE, validateUrlParams } from "../data/participantConfig";
 import {
   initializeAccess,
@@ -55,6 +55,7 @@ export const useExperimentBootstrap = () => {
       }
 
       await initializeSession(participantId, version, PRODUCTION_MODE);
+      await logGameConfig(participantId, version);
       setIsLoading(false);
     };
 

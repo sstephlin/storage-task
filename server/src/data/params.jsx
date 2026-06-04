@@ -1,10 +1,11 @@
 export const GAME_PARAMS = {
   ADD_AMOUNT: 10,
   MAX_LEVEL: 100,
+  BUCKET_CAPACITY: 40,
   OPTIMAL_LEVEL: 50,
   GAME_SPEED: 100,
   ROUND_DURATION: 15,
-  MAX_ROUNDS: 36,
+  MAX_ROUNDS: 2,
   INITIAL_VIAL_LEVEL: 50,
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
@@ -27,7 +28,7 @@ export const VERSION_CONFIG = {
     description: "Single vial that alternates between having storage and not",
     numVials: 1,
     hasPhases: false,
-    bucketBehavior: "alternating",
+    bucketBehavior: "alternating storage/no storage",
     enabled: true,
   },
 
@@ -65,7 +66,7 @@ export const VERSION_CONFIG = {
     description: "Two vials where at most one has storage at a time",
     numVials: 2,
     hasPhases: false,
-    bucketBehavior: "single_alternating",
+    bucketBehavior: "alternate storage between vials or no storage",
     enabled: true,
   },
 
@@ -75,7 +76,7 @@ export const VERSION_CONFIG = {
       "Two vials with abundance/deprivation phases and varying storage",
     numVials: 2,
     hasPhases: true,
-    bucketBehavior: "dynamic",
+    bucketBehavior: "single bucket alternating between vials",
     enabled: true,
   },
 };

@@ -104,7 +104,7 @@ export const initializeSession = async (
     );
     await setDoc(sessionRef, {
       sessionId: currentSessionId,
-      startTime: sessionStartTime,
+      // startTime: sessionStartTime,
       startTimeFormatted: new Date(sessionStartTime).toLocaleString("en-US", {
         year: "numeric",
         month: "short",
@@ -165,8 +165,6 @@ export const endSession = async () => {
  */
 export const logGameConfig = async (userId, gameVersion, productionMode) => {
   currentUserId = userId;
-  currentSessionId = `${userId}_${Date.now()}`;
-  sessionStartTime = Date.now();
 
   try {
     const userRef = doc(db, "user_sessions", userId);
@@ -185,7 +183,7 @@ export const logGameConfig = async (userId, gameVersion, productionMode) => {
       "user_sessions",
       userId,
       "sessions",
-      "game config",
+      `game_config_${currentSessionId}`,
     );
     await setDoc(sessionRef, {
       sessionId: currentSessionId,
@@ -303,10 +301,6 @@ export const logTrainingResult = async (
     console.error("Error logging training result:", error);
   }
 };
-
-// ============================================================================
-// TERMINATION LOGGING
-// ============================================================================
 
 /**
  * Log an experiment termination event to the session document.
@@ -484,23 +478,33 @@ export const logRoundStart = async (
     const roundData = {
       roundNumber: roundNumberForStorage,
       msSinceSessionStart,
-      timestamp: serverTimestamp(),
+      roundStartTime: new Date(roundStartTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+        hour12: true,
+      }),
+      // timestamp: serverTimestamp(),
 
       isTrainingMode: isTrainingMode ? 1 : 0,
-      phase: roundConfig.isTrainingMode,
+      // phase: roundConfig.isTrainingMode,
       gameVersion: roundConfig.gameVersion || null,
 
-      numVials: roundConfig.numVials || 1,
+      // numVials: roundConfig.numVials || 1,
       vial1HasBucket: roundConfig.vial1HasBucket ? 1 : 0,
       vial2HasBucket: roundConfig.vial2HasBucket ? 1 : 0,
       velocity: Math.round(roundConfig.velocity * 100) / 100,
-      setpoint: Math.round(roundConfig.setpoint * 100) / 100,
+      // setpoint: Math.round(roundConfig.setpoint * 100) / 100,
 
-      phaseLabel: roundConfig.phase || "none",
+      // phaseLabel: roundConfig.phase || "none",
       phaseCode: PHASE_MAP[roundConfig.phase] || 0,
 
-      initialVial1Level: Math.round(roundConfig.initialVial1Level * 100) / 100,
-      initialVial2Level: Math.round(roundConfig.initialVial2Level * 100) / 100,
+      // initialVial1Level: Math.round(roundConfig.initialVial1Level * 100) / 100,
+      // initialVial2Level: Math.round(roundConfig.initialVial2Level * 100) / 100,
       initialBucket1Level:
         Math.round(roundConfig.initialBucket1Level * 100) / 100,
       initialBucket2Level:
@@ -593,10 +597,6 @@ export const logButtonPress = async (
   }
 };
 
-// ============================================================================
-// GAS STATION TOGGLE EVENTS
-// ============================================================================
-
 /**
  * Log each time the gas station turns on or off.
  * Call this in VialGame.jsx inside the useEffect that watches isAddingDisabled.
@@ -626,7 +626,6 @@ export const logGasStationToggle = async (
       isNowActive: isNowActive ? 1 : 0,
       isRoundStart: isRoundStart ? 1 : 0,
       roundNumber: currentRoundNumber,
-      roundDocId: currentRoundDocId,
       isTrainingMode: isTrainingMode ? 1 : 0,
       msSinceSessionStart: Date.now() - sessionStartTime,
       msSinceRoundStart: roundStartTime ? Date.now() - roundStartTime : null,
@@ -669,10 +668,6 @@ export const logTabVisibilityChange = async (visibilityState, stage) => {
   }
 };
 
-// ============================================================================
-// ROUND END
-// ============================================================================
-
 /**
  * Logs the end of a round, including its success status, training mode, end time, and cumulative progress.
  * @param {*} successful
@@ -705,7 +700,16 @@ export const logRoundEnd = async (
       roundComplete: 1,
       roundSuccessful: successful ? 1 : 0,
       isTrainingMode: isTrainingMode ? 1 : 0,
-      roundEndTime,
+      roundEndTime: new Date(roundEndTime).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+        hour12: true,
+      }),
       roundDuration,
       cumulativeProgress:
         cumulativeProgress !== null
@@ -720,10 +724,6 @@ export const logRoundEnd = async (
     console.error("Error logging round end:", error);
   }
 };
-
-// ============================================================================
-// GAME COMPLETION
-// ============================================================================
 
 /**
  * Log the completion of the game, including final score, total rounds, cumulative progress, and whether they reached the bonus goal.
@@ -770,19 +770,3 @@ export const logGameCompletion = async ({
     return { reachedBonusGoal };
   }
 };
-
-// ============================================================================
-// UTILITY
-// ============================================================================
-
-/**
- * Returns the mappings for button types, game versions, and phases.
- * @returns
- */
-export const getMappings = () => ({
-  buttonTypes: { forward: BUTTON_TYPE_MAP, reverse: BUTTON_TYPE_REVERSE },
-  gameVersions: { forward: GAME_VERSION_MAP, reverse: GAME_VERSION_REVERSE },
-  phases: { forward: PHASE_MAP, reverse: PHASE_REVERSE },
-});
-
-export const exportMappingsJSON = () => JSON.stringify(getMappings(), null, 2);

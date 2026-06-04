@@ -11,7 +11,13 @@ const Vial = ({
   isTrainingMode = false,
   trainingColors = null,
 }) => {
-  const displayLevel = Math.min(Math.round(level), 100);
+  const displayLevel = Math.min(Math.round(level), GAME_PARAMS.MAX_LEVEL);
+  const bucketFillPercent = Math.min(
+    100,
+    Math.max(0, (bucketLevel / GAME_PARAMS.BUCKET_CAPACITY) * 100),
+  );
+  const bucketHeight =
+    200 * (GAME_PARAMS.BUCKET_CAPACITY / GAME_PARAMS.MAX_LEVEL);
 
   // Get icon colors based on training mode
   const dangerColor = "#dc2626";
@@ -96,11 +102,16 @@ const Vial = ({
 
       {numBuckets > 0 && (
         <div className="bucket-container">
-          <div className="bucket">
+          <div
+            className="bucket"
+            style={{
+              height: `${bucketHeight}px`,
+            }}
+          >
             <div
               className="bucket-liquid"
               style={{
-                height: `${bucketLevel}%`,
+                height: `${bucketFillPercent}%`,
                 backgroundColor: liquidColor,
               }}
             />
