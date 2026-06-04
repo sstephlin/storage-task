@@ -47,7 +47,7 @@ const Vial = ({
             <Flame size={30} fill={dangerColor} color={dangerColor} />
           </div>
 
-          {/* Center line with star icon - golden/amber in training mode */}
+          {/* Center line with star icon*/}
           <div
             className="center-line-container"
             style={{
