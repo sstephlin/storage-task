@@ -10,12 +10,96 @@ import { PRODUCTION_MODE } from "../data/participantConfig";
 // // Set to false for production, true for debugging (disables timer and quiz validation)
 const DEBUG_MODE = true;
 
+const VIDEO_EXTENSIONS = [".mov", ".mp4", ".webm"];
+const RESULT_OVERLAY_MEDIA = [
+  "quiz-correct.png",
+  "quiz-wrong.png",
+  "exit-slide.png",
+];
+const mediaPreloadCache = new Map();
+
+const isVideoSrc = (src = "") =>
+  VIDEO_EXTENSIONS.some((extension) => src.endsWith(extension));
+
+const getSlideMediaSrc = (slide) => slide?.image ?? null;
+
+const getTutorialMediaSources = (slides) => {
+  const media = slides.map(getSlideMediaSrc).filter(Boolean);
+  return [...new Set([...media, ...RESULT_OVERLAY_MEDIA])];
+};
+
+const markMediaReady = (src) => {
+  const cached = mediaPreloadCache.get(src);
+  if (cached) {
+    cached.ready = true;
+  }
+};
+
+const preloadImage = (src, resolve) => {
+  const img = new Image();
+  const finish = () => {
+    const decode = img.decode ? img.decode() : Promise.resolve();
+    decode.catch(() => {}).finally(() => {
+      markMediaReady(src);
+      resolve();
+    });
+  };
+
+  img.onload = finish;
+  img.onerror = finish;
+  img.src = src;
+};
+
+const preloadVideo = (src, resolve) => {
+  const video = document.createElement("video");
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    markMediaReady(src);
+    resolve();
+  };
+
+  video.preload = "auto";
+  video.muted = true;
+  video.playsInline = true;
+  video.addEventListener("loadeddata", finish, { once: true });
+  video.addEventListener("canplaythrough", finish, { once: true });
+  video.addEventListener("error", finish, { once: true });
+  video.src = src;
+  video.load();
+};
+
+const preloadMedia = (src) => {
+  if (!src) return Promise.resolve();
+
+  const cached = mediaPreloadCache.get(src);
+  if (cached) return cached.promise;
+
+  const promise = new Promise((resolve) => {
+    if (isVideoSrc(src)) {
+      preloadVideo(src, resolve);
+      return;
+    }
+
+    preloadImage(src, resolve);
+  });
+
+  mediaPreloadCache.set(src, { promise, ready: false });
+  return promise;
+};
+
+const isMediaReady = (src) => {
+  if (!src) return true;
+  return mediaPreloadCache.get(src)?.ready === true;
+};
+
 // ─── Timing constants ────────────────────────────────────────────────────────
 const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide
 const SLIDE_WARNING_GRACE_MS = 30 * 1000; // 30-sec grace after warning
 const TOTAL_TIME_LIMIT_MS = 27 * 60 * 1000; // 27 min overall
 
-const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
+const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
     return getTutorialSlides(gameVersion);
   }, [gameVersion]);
@@ -32,7 +116,9 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const [groupQuizIndex, setGroupQuizIndex] = useState(0);
   const [groupHadError, setGroupHadError] = useState(false);
   const [disqualifyCountdown, setDisqualifyCountdown] = useState(5);
-  const [isFading, setIsFading] = useState(false);
+  const [pendingSlideIndex, setPendingSlideIndex] = useState(null);
+  const [, setMediaReadyVersion] = useState(0);
+  const [initialMediaReady, setInitialMediaReady] = useState(false);
 
   // ── Timer state ──
   const [showSlideWarning, setShowSlideWarning] = useState(false);
@@ -46,11 +132,11 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   const totalTimeTimerRef = useRef(null);
   const totalTimeTickRef = useRef(null);
   const isDisqualifiedRef = useRef(false); // sync ref so timers don't fire after disqualify
+  const navigationRequestRef = useRef(0);
   const TOTAL_TIME_LIMIT_MS =
     gameVersion === "one_vial_always_bucket" ? 40 * 60 * 1000 : 27 * 60 * 1000;
 
   const totalSlides = TUTORIAL_SLIDES.length;
-  const imageCache = useRef({});
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -145,19 +231,6 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
 
   // ── Slide helpers ─────────────────────────────────────────────────────────
 
-  const changeSlideTo = (newIndex) => {
-    setIsFading(true);
-    setTimeout(() => {
-      setCurrentSlide(newIndex);
-      setGroupQuizIndex(0);
-      setGroupHadError(false);
-      setCanProceed(DEBUG_MODE);
-      setSelectedAnswers({});
-      setQuizFeedback(null);
-      setTimeout(() => setIsFading(false), 50);
-    }, 750);
-  };
-
   const slide = React.useMemo(() => {
     const s = TUTORIAL_SLIDES[currentSlide];
     if (s?.type === "quizGroup") {
@@ -165,6 +238,98 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
     }
     return s;
   }, [TUTORIAL_SLIDES, currentSlide, groupQuizIndex]);
+
+  const preloadSlideMedia = React.useCallback(
+    async (slideIndex) => {
+      const src = getSlideMediaSrc(TUTORIAL_SLIDES[slideIndex]);
+      await preloadMedia(src);
+      setMediaReadyVersion((version) => version + 1);
+    },
+    [TUTORIAL_SLIDES],
+  );
+
+  const isSlideMediaReady = React.useCallback(
+    (slideIndex) => {
+      if (slideIndex < 0 || slideIndex >= totalSlides) return true;
+      const src = getSlideMediaSrc(TUTORIAL_SLIDES[slideIndex]);
+      return isMediaReady(src);
+    },
+    [TUTORIAL_SLIDES, totalSlides],
+  );
+
+  const changeSlideTo = React.useCallback(
+    async (newIndex) => {
+      if (newIndex < 0 || newIndex >= totalSlides) return;
+
+      const requestId = navigationRequestRef.current + 1;
+      navigationRequestRef.current = requestId;
+      setPendingSlideIndex(newIndex);
+      await preloadSlideMedia(newIndex);
+
+      if (navigationRequestRef.current !== requestId || isDisqualifiedRef.current) {
+        return;
+      }
+
+      setCurrentSlide(newIndex);
+      setGroupQuizIndex(0);
+      setGroupHadError(false);
+      setCanProceed(DEBUG_MODE);
+      setSelectedAnswers({});
+      setQuizFeedback(null);
+      setPendingSlideIndex(null);
+    },
+    [preloadSlideMedia, totalSlides],
+  );
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    preloadSlideMedia(0).then(() => {
+      if (!cancelled) {
+        setInitialMediaReady(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [preloadSlideMedia]);
+
+  React.useEffect(() => {
+    const nearbySlideIndexes = [
+      currentSlide - 1,
+      currentSlide,
+      currentSlide + 1,
+      currentSlide + 2,
+    ];
+
+    nearbySlideIndexes.forEach((slideIndex) => {
+      if (slideIndex >= 0 && slideIndex < totalSlides) {
+        preloadSlideMedia(slideIndex);
+      }
+    });
+  }, [currentSlide, preloadSlideMedia, totalSlides]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const mediaSources = getTutorialMediaSources(TUTORIAL_SLIDES);
+
+    const preloadRemainingMedia = async () => {
+      for (const src of mediaSources) {
+        if (cancelled) return;
+        await preloadMedia(src);
+        if (!cancelled) {
+          setMediaReadyVersion((version) => version + 1);
+        }
+      }
+    };
+
+    preloadRemainingMedia();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [TUTORIAL_SLIDES]);
 
   const logSlideChange = (newSlideIndex, direction) => {
     const targetSlide = TUTORIAL_SLIDES[newSlideIndex];
@@ -192,21 +357,23 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   };
 
   const goNext = () => {
-    if (!canProceed) return;
+    if (!canProceed || pendingSlideIndex !== null) return;
     if (slide.type === "quiz" && !DEBUG_MODE) {
       const isCorrect = validateQuizAnswers();
       if (!isCorrect) return;
     }
     if (currentSlide < totalSlides - 1) {
-      logSlideChange(currentSlide + 1, "next");
-      changeSlideTo(currentSlide + 1);
+      const nextSlide = currentSlide + 1;
+      if (!isSlideMediaReady(nextSlide)) return;
+      logSlideChange(nextSlide, "next");
+      changeSlideTo(nextSlide);
     } else {
       onExit();
     }
   };
 
   const goPrevious = () => {
-    if (currentSlide > 0) {
+    if (currentSlide > 0 && pendingSlideIndex === null) {
       logSlideChange(currentSlide - 1, "prev");
       changeSlideTo(currentSlide - 1);
     }
@@ -271,14 +438,14 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                     group.returnToSlide,
                   );
                   logSlideChange(returnIndex, "redirect-incorrect");
-                  setCurrentSlide(returnIndex);
+                  changeSlideTo(returnIndex);
                 });
               }
             } else {
               showOverlayThenRedirect("correct", () => {
                 const nextIndex = currentSlide + 1;
                 logSlideChange(nextIndex, "redirect-correct");
-                setCurrentSlide(nextIndex);
+                changeSlideTo(nextIndex);
               });
             }
           } else {
@@ -311,7 +478,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                   group.returnToSlide,
                 );
                 logSlideChange(returnIndex, "redirect-incorrect");
-                setCurrentSlide(returnIndex);
+                changeSlideTo(returnIndex);
               });
             }
           } else {
@@ -355,7 +522,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
               quiz.returnToSlide,
             );
             logSlideChange(returnIndex, "redirect-incorrect");
-            setCurrentSlide(returnIndex);
+            changeSlideTo(returnIndex);
             setSelectedAnswers({});
             setQuizFeedback(null);
           }, 2500);
@@ -375,6 +542,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   };
 
   const handleKeyPress = (e) => {
+    if (pendingSlideIndex !== null) return;
     if (slide.type === "quiz") return;
     if (e.key === "ArrowRight" || e.key === "Enter") {
       if (canProceed) goNext();
@@ -398,7 +566,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   React.useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentSlide, canProceed, slide.type]);
+  }, [currentSlide, canProceed, pendingSlideIndex, slide.type]);
 
   React.useEffect(() => {
     if (!isDisqualified) return;
@@ -416,21 +584,22 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
   }, [isDisqualified, onDisqualified]);
 
   React.useEffect(() => {
-    const allGifs = TUTORIAL_SLIDES.filter((slide) =>
-      slide.image?.endsWith(".gif"),
-    ).map((slide) => slide.image);
-    allGifs.forEach((src) => {
-      if (!imageCache.current[src]) {
-        const img = new Image();
-        img.src = src;
-        imageCache.current[src] = img;
-      }
-    });
-  }, []);
-
-  React.useEffect(() => {
     logSlideChange(0, "initial");
   }, []);
+
+  const nextSlideReady =
+    currentSlide >= totalSlides - 1 || isSlideMediaReady(currentSlide + 1);
+  const navigationPending = pendingSlideIndex !== null;
+  const nextButtonDisabled =
+    !canProceed || slide.type === "quiz" || navigationPending || !nextSlideReady;
+  const nextButtonLabel =
+    currentSlide === totalSlides - 1
+      ? "Start Game"
+      : navigationPending
+        ? "Loading slide..."
+        : !nextSlideReady
+          ? "Preparing next slide..."
+          : "Next";
 
   // ── Disqualified screen ───────────────────────────────────────────────────
   const DISQUALIFY_MESSAGES = {
@@ -461,7 +630,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
       <div className="tutorial-overlay">
         <div className="tutorial-container">
           <div
-            className={`tutorial-content ${isFading ? "fading" : ""}`}
+            className="tutorial-content"
             style={{ textAlign: "center", padding: "40px" }}
           >
             <h1
@@ -487,6 +656,21 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                   have any questions.
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!initialMediaReady) {
+    return (
+      <div className="tutorial-overlay">
+        <div className="tutorial-container">
+          <div className="tutorial-content tutorial-loading">
+            <h1 className="tutorial-title">Preparing instructions...</h1>
+            <div className="tutorial-text">
+              <p>The first slide is loading so the tutorial can display smoothly.</p>
             </div>
           </div>
         </div>
@@ -565,7 +749,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
           </div>
         </div>
 
-        <div className={`tutorial-content ${isFading ? "fading" : ""}`}>
+        <div className="tutorial-content">
           {slide.title && <h1 className="tutorial-title">{slide.title}</h1>}
 
           {slide.image && (
@@ -592,6 +776,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
                   loop
                   muted
                   playsInline
+                  preload="auto"
                   style={{ maxWidth: "100%", height: "100%" }}
                 />
               ) : (
@@ -718,7 +903,7 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
           <button
             className="nav-button prev"
             onClick={goPrevious}
-            disabled={currentSlide === 0}
+            disabled={currentSlide === 0 || navigationPending}
           >
             <ChevronLeft size={20} />
             Previous
@@ -727,9 +912,9 @@ const Tutorial = ({ onExit, gameVersion, userId, onDisqualified }) => {
           <button
             className="nav-button next"
             onClick={goNext}
-            disabled={!canProceed || slide.type === "quiz"}
+            disabled={nextButtonDisabled}
           >
-            {currentSlide === totalSlides - 1 ? "Start Game" : "Next"}
+            {nextButtonLabel}
             {currentSlide < totalSlides - 1 && <ChevronRight size={20} />}
           </button>
         </div>

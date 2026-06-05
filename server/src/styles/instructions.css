@@ -131,6 +131,12 @@
   opacity: 0;
 }
 
+.tutorial-loading {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 .tutorial-title {
   font-size: 28px;
   color: #333;
@@ -249,10 +255,17 @@
   justify-content: center;
 }
 
-.nav-button.next:hover {
+.nav-button.next:hover:not(:disabled) {
   background: #357abd;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.nav-button.next:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Keyboard Hints */
