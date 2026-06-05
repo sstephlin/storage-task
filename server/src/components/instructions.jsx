@@ -98,6 +98,7 @@ const isMediaReady = (src) => {
 const SLIDE_IDLE_LIMIT_MS = 3 * 60 * 1000; // 3 min per slide
 const SLIDE_WARNING_GRACE_MS = 30 * 1000; // 30-sec grace after warning
 const TOTAL_TIME_LIMIT_MS = 27 * 60 * 1000; // 27 min overall
+const SLIDE_FADE_MS = 180;
 
 const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
   const TUTORIAL_SLIDES = React.useMemo(() => {
@@ -119,6 +120,7 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
   const [pendingSlideIndex, setPendingSlideIndex] = useState(null);
   const [, setMediaReadyVersion] = useState(0);
   const [initialMediaReady, setInitialMediaReady] = useState(false);
+  const [isFading, setIsFading] = useState(false);
 
   // ── Timer state ──
   const [showSlideWarning, setShowSlideWarning] = useState(false);
@@ -133,12 +135,17 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
   const totalTimeTickRef = useRef(null);
   const isDisqualifiedRef = useRef(false); // sync ref so timers don't fire after disqualify
   const navigationRequestRef = useRef(0);
+  const fadeTimerRef = useRef(null);
   const TOTAL_TIME_LIMIT_MS =
     gameVersion === "one_vial_always_bucket" ? 40 * 60 * 1000 : 27 * 60 * 1000;
 
   const totalSlides = TUTORIAL_SLIDES.length;
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  React.useEffect(() => {
+    return () => clearTimeout(fadeTimerRef.current);
+  }, []);
 
   const clearSlideTimers = () => {
     clearTimeout(slideIdleTimerRef.current);
@@ -270,13 +277,26 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
         return;
       }
 
-      setCurrentSlide(newIndex);
-      setGroupQuizIndex(0);
-      setGroupHadError(false);
-      setCanProceed(DEBUG_MODE);
-      setSelectedAnswers({});
-      setQuizFeedback(null);
-      setPendingSlideIndex(null);
+      clearTimeout(fadeTimerRef.current);
+      setIsFading(true);
+      fadeTimerRef.current = setTimeout(() => {
+        if (
+          navigationRequestRef.current !== requestId ||
+          isDisqualifiedRef.current
+        ) {
+          return;
+        }
+
+        setCurrentSlide(newIndex);
+        setGroupQuizIndex(0);
+        setGroupHadError(false);
+        setCanProceed(DEBUG_MODE);
+        setSelectedAnswers({});
+        setQuizFeedback(null);
+        setPendingSlideIndex(null);
+        fadeTimerRef.current = null;
+        requestAnimationFrame(() => setIsFading(false));
+      }, SLIDE_FADE_MS);
     },
     [preloadSlideMedia, totalSlides],
   );
@@ -749,7 +769,7 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
           </div>
         </div>
 
-        <div className="tutorial-content">
+        <div className={`tutorial-content ${isFading ? "fading" : ""}`}>
           {slide.title && <h1 className="tutorial-title">{slide.title}</h1>}
 
           {slide.image && (
