@@ -72,14 +72,13 @@ export const useVialGameLoop = ({
         });
       }
 
-      distanceSamplesRef.current = [
-        ...distanceSamplesRef.current,
+      distanceSamplesRef.current.push(
         getAverageDistanceFromSetpoint({
           vial1Level,
           vial2Level,
           numVials,
         }),
-      ];
+      );
     }, GAME_PARAMS.GAME_SPEED);
 
     return () => clearInterval(gameLoopRef.current);

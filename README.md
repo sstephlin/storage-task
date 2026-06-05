@@ -102,6 +102,7 @@ The app is organized as a single-page React experiment. `App.jsx` controls the h
 3. **Instructions/tutorial**
    - Instruction slides and quizzes live in `src/components/instructions.jsx`.
    - Each slide has a minimum viewing time.
+   - The Next button is disabled until the next slide’s media is ready and the minimum view time as surpassed.
    - Quiz groups allow a limited number of attempts.
    - Failing the instruction checks disqualifies the participant and redirects them to the appropriate Prolific completion link.
 
@@ -154,7 +155,9 @@ Most experiment behavior is split between high-level flow components, game compo
 - `src/components/instructions.jsx`
   - Shows tutorial slides.
   - Handles quiz answers, timing, warnings, and instruction disqualification.
-
+  - Shows a "Preparing instructions" page if the first slide is not ready yet.
+  - Every time a slide changes, the prev, next and next-next slides are preloaded. When the next slide is preloaded and the minimum view time surpassed, the next button will be enabled. The next button is disabled is the current slide is a quiz slide, the minimum time has not surpassed yet, the next slide is not ready, or not currently transitioning between slides.
+  - Media is preloaded in the background as well one by one.
 - `src/components/TrainingPhase.jsx`
   - Shows instructions, training intro, active practice rounds, pass/fail results, and the transition screen before the main game.
   - Uses `VialGame` in training mode.

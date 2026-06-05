@@ -21,6 +21,7 @@ export const getBucketTransferAmount = (vialLevel, bucketLevel) => {
     : 0;
 };
 
+// gets average distance from optimal level across both vials. if 1 vial game, the distance from the single vial is returned. if 2 vial game, the average distance across both vials is returned.
 export const getAverageDistanceFromSetpoint = ({
   vial1Level,
   vial2Level,
