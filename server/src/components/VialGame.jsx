@@ -54,6 +54,7 @@ const VialGame = ({
       ? trainingParams.sequences
       : generateGameSequences(gameVersion, maxRounds, velocityConfig),
   );
+  console.log("Game Sequences:", gameSequences);
 
   const [vial1Level, setVial1Level] = useState(GAME_PARAMS.INITIAL_VIAL_LEVEL);
   const [vial2Level, setVial2Level] = useState(GAME_PARAMS.INITIAL_VIAL_LEVEL);

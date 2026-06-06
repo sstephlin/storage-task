@@ -5,7 +5,7 @@ export const GAME_PARAMS = {
   OPTIMAL_LEVEL: 50,
   GAME_SPEED: 100,
   ROUND_DURATION: 15,
-  MAX_ROUNDS: 2,
+  MAX_ROUNDS: 36,
   INITIAL_VIAL_LEVEL: 50,
   INITIAL_BUCKET_LEVEL: 0,
   EMPTY_BUCKET_AMOUNT: 15,
@@ -28,8 +28,9 @@ export const VERSION_CONFIG = {
     description: "Single vial that alternates between having storage and not",
     numVials: 1,
     hasPhases: false,
-    bucketBehavior: "alternating storage/no storage",
+    bucketBehavior: "alternating",
     enabled: true,
+    numPhases: 4,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
@@ -38,8 +39,9 @@ export const VERSION_CONFIG = {
       "Single vial that always has storage but has abundance/deprivation phases",
     numVials: 1,
     hasPhases: true,
-    bucketBehavior: "always",
+    bucketBehavior: "constant",
     enabled: true,
+    numPhases: 4,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: {
@@ -47,8 +49,9 @@ export const VERSION_CONFIG = {
     description: "Single vial with constant storage and no phases",
     numVials: 1,
     hasPhases: false,
-    bucketBehavior: "always",
+    bucketBehavior: "constant",
     enabled: true,
+    numPhases: 4,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
@@ -57,28 +60,29 @@ export const VERSION_CONFIG = {
       "Single vial with constant storage and no phases but faster velocity",
     numVials: 1,
     hasPhases: false,
-    bucketBehavior: "always",
+    bucketBehavior: "constant",
     enabled: true,
+    numPhases: 4,
   },
 
-  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
-    name: "Two Vials - Single Bucket",
-    description: "Two vials where at most one has storage at a time",
-    numVials: 2,
-    hasPhases: false,
-    bucketBehavior: "alternate storage between vials or no storage",
-    enabled: true,
-  },
+  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
+  //   name: "Two Vials - Single Bucket",
+  //   description: "Two vials where at most one has storage at a time",
+  //   numVials: 2,
+  //   hasPhases: false,
+  //   bucketBehavior: "alternate",
+  //   enabled: true,
+  // },
 
-  [GAME_VERSIONS.TWO_VIALS_PHASES]: {
-    name: "Two Vials - Phases",
-    description:
-      "Two vials with abundance/deprivation phases and varying storage",
-    numVials: 2,
-    hasPhases: true,
-    bucketBehavior: "single bucket alternating between vials",
-    enabled: true,
-  },
+  // [GAME_VERSIONS.TWO_VIALS_PHASES]: {
+  //   name: "Two Vials - Phases",
+  //   description:
+  //     "Two vials with abundance/deprivation phases and varying storage",
+  //   numVials: 2,
+  //   hasPhases: true,
+  //   bucketBehavior: "dynamic",
+  //   enabled: true,
+  // },
 };
 
 // Version-specific velocity configurations
@@ -116,8 +120,8 @@ export const VERSION_VELOCITIES = {
 };
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 2,
-  ROUND_DURATION: 10,
+  MAX_ROUNDS: 1,
+  ROUND_DURATION: 5,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
   VELOCITIES: {
@@ -195,112 +199,63 @@ export const PHASE_CONFIG = {
   FORCE_START_PHASE: null,
 };
 
-// // Get list of enabled versions
-// export const getEnabledVersions = () => {
-//   return Object.entries(VERSION_CONFIG)
-//     .filter(([_, config]) => config.enabled)
-//     .map(([versionId]) => versionId);
-// };
-
 // ============================================================================
 // POST-GAME REDIRECT URLS
 // After the main game ends, participants are sent to a version-specific link.
 // Update the placeholder URLs below before deploying.
 // Keyed by the same internal version strings used throughout the app.
 // ============================================================================
-export const GAME_COMPLETE_REDIRECT_URL = {
-  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
-    "https://brown.co1.qualtrics.com/jfe/form/SV_cLObwj6KBpKvEF0",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
-    "https://brown.co1.qualtrics.com/jfe/form/SV_9mErNW5zeKEL0SW",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
-    "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
-    "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
-  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
-  //   "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
-  // [GAME_VERSIONS.TWO_VIALS_PHASES]:
-  //   "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
-};
-
-/**
- * Redirection URL if participant fails instructions phase
- */
-export const FAIL_INSTRUCTIONS_REDIRECT_URL = {
-  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
-    "https://app.prolific.com/submissions/complete?cc=C1FVK0JA",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
-    "https://app.prolific.com/submissions/complete?cc=C11L3B0C",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
-    "https://app.prolific.com/submissions/complete?cc=C1DTFOCP",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
-    "https://app.prolific.com/submissions/complete?cc=CPU6RVTR",
-  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
-  //   "https://app.prolific.com/submissions/complete?cc=C1DTFOCP",
-  // [GAME_VERSIONS.TWO_VIALS_PHASES]:
-  //   "https://app.prolific.com/submissions/complete?cc=CPU6RVTR",
-};
-
-/**
- * Redirection URLs if participant fails training phase
- */
-export const FAIL_TRAINING_REDIRECT_URL = {
-  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]:
-    "https://app.prolific.com/submissions/complete?cc=CQVYF7F2",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]:
-    "https://app.prolific.com/submissions/complete?cc=C1AWOSIL",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]:
-    "https://app.prolific.com/submissions/complete?cc=C1G6HUCS",
-  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]:
-    "https://app.prolific.com/submissions/complete?cc=C1G7YBS3",
-  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]:
-  //   "https://app.prolific.com/submissions/complete?cc=C1G6HUCS",
-  // [GAME_VERSIONS.TWO_VIALS_PHASES]:
-  //   "https://app.prolific.com/submissions/complete?cc=C1G7YBS3",
-};
-
-/**
- * Redirection URLs if participant reloads before the main game (in instructions, training, etc)
- */
-export const RELOAD_REDIRECT_URLS_GENERAL = {
-  one_vial_alternating:
-    "https://app.prolific.com/submissions/complete?cc=CDUWLNWZ",
-  one_vial_always_bucket:
-    "https://app.prolific.com/submissions/complete?cc=C1M6NFW7",
-  one_vial_always_bucket_simple:
-    "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
-  one_vial_always_bucket_simple_fast:
-    "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
-  // two_vials_single_bucket:
-  //   "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
-  // two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
-};
-
-/**
- * Redirection URLs if participant reloads during the main game
- */
-export const RELOAD_REDIRECT_URLS_MAIN_GAME = {
-  one_vial_alternating:
-    "https://app.prolific.com/submissions/complete?cc=C1D2NK2X",
-  one_vial_always_bucket:
-    "https://app.prolific.com/submissions/complete?cc=C12Y7MTD",
-  one_vial_always_bucket_simple:
-    "https://app.prolific.com/submissions/complete?cc=CC2HW32K",
-  one_vial_always_bucket_simple_fast:
-    "https://app.prolific.com/submissions/complete?cc=C14R4MD0",
-  // two_vials_single_bucket:
-  //   "https://app.prolific.com/submissions/complete?cc=CC2HW32K",
-  // two_vials_phases: "https://app.prolific.com/submissions/complete?cc=C14R4MD0",
-};
-
-/**
- * Codes needed for participant credit, even if participant did not complete the game (e.g. reloaded during main game, refresh page, etc)
- */
-export const PARTIAL_COMPLETION_CODES = {
-  one_vial_alternating: "C1D2NK2X",
-  one_vial_always_bucket: "C12Y7MTD",
-  one_vial_always_bucket_simple: "CC2HW32K",
-  one_vial_always_bucket_simple_fast: "C14R4MD0",
-  // two_vials_single_bucket: "CC2HW32K",
-  // two_vials_phases: "C14R4MD0",
+export const VERSION_URLS = {
+  [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: {
+    gameComplete: "https://brown.co1.qualtrics.com/jfe/form/SV_cLObwj6KBpKvEF0",
+    failInstructions:
+      "https://app.prolific.com/submissions/complete?cc=C1FVK0JA",
+    failTraining: "https://app.prolific.com/submissions/complete?cc=CQVYF7F2",
+    reloadGeneral: "https://app.prolific.com/submissions/complete?cc=CDUWLNWZ",
+    reloadMainGame: "https://app.prolific.com/submissions/complete?cc=C1D2NK2X",
+    partialCompletion: "C1D2NK2X",
+  },
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
+    gameComplete: "https://brown.co1.qualtrics.com/jfe/form/SV_9mErNW5zeKEL0SW",
+    failInstructions:
+      "https://app.prolific.com/submissions/complete?cc=C11L3B0C",
+    failTraining: "https://app.prolific.com/submissions/complete?cc=C1AWOSIL",
+    reloadGeneral: "https://app.prolific.com/submissions/complete?cc=C1M6NFW7",
+    reloadMainGame: "https://app.prolific.com/submissions/complete?cc=C12Y7MTD",
+    partialCompletion: "C12Y7MTD",
+  },
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: {
+    gameComplete: "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
+    failInstructions:
+      "https://app.prolific.com/submissions/complete?cc=C1DTFOCP",
+    failTraining: "https://app.prolific.com/submissions/complete?cc=C1G6HUCS",
+    reloadGeneral: "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
+    reloadMainGame: "https://app.prolific.com/submissions/complete?cc=CC2HW32K",
+    partialCompletion: "CC2HW32K",
+  },
+  [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
+    gameComplete: "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
+    failInstructions:
+      "https://app.prolific.com/submissions/complete?cc=CPU6RVTR",
+    failTraining: "https://app.prolific.com/submissions/complete?cc=C1G7YBS3",
+    reloadGeneral: "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
+    reloadMainGame: "https://app.prolific.com/submissions/complete?cc=C14R4MD0",
+    partialCompletion: "C14R4MD0",
+  },
+  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
+  //   gameComplete:      "https://brown.co1.qualtrics.com/jfe/form/SV_9z9tplZtesJSya2",
+  //   failInstructions:  "https://app.prolific.com/submissions/complete?cc=C1DTFOCP",
+  //   failTraining:      "https://app.prolific.com/submissions/complete?cc=C1G6HUCS",
+  //   reloadGeneral:     "https://app.prolific.com/submissions/complete?cc=C1HX2EFH",
+  //   reloadMainGame:    "https://app.prolific.com/submissions/complete?cc=CC2HW32K",
+  //   partialCompletion: "CC2HW32K",
+  // },
+  // [GAME_VERSIONS.TWO_VIALS_PHASES]: {
+  //   gameComplete:      "https://brown.co1.qualtrics.com/jfe/form/SV_42ajRjRdYhvv7xA",
+  //   failInstructions:  "https://app.prolific.com/submissions/complete?cc=CPU6RVTR",
+  //   failTraining:      "https://app.prolific.com/submissions/complete?cc=C1G7YBS3",
+  //   reloadGeneral:     "https://app.prolific.com/submissions/complete?cc=C1FJ139N",
+  //   reloadMainGame:    "https://app.prolific.com/submissions/complete?cc=C14R4MD0",
+  //   partialCompletion: "C14R4MD0",
+  // },
 };

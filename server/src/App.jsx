@@ -22,12 +22,7 @@ import { PRODUCTION_MODE } from "./data/participantConfig";
 
 import { completeSession, markIntentionalRedirect } from "./data/accessControl";
 
-import {
-  VERSION_CONFIG,
-  GAME_COMPLETE_REDIRECT_URL,
-  FAIL_TRAINING_REDIRECT_URL,
-  FAIL_INSTRUCTIONS_REDIRECT_URL,
-} from "./data/params";
+import { VERSION_CONFIG, VERSION_URLS } from "./data/params";
 import { useExperimentBootstrap } from "./hooks/useExperimentBootstrap";
 import { useReloadRedirect } from "./hooks/useReloadRedirect";
 import { useReloadWarning } from "./hooks/useReloadWarning";
@@ -120,7 +115,10 @@ const App = () => {
         await endSession();
       }
 
-      const redirectUrl = GAME_COMPLETE_REDIRECT_URL[gameVersion];
+      const redirectUrl = VERSION_URLS[gameVersion]?.gameComplete;
+      if (!redirectUrl) {
+        console.error(`Missing gameComplete URL for version: ${gameVersion}`);
+      }
       const finalUrl = buildParticipantRedirectUrl(redirectUrl, {
         userId,
         gameVersion,
@@ -144,7 +142,12 @@ const App = () => {
       setIsDisqualified(true);
       await logInstructionsResult(false, reason);
 
-      const redirectUrl = FAIL_INSTRUCTIONS_REDIRECT_URL[gameVersion];
+      const redirectUrl = VERSION_URLS[gameVersion]?.failInstructions;
+      if (!redirectUrl) {
+        console.error(
+          `Missing failInstructions URL for version: ${gameVersion}`,
+        );
+      }
       const finalUrl = buildParticipantRedirectUrl(redirectUrl, {
         userId,
         gameVersion,
@@ -163,7 +166,10 @@ const App = () => {
   const handleTrainingDisqualified = useCallback(() => {
     setIsDisqualified(true);
 
-    const redirectUrl = FAIL_TRAINING_REDIRECT_URL[gameVersion];
+    const redirectUrl = VERSION_URLS[gameVersion]?.failTraining;
+    if (!redirectUrl) {
+      console.error(`Missing failTraining URL for version: ${gameVersion}`);
+    }
     const finalUrl = buildParticipantRedirectUrl(redirectUrl, {
       userId,
       gameVersion,

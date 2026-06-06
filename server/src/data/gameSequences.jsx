@@ -3,6 +3,7 @@ import {
   GAME_VERSIONS,
   ONE_VIAL_ALTERNATING_CONFIG,
   PHASE_CONFIG,
+  VERSION_CONFIG,
 } from "./params";
 const numPhases1Vial = 4;
 
@@ -15,124 +16,39 @@ const numPhases1Vial = 4;
  */
 export const generateGameSequences = (
   version,
-  totalRounds = 24,
+  totalRounds = 36,
   customVelocities = null,
 ) => {
+  const config = VERSION_CONFIG[version];
+
+  if (!config) throw new Error(`Unknown game version: ${version}`);
+
   const velocities = customVelocities || VERSION_VELOCITIES[version];
 
-  switch (version) {
-    case GAME_VERSIONS.ONE_VIAL_ALTERNATING:
-      return {
-        velocitySequence: generatePhaseVelocities(
-          totalRounds,
-          velocities,
-          numPhases1Vial,
-        ),
-        bucketSequence: generateOneVialAlternatingBuckets(totalRounds),
-        phaseSequence: generateConstantPhase(totalRounds, "abundance"),
-      };
-
-    case GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET:
-      return {
-        velocitySequence: generatePhaseVelocities(
-          totalRounds,
-          velocities,
-          numPhases1Vial,
-        ),
-        bucketSequence: generateConstantBuckets(totalRounds, 1),
-        phaseSequence: generateAlternatingPhases(
-          totalRounds,
-          null,
-          numPhases1Vial,
-        ),
-      };
-
-    case GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE:
-      return {
-        velocitySequence: generatePhaseVelocities(
-          totalRounds,
-          velocities,
-          numPhases1Vial,
-        ),
-        bucketSequence: generateConstantBuckets(totalRounds, 1),
-        phaseSequence: generateConstantPhase(totalRounds, "abundance"),
-      };
-
-    case GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST:
-      return {
-        velocitySequence: generatePhaseVelocities(
-          totalRounds,
-          velocities,
-          numPhases1Vial,
-        ),
-        bucketSequence: generateConstantBuckets(totalRounds, 1),
-        phaseSequence: generateConstantPhase(totalRounds, "abundance"),
-      };
-
-    // case GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET:
-    //   return {
-    //     velocitySequence: generatePhaseVelocities(totalRounds, velocities, 6),
-    //     bucketSequence: generateTwoVialSingleBucket(totalRounds),
-    //     phaseSequence: generateConstantPhase(totalRounds, "abundance"),
-    //   };
-
-    // case GAME_VERSIONS.TWO_VIALS_PHASES:
-    //   return {
-    //     velocitySequence: generatePhaseVelocities(
-    //       totalRounds,
-    //       velocities,
-    //       numPhases,
-    //     ),
-    //     bucketSequence: generateDynamicBuckets(totalRounds, 4),
-    //     phaseSequence: generateAlternatingPhases(
-    //       totalRounds,
-    //       "deprivation",
-    //       numPhases,
-    //     ),
-    //   };
-
-    default:
-      throw new Error(`Unknown game version: ${version}`);
-  }
+  return {
+    velocitySequence: generatePhaseVelocities(
+      totalRounds,
+      velocities,
+      config.numPhases,
+    ),
+    bucketSequence: generateBucketSequence(
+      totalRounds,
+      config.numPhases,
+      config.numVials, // vialNumber — could also move to config if needed
+      config.bucketStrategy,
+    ),
+    phaseSequence: generatePhaseSequence(
+      totalRounds,
+      config.numPhases,
+      null,
+      config.hasPhases,
+    ),
+  };
 };
 
 // ============================================================================
 // SEQUENCE HELPERS
 // ============================================================================
-/**
- * Creates the storage sequence.
- * Creates phases for game, storage setting stays the same over entire phase.
- * Phases will alternate between storage and no storage, starting condition is randomized unless forced by config.
- *
- * @param {*} totalRounds
- * @param {*} numPhases
- * @returns
- */
-const generateOneVialAlternatingBuckets = (totalRounds, numPhases) => {
-  const buckets = [];
-  const roundsPerPhase = Math.floor(totalRounds / numPhases);
-
-  // can force games
-  let startWithStorage;
-  if (ONE_VIAL_ALTERNATING_CONFIG.FORCE_START_PHASE === "storage") {
-    // odd numbered phases have storage
-    startWithStorage = true;
-  } else if (ONE_VIAL_ALTERNATING_CONFIG.FORCE_START_PHASE === "no_storage") {
-    // even numbers phases have storage
-    startWithStorage = false;
-  } else {
-    startWithStorage = Math.random() < 0.5; // randomly assign
-  }
-
-  for (let phase = 0; phase < numPhases; phase++) {
-    const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage; // setting for entire phase
-    for (let i = 0; i < roundsPerPhase; i++) {
-      buckets.push({ vial1: hasStorage ? 1 : 0, vial2: 0 }); // vial 2 will not have storage ever
-    }
-  }
-  return buckets;
-};
-
 /**
  * Creates the per-round drain speed sequence.
  * Creates phases for game, each phases gets an equal number of rounds for each velocity.
@@ -187,6 +103,23 @@ const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
   return velocityArray;
 };
 
+const generateBucketSequence = (
+  totalRounds,
+  numPhases,
+  vialNumber = 1,
+  bucketConfig = "constant",
+) => {
+  if (bucketConfig === "constant") {
+    return generateConstantBuckets(totalRounds, vialNumber);
+  } else if (bucketConfig === "alternating") {
+    return generateOneVialAlternatingBuckets(totalRounds, numPhases);
+  } else if (bucketConfig === "dynamic") {
+    return generateDynamicBuckets(totalRounds, numPhases);
+  } else {
+    throw new Error(`Unknown bucket config: ${bucketConfig}`);
+  }
+};
+
 /**
  * For 1 vial versions with constant storage presencce, generate the bucket sequence.
  * V0.2, V0.3, V0.4
@@ -198,6 +131,39 @@ const generateConstantBuckets = (totalRounds, vialNumber = 1) => {
   const buckets = [];
   for (let i = 0; i < totalRounds; i++) {
     buckets.push({ vial1: vialNumber === 1 ? 1 : 0, vial2: 0 });
+  }
+  return buckets;
+};
+/**
+ * Creates the storage sequence.
+ * Creates phases for game, storage setting stays the same over entire phase.
+ * Phases will alternate between storage and no storage, starting condition is randomized unless forced by config.
+ *
+ * @param {*} totalRounds
+ * @param {*} numPhases
+ * @returns
+ */
+const generateOneVialAlternatingBuckets = (totalRounds, numPhases) => {
+  const buckets = [];
+  const roundsPerPhase = Math.floor(totalRounds / numPhases);
+
+  // can force games
+  let startWithStorage;
+  if (ONE_VIAL_ALTERNATING_CONFIG.FORCE_START_PHASE === "storage") {
+    // odd numbered phases have storage
+    startWithStorage = true;
+  } else if (ONE_VIAL_ALTERNATING_CONFIG.FORCE_START_PHASE === "no_storage") {
+    // even numbers phases have storage
+    startWithStorage = false;
+  } else {
+    startWithStorage = Math.random() < 0.5; // randomly assign
+  }
+
+  for (let phase = 0; phase < numPhases; phase++) {
+    const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage; // setting for entire phase
+    for (let i = 0; i < roundsPerPhase; i++) {
+      buckets.push({ vial1: hasStorage ? 1 : 0, vial2: 0 }); // vial 2 will not have storage ever
+    }
   }
   return buckets;
 };
@@ -272,6 +238,19 @@ const generateDynamicBuckets = (totalRounds, numPhases) => {
   }
 
   return buckets;
+};
+
+const generatePhaseSequence = (
+  totalRounds,
+  numPhases,
+  forceStartPhase = null,
+  hasPhases = false,
+) => {
+  if (hasPhases === true) {
+    return generateAlternatingPhases(totalRounds, forceStartPhase, numPhases);
+  } else if (hasPhases === false) {
+    return generateConstantPhase(totalRounds, "abundance");
+  }
 };
 
 /**

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import VialGame from "./VialGame";
 import Tutorial from "./instructions";
 import "../styles/TrainingPhase.css";
-import { PARTIAL_COMPLETION_CODES } from "../data/params";
+import { VERSION_URLS } from "../data/params";
 import { logTrainingResult } from "../data/logging";
 import { TRAINING_PARAMS } from "../data/params";
 
@@ -325,7 +325,7 @@ const TrainingPhase = ({
   }
 
   if (trainingComplete) {
-    const partialCode = PARTIAL_COMPLETION_CODES[gameVersion];
+    const partialCode = VERSION_URLS[gameVersion]?.partialCompletion;
 
     return (
       <div className="training-complete">

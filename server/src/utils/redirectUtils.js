@@ -1,13 +1,13 @@
 import { getVersionCode } from "../data/participantConfig";
-import {
-  RELOAD_REDIRECT_URLS_GENERAL,
-  RELOAD_REDIRECT_URLS_MAIN_GAME,
-} from "../data/params";
+import { VERSION_URLS } from "../data/params";
 
 export const getReloadRedirectUrl = (gameVersion, isMainGame) => {
   const redirectUrls = isMainGame
-    ? RELOAD_REDIRECT_URLS_MAIN_GAME
-    : RELOAD_REDIRECT_URLS_GENERAL;
+    ? VERSION_URLS[gameVersion]?.reloadMainGame
+    : VERSION_URLS[gameVersion]?.reloadGeneral;
+  if (!redirectUrl) {
+    console.error(`Missing reload URL for version: ${gameVersion}`);
+  }
 
   return redirectUrls[gameVersion] ?? null;
 };
