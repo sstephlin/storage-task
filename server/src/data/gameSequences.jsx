@@ -34,8 +34,8 @@ export const generateGameSequences = (
     bucketSequence: generateBucketSequence(
       totalRounds,
       config.numPhases,
-      config.numVials, // vialNumber — could also move to config if needed
-      config.bucketStrategy,
+      config.numVials,
+      config.bucketBehavior,
     ),
     phaseSequence: generatePhaseSequence(
       totalRounds,
@@ -288,17 +288,15 @@ const generateAlternatingPhases = (
       : Math.random() < 0.5
         ? "abundance"
         : "deprivation";
-
-  const firstPhase = startingPhase;
   const secondPhase =
     startingPhase === "abundance" ? "deprivation" : "abundance";
 
-  for (let i = 0; i < roundsPerPhase; i++) phases.push(firstPhase);
-  for (let i = 0; i < roundsPerPhase; i++) phases.push(secondPhase);
-  for (let i = 0; i < roundsPerPhase; i++) phases.push(firstPhase);
-
-  const remainingRounds = totalRounds - roundsPerPhase * 3;
-  for (let i = 0; i < remainingRounds; i++) phases.push(secondPhase);
+  for (let phase = 0; phase < numPhases; phase++) {
+    const condition = phase % 2 === 0 ? startingPhase : secondPhase; // setting for entire phase
+    for (let i = 0; i < roundsPerPhase; i++) {
+      phases.push(condition);
+    }
+  }
 
   return phases;
 };

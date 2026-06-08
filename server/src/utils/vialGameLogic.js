@@ -34,6 +34,7 @@ export const getAverageDistanceFromSetpoint = ({
   return numVials === 2 ? (vial1Distance + vial2Distance) / 2 : vial1Distance;
 };
 
+// decrement vial level, increment bucket if possible
 export const tickVialLevel = ({ level, isPaused, hasBucket, drainRate }) => {
   if (isPaused) {
     return { nextLevel: level, bucketIncrement: 0 };

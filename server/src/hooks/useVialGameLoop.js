@@ -14,6 +14,8 @@ export const useVialGameLoop = ({
   numVials,
   vial1Level,
   vial2Level,
+  vial1LevelRef,
+  vial2LevelRef,
   vial1HasBucket,
   vial2HasBucket,
   vial1Paused,
@@ -74,14 +76,16 @@ export const useVialGameLoop = ({
 
       distanceSamplesRef.current.push(
         getAverageDistanceFromSetpoint({
-          vial1Level,
-          vial2Level,
+          vial1Level: vial1LevelRef.current,
+          vial2Level: vial2LevelRef.current,
           numVials,
         }),
       );
     }, GAME_PARAMS.GAME_SPEED);
 
-    return () => clearInterval(gameLoopRef.current);
+    return () => {
+      clearInterval(gameLoopRef.current);
+    };
   }, [
     currentDrainRate,
     distanceSamplesRef,
@@ -92,8 +96,8 @@ export const useVialGameLoop = ({
     setVial1Level,
     setVial2Level,
     vial1HasBucket,
-    vial1Level,
+    // vial1Level,
     vial2HasBucket,
-    vial2Level,
+    // vial2Level,
   ]);
 };

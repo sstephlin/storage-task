@@ -17,7 +17,7 @@ export const useReloadWarning = (userId) => {
 
   useEffect(() => {
     if (userId && PRODUCTION_MODE) {
-      cleanupRef.current = setupReloadWarning();
+      cleanupRef.current = setupReloadWarning(); // shows browser popup
     }
 
     return cleanupReloadWarning;

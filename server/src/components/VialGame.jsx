@@ -96,6 +96,8 @@ const VialGame = ({
   const distanceSamplesRef = useRef([]);
   const vial1Paused = useRef(false);
   const vial2Paused = useRef(false);
+  const vial1LevelRef = useRef(vial1Level);
+  const vial2LevelRef = useRef(vial2Level);
   const bucket1LevelRef = useRef(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
   const bucket2LevelRef = useRef(GAME_PARAMS.INITIAL_BUCKET_LEVEL);
 
@@ -149,6 +151,8 @@ const VialGame = ({
     numVials: versionConfig.numVials,
     vial1Level,
     vial2Level,
+    vial1LevelRef,
+    vial2LevelRef,
     vial1HasBucket,
     vial2HasBucket,
     vial1Paused,
@@ -290,10 +294,10 @@ const VialGame = ({
         });
       }, 1000);
     } else {
-      clearInterval(roundTimerRef.current);
+      clearInterval(roundTimerRef.current); // if the game is not longer running and is instead transitioning, clear the interval
     }
 
-    return () => clearInterval(roundTimerRef.current);
+    return () => clearInterval(roundTimerRef.current); // cleans up before executing a new effect, prevents interval from running in the background
   }, [gameRunning, isRoundTransition, showingAnimation]);
 
   // useEffect to check for round ending conditions (success)
@@ -344,6 +348,14 @@ const VialGame = ({
     vial1Level,
     vial2Level,
   ]);
+  // sync vial levels to refs
+  useEffect(() => {
+    vial1LevelRef.current = vial1Level;
+  }, [vial1Level]);
+  useEffect(() => {
+    vial2LevelRef.current = vial2Level;
+  }, [vial2Level]);
+
   // sync bucket levels to refs
   useEffect(() => {
     bucket1LevelRef.current = bucket1Level;
