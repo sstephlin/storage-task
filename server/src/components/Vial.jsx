@@ -2,6 +2,7 @@ import React from "react";
 import { GAME_PARAMS } from "../data/params";
 import "../styles/Vial.css";
 import { Star, Flame, Skull } from "lucide-react";
+import GasStationIndicator from "./GasStationIndicator";
 
 const Vial = ({
   level,
@@ -10,6 +11,8 @@ const Vial = ({
   liquidColor,
   isTrainingMode = false,
   trainingColors = null,
+  showGasStation = false,
+  gasStationActive = true,
 }) => {
   const displayLevel = Math.min(Math.round(level), GAME_PARAMS.MAX_LEVEL);
   const bucketFillPercent = Math.min(
@@ -103,18 +106,25 @@ const Vial = ({
       {numBuckets > 0 && (
         <div className="bucket-container">
           <div
-            className="bucket"
             style={{
-              height: `${bucketHeight}px`,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-end",
+              gap: "4px",
             }}
           >
-            <div
-              className="bucket-liquid"
-              style={{
-                height: `${bucketFillPercent}%`,
-                backgroundColor: liquidColor,
-              }}
-            />
+            <div className="bucket" style={{ height: `${bucketHeight}px` }}>
+              <div
+                className="bucket-liquid"
+                style={{
+                  height: `${bucketFillPercent}%`,
+                  backgroundColor: liquidColor,
+                }}
+              />
+            </div>
+            {showGasStation && (
+              <GasStationIndicator isActive={gasStationActive} />
+            )}
           </div>
         </div>
       )}

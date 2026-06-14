@@ -46,6 +46,9 @@ export const useGasStationControl = ({
     }
 
     if (gameRunning && !isRoundTransition && !showingAnimation) {
+      if (roundKey !== prevRoundKey.current) {
+        setAddingDisabled(false);
+      }
       const scheduleNextDisable = () => {
         const timeUntilDisable =
           Math.random() *
@@ -72,7 +75,7 @@ export const useGasStationControl = ({
       scheduleNextDisable();
     } else {
       clearDisableTimer();
-      setAddingDisabled(false);
+      // setAddingDisabled(false);
     }
 
     return clearDisableTimer;

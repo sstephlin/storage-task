@@ -402,8 +402,8 @@ const VialGame = ({
             />
           )}
           <h1>
-            {isTrainingMode && "PRACTICE: "}
-            {"Keep BleeBlop's Gloop at the Ideal Level!"}
+            {isTrainingMode &&
+              "PRACTICE: Keep BleeBlop's Gloop at the Ideal Level!"}
           </h1>
 
           <div className="game-info">
@@ -448,8 +448,14 @@ const VialGame = ({
               trainingColors={
                 isTrainingMode ? trainingParams.VIAL_COLORS : null
               }
+              hasPhases={versionConfig.hasPhases}
+              gasStationActive={
+                showingAnimation
+                  ? !frozenAddingDisabled
+                  : !isAddingDisabledRef.current
+              }
             />
-            {versionConfig.hasPhases && (
+            {/* {versionConfig.hasPhases && (
               <GasStationIndicator
                 isActive={
                   showingAnimation
@@ -457,7 +463,7 @@ const VialGame = ({
                     : !isAddingDisabledRef.current
                 }
               />
-            )}
+            )} */}
           </div>
         </>
       )}

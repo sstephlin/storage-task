@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Star, Flame, Skull } from "lucide-react";
 import Vial from "./Vial";
+import GasStationIndicator from "./GasStationIndicator";
 import { PRODUCTION_MODE } from "../data/participantConfig";
 
 const Robot = ({
@@ -19,6 +20,9 @@ const Robot = ({
   // Training mode props
   isTrainingMode = false,
   trainingColors = null,
+  // gas station props
+  hasPhases = false,
+  gasStationActive = true,
 }) => {
   // Adjust scale based on production mode
   const effectiveScale = PRODUCTION_MODE ? scale * 1.2 : scale;
@@ -404,7 +408,8 @@ const Robot = ({
                 borderRadius: "20px",
                 border: "5px solid #2c3e50",
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "column",
+                justifyContent: "flex-start",
                 alignItems: "center",
                 gap: "8px",
                 padding: "6px",
@@ -418,6 +423,8 @@ const Robot = ({
                 liquidColor={vial1Color}
                 isTrainingMode={isTrainingMode}
                 trainingColors={trainingColors}
+                showGasStation={hasPhases && vial1HasBucket}
+                gasStationActive={gasStationActive}
               />
               {numVials === 2 && (
                 <Vial
@@ -427,6 +434,8 @@ const Robot = ({
                   liquidColor={vial2Color}
                   isTrainingMode={isTrainingMode}
                   trainingColors={trainingColors}
+                  showGasStation={hasPhases && vial2HasBucket}
+                  gasStationActive={gasStationActive}
                 />
               )}
             </div>

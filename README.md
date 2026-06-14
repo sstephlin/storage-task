@@ -50,6 +50,12 @@ git clone https://github.com/[USERNAME]/storage-task.git
 
 # storage-task
 
+This repository features a web application for the Maintenance Task, a scientific experiment about context-dependent reinforcement learning. The frontend contains an experimental work flow that begins with participant validition, prelimiary questions, and instructional tutorial. The task then moves onto a training phase, main phase, and game completion.
+
+Currently, 4 versions of the 1 Vial game can be run simaltaneiously by altering the URL parameter. The process of including 2 vial versions is still the in process of being implemented.
+
+For this application, real time updates and accurate logging of games states are the most important. Timing is managed strictly, ensure proper conditions and teardowns to no processes are running in the background.
+
 ## Game Versions
 
 ### V0.1: "one_vial_alternating"
