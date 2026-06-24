@@ -21,6 +21,8 @@ export const GAME_VERSIONS = {
   TWO_VIALS_PHASES: "two_vials_phases",
 };
 
+const phaseLengths = [6, 9, 7, 6, 8];
+
 // Version Configuration
 export const VERSION_CONFIG = {
   [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: {
@@ -30,7 +32,7 @@ export const VERSION_CONFIG = {
     hasPhases: false,
     bucketBehavior: "alternating",
     enabled: true,
-    numPhases: 4,
+    phaseConfig: phaseLengths,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
@@ -41,7 +43,7 @@ export const VERSION_CONFIG = {
     hasPhases: true,
     bucketBehavior: "constant",
     enabled: true,
-    numPhases: 4,
+    phaseConfig: phaseLengths,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: {
@@ -51,7 +53,7 @@ export const VERSION_CONFIG = {
     hasPhases: false,
     bucketBehavior: "constant",
     enabled: true,
-    numPhases: 4,
+    phaseConfig: phaseLengths,
   },
 
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
@@ -62,7 +64,7 @@ export const VERSION_CONFIG = {
     hasPhases: false,
     bucketBehavior: "constant",
     enabled: true,
-    numPhases: 4,
+    phaseConfig: phaseLengths,
   },
 
   // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
@@ -89,72 +91,72 @@ export const VERSION_CONFIG = {
 export const VERSION_VELOCITIES = {
   [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: {
     SLOW: 1.6,
-    MEDIUM: 1.8,
-    FAST: 2.0,
+    MEDIUM: 2.8,
+    FAST: 4.0,
   },
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
     SLOW: 1.6,
-    MEDIUM: 1.8,
-    FAST: 2.0,
+    MEDIUM: 2.8,
+    FAST: 4.0,
   },
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: {
     SLOW: 1.6,
-    MEDIUM: 1.8,
-    FAST: 2.0,
+    MEDIUM: 2.8,
+    FAST: 4.0,
   },
   [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
     SLOW: 2.6,
-    MEDIUM: 2.8,
-    FAST: 3.0,
+    MEDIUM: 3.8,
+    FAST: 5.0,
   },
-  [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
-    SLOW: 1.6,
-    MEDIUM: 1.8,
-    FAST: 2.0,
-  },
-  [GAME_VERSIONS.TWO_VIALS_PHASES]: {
-    SLOW: 1.6,
-    MEDIUM: 1.8,
-    FAST: 2.0,
-  },
+  // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
+  //   SLOW: 1.6,
+  //   MEDIUM: 1.8,
+  //   FAST: 2.0,
+  // },
+  // [GAME_VERSIONS.TWO_VIALS_PHASES]: {
+  //   SLOW: 1.6,
+  //   MEDIUM: 1.8,
+  //   FAST: 2.0,
+  // },
 };
 
 export const TRAINING_PARAMS = {
-  MAX_ROUNDS: 1,
-  ROUND_DURATION: 5,
+  MAX_ROUNDS: 10,
+  ROUND_DURATION: 10,
   REQUIRED_SURVIVAL_RATE: 0.5,
 
   VELOCITIES: {
     [GAME_VERSIONS.ONE_VIAL_ALTERNATING]: {
-      SLOW: 1.2,
-      MEDIUM: 1.4,
-      FAST: 1.6,
+      SLOW: 1.0,
+      MEDIUM: 2.0,
+      FAST: 3.0,
     },
     [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET]: {
-      SLOW: 1.2,
-      MEDIUM: 1.4,
-      FAST: 1.6,
+      SLOW: 1.0,
+      MEDIUM: 2.0,
+      FAST: 3.0,
     },
     [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE]: {
-      SLOW: 1.2,
-      MEDIUM: 1.4,
-      FAST: 1.6,
+      SLOW: 1.0,
+      MEDIUM: 2.0,
+      FAST: 3.0,
     },
     [GAME_VERSIONS.ONE_VIAL_ALWAYS_BUCKET_SIMPLE_FAST]: {
-      SLOW: 2.2,
-      MEDIUM: 2.4,
-      FAST: 2.6,
+      SLOW: 2.0,
+      MEDIUM: 3.0,
+      FAST: 4.0,
     },
-    [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
-      SLOW: 1.4,
-      MEDIUM: 1.5,
-      FAST: 1.6,
-    },
-    [GAME_VERSIONS.TWO_VIALS_PHASES]: {
-      SLOW: 1.4,
-      MEDIUM: 1.5,
-      FAST: 1.6,
-    },
+    // [GAME_VERSIONS.TWO_VIALS_SINGLE_BUCKET]: {
+    //   SLOW: 1.4,
+    //   MEDIUM: 1.5,
+    //   FAST: 1.6,
+    // },
+    // [GAME_VERSIONS.TWO_VIALS_PHASES]: {
+    //   SLOW: 1.4,
+    //   MEDIUM: 1.5,
+    //   FAST: 1.6,
+    // },
   },
 
   VIAL_COLORS: {

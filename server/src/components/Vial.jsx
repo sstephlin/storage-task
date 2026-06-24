@@ -108,11 +108,14 @@ const Vial = ({
           <div
             style={{
               display: "flex",
-              flexDirection: "row",
-              alignItems: "flex-end",
+              flexDirection: "column",
+              alignItems: "center",
               gap: "4px",
             }}
           >
+            {showGasStation && (
+              <GasStationIndicator isActive={gasStationActive} />
+            )}
             <div className="bucket" style={{ height: `${bucketHeight}px` }}>
               <div
                 className="bucket-liquid"
@@ -122,9 +125,6 @@ const Vial = ({
                 }}
               />
             </div>
-            {showGasStation && (
-              <GasStationIndicator isActive={gasStationActive} />
-            )}
           </div>
         </div>
       )}

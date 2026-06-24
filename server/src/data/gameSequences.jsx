@@ -5,7 +5,6 @@ import {
   PHASE_CONFIG,
   VERSION_CONFIG,
 } from "./params";
-const numPhases1Vial = 4;
 
 /**
  * Generate sequences based on game version.
@@ -26,20 +25,20 @@ export const generateGameSequences = (
   const velocities = customVelocities || VERSION_VELOCITIES[version];
 
   return {
-    velocitySequence: generatePhaseVelocities(
+    velocitySequence: generateVelocitiesSequence(
       totalRounds,
       velocities,
-      config.numPhases,
+      // config.numPhases,
     ),
     bucketSequence: generateBucketSequence(
       totalRounds,
-      config.numPhases,
+      config.phaseConfig,
       config.numVials,
       config.bucketBehavior,
     ),
     phaseSequence: generatePhaseSequence(
       totalRounds,
-      config.numPhases,
+      config.phaseConfig,
       null,
       config.hasPhases,
     ),
@@ -49,6 +48,17 @@ export const generateGameSequences = (
 // ============================================================================
 // SEQUENCE HELPERS
 // ============================================================================
+
+const generateVelocitiesSequence = (totalRounds, velocities) => {
+  const velocityTypes = [velocities.SLOW, velocities.MEDIUM, velocities.FAST];
+  const velocityArray = [];
+
+  for (let i = 0; i < totalRounds; i++) {
+    velocityArray.push(velocityTypes[i % 3]);
+  }
+  shuffleArray(velocityArray);
+  return velocityArray;
+};
 /**
  * Creates the per-round drain speed sequence.
  * Creates phases for game, each phases gets an equal number of rounds for each velocity.
@@ -105,16 +115,16 @@ const generatePhaseVelocities = (totalRounds, velocities, numPhases) => {
 
 const generateBucketSequence = (
   totalRounds,
-  numPhases,
+  phaseConfig,
   vialNumber = 1,
   bucketConfig = "constant",
 ) => {
   if (bucketConfig === "constant") {
     return generateConstantBuckets(totalRounds, vialNumber);
   } else if (bucketConfig === "alternating") {
-    return generateOneVialAlternatingBuckets(totalRounds, numPhases);
+    return generateOneVialAlternatingBuckets(totalRounds, phaseConfig);
   } else if (bucketConfig === "dynamic") {
-    return generateDynamicBuckets(totalRounds, numPhases);
+    return generateDynamicBuckets(totalRounds, phaseConfig);
   } else {
     throw new Error(`Unknown bucket config: ${bucketConfig}`);
   }
@@ -140,12 +150,11 @@ const generateConstantBuckets = (totalRounds, vialNumber = 1) => {
  * Phases will alternate between storage and no storage, starting condition is randomized unless forced by config.
  *
  * @param {*} totalRounds
- * @param {*} numPhases
+ * @param {*} phaseConfig
  * @returns
  */
-const generateOneVialAlternatingBuckets = (totalRounds, numPhases) => {
+const generateOneVialAlternatingBuckets = (totalRounds, phaseConfig) => {
   const buckets = [];
-  const roundsPerPhase = Math.floor(totalRounds / numPhases);
 
   // can force games
   let startWithStorage;
@@ -159,9 +168,9 @@ const generateOneVialAlternatingBuckets = (totalRounds, numPhases) => {
     startWithStorage = Math.random() < 0.5; // randomly assign
   }
 
-  for (let phase = 0; phase < numPhases; phase++) {
+  for (let phase = 0; phase < phaseConfig.length; phase++) {
     const hasStorage = phase % 2 === 0 ? startWithStorage : !startWithStorage; // setting for entire phase
-    for (let i = 0; i < roundsPerPhase; i++) {
+    for (let i = 0; i < phaseConfig[phase]; i++) {
       buckets.push({ vial1: hasStorage ? 1 : 0, vial2: 0 }); // vial 2 will not have storage ever
     }
   }
@@ -174,33 +183,33 @@ const generateOneVialAlternatingBuckets = (totalRounds, numPhases) => {
  * @returns
  */
 // MUST CLARIFY BEFORE USE 5/18
-const generateTwoVialSingleBucket = (totalRounds) => {
-  const buckets = [];
-  // const numPhases = Math.floor(totalRounds / 6);
-  const roundsPerPhase = Math.floor(totalRounds / numPhases);
-  const bucketStates = [
-    { vial1: 1, vial2: 0 },
-    { vial1: 0, vial2: 1 },
-    { vial1: 0, vial2: 0 },
-  ];
+// const generateTwoVialSingleBucket = (totalRounds) => {
+//   const buckets = [];
+//   // const numPhases = Math.floor(totalRounds / 6);
+//   const roundsPerPhase = Math.floor(totalRounds / numPhases);
+//   const bucketStates = [
+//     { vial1: 1, vial2: 0 },
+//     { vial1: 0, vial2: 1 },
+//     { vial1: 0, vial2: 0 },
+//   ];
 
-  const firstIteration = [...bucketStates];
-  shuffleArray(firstIteration);
+//   const firstIteration = [...bucketStates];
+//   shuffleArray(firstIteration);
 
-  const secondIteration = [...bucketStates];
-  shuffleArray(secondIteration);
+//   const secondIteration = [...bucketStates];
+//   shuffleArray(secondIteration);
 
-  const phaseOrder = [...firstIteration, ...secondIteration];
+//   const phaseOrder = [...firstIteration, ...secondIteration];
 
-  for (let phase = 0; phase < numPhases; phase++) {
-    const bucketState = phaseOrder[phase];
-    for (let i = 0; i < roundsPerPhase; i++) {
-      buckets.push({ ...bucketState });
-    }
-  }
+//   for (let phase = 0; phase < numPhases; phase++) {
+//     const bucketState = phaseOrder[phase];
+//     for (let i = 0; i < roundsPerPhase; i++) {
+//       buckets.push({ ...bucketState });
+//     }
+//   }
 
-  return buckets;
-};
+//   return buckets;
+// };
 
 /**
  * for the two-vial phases version.
@@ -211,43 +220,43 @@ const generateTwoVialSingleBucket = (totalRounds) => {
  * @param {*} numPhases
  * @returns
  */
-const generateDynamicBuckets = (totalRounds, numPhases) => {
-  const buckets = [];
-  const roundsPerPhase = Math.floor(totalRounds / numPhases);
-  const options = [
-    { vial1: 1, vial2: 0 },
-    { vial1: 0, vial2: 1 },
-  ];
+// const generateDynamicBuckets = (totalRounds, numPhases) => {
+//   const buckets = [];
+//   const roundsPerPhase = Math.floor(totalRounds / numPhases);
+//   const options = [
+//     { vial1: 1, vial2: 0 },
+//     { vial1: 0, vial2: 1 },
+//   ];
 
-  for (let phase = 0; phase < numPhases; phase++) {
-    const bucketPhase = [];
-    const pairsNeeded = Math.floor(roundsPerPhase / 2);
+//   for (let phase = 0; phase < numPhases; phase++) {
+//     const bucketPhase = [];
+//     const pairsNeeded = Math.floor(roundsPerPhase / 2);
 
-    // create pairs of rounds for each option to ensure even distribution within phase, then shuffle
-    for (let i = 0; i < pairsNeeded; i++) {
-      bucketPhase.push({ ...options[0] });
-      bucketPhase.push({ ...options[1] });
-    }
+//     // create pairs of rounds for each option to ensure even distribution within phase, then shuffle
+//     for (let i = 0; i < pairsNeeded; i++) {
+//       bucketPhase.push({ ...options[0] });
+//       bucketPhase.push({ ...options[1] });
+//     }
 
-    if (roundsPerPhase % 2 !== 0) {
-      bucketPhase.push({ ...options[Math.floor(Math.random() * 2)] });
-    }
+//     if (roundsPerPhase % 2 !== 0) {
+//       bucketPhase.push({ ...options[Math.floor(Math.random() * 2)] });
+//     }
 
-    shuffleArray(bucketPhase);
-    buckets.push(...bucketPhase);
-  }
+//     shuffleArray(bucketPhase);
+//     buckets.push(...bucketPhase);
+//   }
 
-  return buckets;
-};
+//   return buckets;
+// };
 
 const generatePhaseSequence = (
   totalRounds,
-  numPhases,
+  phaseConfig,
   forceStartPhase = null,
   hasPhases = false,
 ) => {
   if (hasPhases === true) {
-    return generateAlternatingPhases(totalRounds, forceStartPhase, numPhases);
+    return generateAlternatingPhases(totalRounds, forceStartPhase, phaseConfig);
   } else if (hasPhases === false) {
     return generateConstantPhase(totalRounds, "abundance");
   }
@@ -270,15 +279,14 @@ const generateConstantPhase = (totalRounds, phase = "abundance") => {
  * ABAB-style phase sequence
  * @param {*} totalRounds
  * @param {*} forceStartPhase
- * @param {*} numPhases
+ * @param {*} phaseConfig
  * @returns
  */
 const generateAlternatingPhases = (
   totalRounds,
   forceStartPhase = null,
-  numPhases,
+  phaseConfig,
 ) => {
-  const roundsPerPhase = Math.floor(totalRounds / numPhases);
   const phases = [];
 
   const configuredPhase = PHASE_CONFIG.FORCE_START_PHASE || forceStartPhase;
@@ -291,9 +299,9 @@ const generateAlternatingPhases = (
   const secondPhase =
     startingPhase === "abundance" ? "deprivation" : "abundance";
 
-  for (let phase = 0; phase < numPhases; phase++) {
+  for (let phase = 0; phase < phaseConfig.length; phase++) {
     const condition = phase % 2 === 0 ? startingPhase : secondPhase; // setting for entire phase
-    for (let i = 0; i < roundsPerPhase; i++) {
+    for (let i = 0; i < phaseConfig[phase]; i++) {
       phases.push(condition);
     }
   }

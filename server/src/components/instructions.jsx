@@ -8,7 +8,7 @@ import { TimeExpiredModal } from "./instructionsTimeoutModal";
 import { PRODUCTION_MODE } from "../data/participantConfig";
 
 // Set to false for production, true for debugging (disables timer and quiz validation)
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 // Preload media helpers
 const VIDEO_EXTENSIONS = [".mov", ".mp4", ".webm"];

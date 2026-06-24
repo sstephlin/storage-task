@@ -15,8 +15,8 @@ const GasStationIndicator = ({ isActive }) => {
       <div
         style={{
           position: "relative",
-          width: "50px",
-          height: "68px",
+          width: "70px",
+          height: "95px",
         }}
       >
         {/* Pump Body */}
@@ -26,14 +26,14 @@ const GasStationIndicator = ({ isActive }) => {
             top: "0",
             left: "50%",
             transform: "translateX(-50%)",
-            width: "30px",
-            height: "54px",
+            width: "42px",
+            height: "76px",
             backgroundColor: isActive ? "#2E7D32" : "#444",
-            borderRadius: "4px",
+            borderRadius: "5px",
             border: `2px solid ${isActive ? "#4CAF50" : "#555"}`,
             transition: "all 0.3s ease",
             boxShadow: isActive
-              ? "0 0 10px rgba(76,175,80,0.6), inset 0 0 8px rgba(76,175,80,0.2)"
+              ? "0 0 12px rgba(76,175,80,0.6), inset 0 0 10px rgba(76,175,80,0.2)"
               : "none",
           }}
         >
@@ -41,51 +41,51 @@ const GasStationIndicator = ({ isActive }) => {
           <div
             style={{
               position: "absolute",
-              top: "7px",
+              top: "10px",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "20px",
-              height: "11px",
+              width: "28px",
+              height: "15px",
               backgroundColor: isActive ? "#8BC34A" : "#333",
               borderRadius: "2px",
               border: "1px solid #000",
               transition: "background-color 0.3s ease",
-              boxShadow: isActive ? "0 0 6px rgba(139,195,74,0.8)" : "none",
+              boxShadow: isActive ? "0 0 7px rgba(139,195,74,0.8)" : "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "5px",
+              fontSize: "6px",
               fontWeight: "bold",
               color: isActive ? "#1B5E20" : "#666",
               fontFamily: "monospace",
             }}
           >
-            {isActive ? "RDY" : "OFF"}
+            {isActive ? "READY" : "OFF"}
           </div>
 
           {/* Keypad dots */}
           <div
             style={{
               position: "absolute",
-              top: "24px",
+              top: "34px",
               left: "50%",
               transform: "translateX(-50%)",
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "2px",
-              width: "18px",
+              gap: "3px",
+              width: "25px",
             }}
           >
             {[...Array(9)].map((_, i) => (
               <div
                 key={i}
                 style={{
-                  width: "4px",
-                  height: "3px",
+                  width: "5px",
+                  height: "4px",
                   backgroundColor: isActive ? "#4CAF50" : "#555",
                   borderRadius: "1px",
                   transition: "background-color 0.3s ease",
-                  boxShadow: isActive ? "0 0 2px rgba(76,175,80,0.5)" : "none",
+                  boxShadow: isActive ? "0 0 3px rgba(76,175,80,0.5)" : "none",
                 }}
               />
             ))}
@@ -96,12 +96,12 @@ const GasStationIndicator = ({ isActive }) => {
         <div
           style={{
             position: "absolute",
-            top: "14px",
+            top: "20px",
             right: "2px",
-            width: "10px",
-            height: "20px",
+            width: "14px",
+            height: "28px",
             backgroundColor: isActive ? "#388E3C" : "#555",
-            borderRadius: "2px",
+            borderRadius: "3px",
             border: `1px solid ${isActive ? "#4CAF50" : "#666"}`,
             transition: "all 0.3s ease",
           }}
@@ -111,31 +111,16 @@ const GasStationIndicator = ({ isActive }) => {
             style={{
               position: "absolute",
               top: "50%",
-              right: "-4px",
+              right: "-5px",
               transform: "translateY(-50%)",
-              width: "4px",
-              height: "11px",
+              width: "5px",
+              height: "15px",
               backgroundColor: isActive ? "#4CAF50" : "#666",
               borderRadius: "0 2px 2px 0",
               transition: "background-color 0.3s ease",
             }}
           />
         </div>
-
-        {/* Base */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "0",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "42px",
-            height: "4px",
-            backgroundColor: isActive ? "#2E7D32" : "#444",
-            borderRadius: "2px",
-            transition: "background-color 0.3s ease",
-          }}
-        />
 
         {/* Pulsing glow when active */}
         {isActive && (
@@ -145,31 +130,15 @@ const GasStationIndicator = ({ isActive }) => {
               top: "0",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "36px",
-              height: "58px",
+              width: "50px",
+              height: "80px",
               backgroundColor: "rgba(76,175,80,0.15)",
-              borderRadius: "6px",
+              borderRadius: "8px",
               animation: "gsPulse 2s ease-in-out infinite",
               pointerEvents: "none",
             }}
           />
         )}
-      </div>
-
-      {/* Status label */}
-      <div
-        style={{
-          fontSize: "7px",
-          fontWeight: "bold",
-          color: isActive ? "#4CAF50" : "#ff4444",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-          textShadow: isActive ? "0 0 4px rgba(76,175,80,0.5)" : "none",
-          transition: "all 0.3s ease",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {isActive ? "REFUEL" : "CLOSED"}
       </div>
 
       <style>{`
