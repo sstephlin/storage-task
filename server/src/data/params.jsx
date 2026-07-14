@@ -21,7 +21,7 @@ export const GAME_VERSIONS = {
   TWO_VIALS_PHASES: "two_vials_phases",
 };
 
-const phaseLengths = [6, 9, 7, 6, 8];
+const phaseLengths = [7, 6, 6, 7, 5, 5];
 
 // Version Configuration
 export const VERSION_CONFIG = {
