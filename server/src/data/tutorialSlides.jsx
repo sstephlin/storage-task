@@ -13,13 +13,13 @@ const SHARED_INTRO_SLIDES = [
   { id: "intro-2.3", image: "Intro-2.3.png", showButtons: false },
   {
     id: "intro-3",
-    image: "gifs/blinking.gif",
+    image: "gifs/blinking.mp4",
     title: "This is Bleeblop. Bleeblop is a robot.",
     showButtons: false,
   },
   {
     id: "intro-4",
-    image: "gifs/thinking.gif",
+    image: "gifs/thinking.mp4",
     title:
       "Bleeblop's Goal is to Reach Robonia in time for the yearly Roboday celebration,",
     showButtons: false,
@@ -42,7 +42,7 @@ const SHARED_COMMANDS_SLIDES_PART1 = [
   { id: "commands-1", image: "Commands-1.png", showButtons: false },
   {
     id: "commands-2",
-    image: "gifs/leftclick.gif",
+    image: "gifs/leftclick.mp4",
     title: "Use the left arrow key to add to the main gloop container.",
     showButtons: false,
   },
@@ -51,42 +51,42 @@ const SHARED_COMMANDS_SLIDES_PART1 = [
 const SHARED_COMMANDS_SLIDES_PART2 = [
   {
     id: "commands-4",
-    image: "gifs/draining1.gif",
+    image: "gifs/draining1.mp4",
     title:
       "When BleeBlop has more than the ideal amount of gloop, the gloop that naturally drains will fill this container.",
     showButtons: false,
   },
   {
     id: "commands-5",
-    image: "gifs/draining2.gif",
+    image: "gifs/draining2.mp4",
     title:
       "IMPORTANT: this only happens if Bleeblop has MORE than the ideal amount of gloop. If their gloop is at or below the ideal level, the draining gloop is simply lost.",
     showButtons: false,
   },
   {
     id: "commands-6",
-    image: "gifs/upclick.gif",
+    image: "gifs/upclick.mp4",
     title:
       "By clicking the up arrow, you can dump some stored gloop back into the main gloop container.",
     showButtons: false,
   },
   {
     id: "commands-7",
-    image: "gifs/upclick.gif",
+    image: "gifs/upclick.mp4",
     title:
       "Note that adding stored gloop cannot not bring Bleeblop's gloop levels any higher than the ideal.",
     showButtons: false,
   },
   {
     id: "commands-8",
-    image: "gifs/upclick.gif",
+    image: "gifs/upclick.mp4",
     title:
       "*If you choose to add stored gloop and doing so would cause Bleeblop's gloop levels to go over the ideal, only the amount that would bring Bleeblop's gloop levels to the ideal will be added",
     showButtons: false,
   },
   {
     id: "commands-9",
-    image: "gifs/map.gif",
+    image: "gifs/map.mp4",
     title:
       "At the end of each day, you will get to see how far you helped Bleeblop travel.",
     showButtons: false,

@@ -326,13 +326,13 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
     };
   }, [preloadSlideMedia]);
 
-  // prioritizes the current, previous, next, and next-next slides
+  // prioritizes the current, previous, and several upcoming slides
   React.useEffect(() => {
+    const LOOKAHEAD = 5;
     const nearbySlideIndexes = [
       currentSlide - 1,
       currentSlide,
-      currentSlide + 1,
-      currentSlide + 2,
+      ...Array.from({ length: LOOKAHEAD }, (_, i) => currentSlide + 1 + i),
     ];
 
     nearbySlideIndexes.forEach((slideIndex) => {
@@ -347,14 +347,14 @@ const Tutorial = ({ onExit, gameVersion, onDisqualified }) => {
     let cancelled = false;
     const mediaSources = getTutorialMediaSources(TUTORIAL_SLIDES);
 
-    const preloadRemainingMedia = async () => {
-      for (const src of mediaSources) {
-        if (cancelled) return;
-        await preloadMedia(src);
-        if (!cancelled) {
-          setMediaReadyVersion((version) => version + 1);
-        }
-      }
+    const preloadRemainingMedia = () => {
+      mediaSources.forEach((src) => {
+        preloadMedia(src).then(() => {
+          if (!cancelled) {
+            setMediaReadyVersion((version) => version + 1);
+          }
+        });
+      });
     };
 
     preloadRemainingMedia();
